@@ -1,0 +1,260 @@
+/* 优惠券列表页样式 */
+
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding-bottom: 40rpx;
+}
+
+/* 头部 */
+.header {
+  padding: 40rpx 30rpx 30rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 10rpx;
+}
+
+.subtitle {
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.my-coupon-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border: 2rpx solid rgba(255, 255, 255, 0.3);
+  font-size: 28rpx;
+  padding: 15rpx 30rpx;
+  border-radius: 50rpx;
+}
+
+/* 筛选栏 */
+.filter-bar {
+  background: #fff;
+  margin: 0 30rpx 30rpx;
+  padding: 30rpx;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+}
+
+.filter-group {
+  display: flex;
+  justify-content: space-around;
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+}
+
+.filter-label {
+  margin-left: 10rpx;
+  font-size: 28rpx;
+  color: #333;
+}
+
+/* 优惠券列表 */
+.coupon-list {
+  padding: 0 30rpx;
+}
+
+.coupon-card {
+  position: relative;
+  display: flex;
+  background: #fff;
+  margin-bottom: 30rpx;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+}
+
+/* 左侧折扣区 */
+.coupon-left {
+  width: 220rpx;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40rpx 0;
+  position: relative;
+}
+
+.coupon-left.expired,
+.coupon-left.claimed {
+  background: linear-gradient(135deg, #bbb 0%, #999 100%);
+}
+
+/* 折扣数值 */
+.discount-value {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 15rpx;
+}
+
+.discount-number {
+  font-size: 72rpx;
+  font-weight: bold;
+  color: #fff;
+  line-height: 1;
+}
+
+.discount-unit {
+  font-size: 36rpx;
+  color: #fff;
+  margin-left: 5rpx;
+}
+
+.condition {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.2);
+  padding: 8rpx 20rpx;
+  border-radius: 30rpx;
+}
+
+/* 右侧信息区 */
+.coupon-right {
+  flex: 1;
+  padding: 30rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.coupon-info {
+  flex: 1;
+}
+
+.coupon-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  display: block;
+  margin-bottom: 10rpx;
+}
+
+.coupon-desc {
+  font-size: 26rpx;
+  color: #666;
+  display: block;
+  margin-bottom: 15rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coupon-time {
+  margin-bottom: 8rpx;
+}
+
+.time-text {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.coupon-stock {
+  margin-bottom: 15rpx;
+}
+
+.stock-text {
+  font-size: 24rpx;
+  color: #ff6b6b;
+}
+
+/* 操作按钮 */
+.coupon-action {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.claim-btn {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+  color: #fff;
+  border: none;
+  border-radius: 50rpx;
+  padding: 15rpx 40rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+}
+
+.status-badge {
+  padding: 10rpx 25rpx;
+  border-radius: 50rpx;
+  font-size: 24rpx;
+  text-align: center;
+}
+
+.claimed-badge {
+  background: #f0f0f0;
+  color: #999;
+}
+
+.expired-badge {
+  background: #ffe0e0;
+  color: #ff6b6b;
+}
+
+.unavailable-badge {
+  background: #f0f0f0;
+  color: #999;
+}
+
+/* 过期遮罩 */
+.expired-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.expired-text {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #999;
+  transform: rotate(-15deg);
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 100rpx 0;
+}
+
+.empty-icon {
+  font-size: 120rpx;
+  display: block;
+  margin-bottom: 30rpx;
+}
+
+.empty-text {
+  font-size: 32rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 加载状态 */
+.loading-more,
+.no-more {
+  text-align: center;
+  padding: 30rpx 0;
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.8);
+}

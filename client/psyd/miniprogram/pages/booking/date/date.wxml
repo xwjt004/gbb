@@ -1,0 +1,111 @@
+<!--日期选择页-->
+<view class="container">
+  <!-- 套系信息卡片 -->
+  <view class="package-card">
+    <view class="package-name">{{packageInfo.name}}</view>
+    <view class="package-price">
+      <text class="price">¥{{packageInfo.price}}</text>
+      <text class="deposit">定金¥{{packageInfo.depositAmount}}</text>
+    </view>
+  </view>
+
+  <!-- 日历区域 -->
+  <view class="calendar-container">
+    <!-- 月份切换 -->
+    <view class="month-header">
+      <view class="month-btn" bindtap="onPrevMonth">
+        <text>◀</text>
+      </view>
+      <view class="month-title">
+        {{currentYear}}年{{currentMonth}}月
+      </view>
+      <view class="month-btn" bindtap="onNextMonth">
+        <text>▶</text>
+      </view>
+    </view>
+
+    <!-- 星期标题 -->
+    <view class="week-header">
+      <view class="week-item">日</view>
+      <view class="week-item">一</view>
+      <view class="week-item">二</view>
+      <view class="week-item">三</view>
+      <view class="week-item">四</view>
+      <view class="week-item">五</view>
+      <view class="week-item">六</view>
+    </view>
+
+    <!-- 日期网格 -->
+    <view class="calendar-grid">
+      <view 
+        wx:for="{{calendarDays}}" 
+        wx:key="index"
+        class="calendar-cell {{item.disabled ? 'disabled' : ''}} {{item.selected ? 'selected' : ''}} {{item.isToday ? 'today' : ''}}"
+        bindtap="onDateSelect"
+        data-date="{{item.date}}"
+        data-disabled="{{item.disabled}}"
+      >
+        <view wx:if="{{item.day > 0}}" class="day-content">
+          <text class="day-number">{{item.day}}</text>
+          
+          <!-- 节假日标记 -->
+          <view wx:if="{{item.isHoliday && !item.disabled}}" class="holiday-badge">
+            节
+          </view>
+          
+          <!-- 剩余名额 -->
+          <text wx:if="{{!item.disabled && item.remainingSlots > 0}}" class="slots-text">
+            {{item.remainingSlots}}
+          </text>
+          
+          <!-- 已满标记 -->
+          <text wx:if="{{!item.isPassed && item.remainingSlots === 0}}" class="full-text">
+            满
+          </text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 选中日期信息 -->
+  <view wx:if="{{selectedDate}}" class="selected-info">
+    <view class="selected-title">已选日期</view>
+    <view class="selected-date">
+      {{selectedDate}} {{getWeekDay(selectedDate)}}
+    </view>
+  </view>
+
+  <!-- 图例说明 -->
+  <view class="legend-container">
+    <view class="legend-title">图例说明</view>
+    <view class="legend-list">
+      <view class="legend-item">
+        <view class="legend-dot today"></view>
+        <text>今天</text>
+      </view>
+      <view class="legend-item">
+        <view class="legend-dot available"></view>
+        <text>可预约</text>
+      </view>
+      <view class="legend-item">
+        <view class="legend-dot holiday"></view>
+        <text>节假日</text>
+      </view>
+      <view class="legend-item">
+        <view class="legend-dot disabled"></view>
+        <text>不可选</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部确认按钮 -->
+  <view class="bottom-bar">
+    <button 
+      class="confirm-btn {{selectedDate ? '' : 'disabled'}}"
+      bindtap="onConfirm"
+      disabled="{{!selectedDate}}"
+    >
+      下一步：选择时间
+    </button>
+  </view>
+</view>

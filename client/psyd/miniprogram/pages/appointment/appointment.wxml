@@ -1,0 +1,207 @@
+<!-- 预约页面 -->
+<view class="appointment-page">
+  <scroll-view scroll-y class="scroll-container">
+    <!-- 顶部Banner -->
+   <view class="appointment-banner">
+    <swiper indicator-dots="true" autoplay="true" interval="3000" circular="true">
+    <swiper-item>
+      <image src="../../images/banner-1.png" class="banner-img" mode="aspectFill" />
+    </swiper-item>
+    <swiper-item>
+      <image src="../../images/banner-2.png" class="banner-img" mode="aspectFill" />
+    </swiper-item>
+    <swiper-item>
+      <image src="../../images/banner-3.png" class="banner-img" mode="aspectFill" />
+    </swiper-item>
+    </swiper>
+   </view>
+    <!-- 快速预约入口 -->
+    <view class="quick-book-section">
+      <view class="section-title">
+        <text class="title-icon">⚡</text>
+        <text class="title-text">快速预约</text>
+      </view>
+      
+      <view class="book-types-grid">
+        <view class="book-type-card" bindtap="goToPackageBook">
+          <view class="card-icon">📸</view>
+          <text class="card-title">预约套系拍摄</text>
+          <text class="card-desc">选择套系，预约拍摄时间</text>
+          <view class="card-badge hot">热门</view>
+        </view>
+        
+        <view class="book-type-card" bindtap="goToDiyBook">
+          <view class="card-icon">✨</view>
+          <text class="card-title">DIY定制预约</text>
+          <text class="card-desc">个性化定制拍摄方案</text>
+        </view>
+        
+        <view class="book-type-card" bindtap="goToServiceBook">
+          <view class="card-icon">🔧</view>
+          <text class="card-title">单独服务预约</text>
+          <text class="card-desc">化妆、造型、后期等</text>
+        </view>
+        
+        <view class="book-type-card" bindtap="goToPickupBook">
+          <view class="card-icon">📦</view>
+          <text class="card-title">取件预约</text>
+          <text class="card-desc">预约到店取件时间</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 我的预约 -->
+    <view class="my-appointments-section">
+      <view class="section-header">
+        <view class="section-title">
+          <text class="title-icon">📅</text>
+          <text class="title-text">我的预约</text>
+        </view>
+        <view class="section-more" bindtap="goToMyAppointments">
+          <text>全部</text>
+          <text class="arrow">→</text>
+        </view>
+      </view>
+
+      <!-- 预约状态筛选 -->
+      <view class="status-tabs">
+        <view 
+          class="status-tab {{activeTab === item.value ? 'active' : ''}}"
+          wx:for="{{statusTabs}}"
+          wx:key="value"
+          data-value="{{item.value}}"
+          bindtap="onTabChange"
+        >
+          <text>{{item.label}}</text>
+          <view class="tab-badge" wx:if="{{item.count > 0}}">{{item.count}}</view>
+        </view>
+      </view>
+
+      <!-- 预约列表 -->
+      <view class="appointment-list" wx:if="{{appointments.length > 0}}">
+        <view 
+          class="appointment-card"
+          wx:for="{{appointments}}"
+          wx:key="id"
+          bindtap="goToAppointmentDetail"
+          data-id="{{item.id}}"
+        >
+          <!-- 订单头部 -->
+          <view class="card-header">
+            <view class="order-info">
+              <text class="order-no">预约单号: {{item.orderNo}}</text>
+              <view class="status-badge status-{{item.status}}">
+                {{item.statusText}}
+              </view>
+            </view>
+          </view>
+
+          <!-- 预约信息 -->
+          <view class="appointment-info">
+            <view class="info-row">
+              <text class="label">📸 预约类型:</text>
+              <text class="value">{{item.type}}</text>
+            </view>
+            <view class="info-row">
+              <text class="label">📅 预约日期:</text>
+              <text class="value highlight">{{item.appointmentDate}}</text>
+            </view>
+            <view class="info-row">
+              <text class="label">⏰ 预约时段:</text>
+              <text class="value highlight">{{item.timeSlot}}</text>
+            </view>
+            <view class="info-row" wx:if="{{item.customerName}}">
+              <text class="label">👤 客户姓名:</text>
+              <text class="value">{{item.customerName}}</text>
+            </view>
+          </view>
+
+          <!-- 操作按钮 -->
+          <view class="card-actions">
+            <button 
+              class="action-btn cancel-btn"
+              wx:if="{{item.canCancel}}"
+              catchtap="cancelAppointment"
+              data-id="{{item.id}}"
+            >
+              取消预约
+            </button>
+            <button 
+              class="action-btn reschedule-btn"
+              wx:if="{{item.canReschedule}}"
+              catchtap="rescheduleAppointment"
+              data-id="{{item.id}}"
+            >
+              改约
+            </button>
+            <button 
+              class="action-btn primary-btn"
+              wx:if="{{item.canPay}}"
+              catchtap="payAppointment"
+              data-id="{{item.id}}"
+            >
+              去支付
+            </button>
+            <button 
+              class="action-btn detail-btn"
+              catchtap="goToAppointmentDetail"
+              data-id="{{item.id}}"
+            >
+              查看详情
+            </button>
+          </view>
+        </view>
+      </view>
+
+      <!-- 空状态 -->
+      <view class="empty-state" wx:if="{{!loading && appointments.length === 0}}">
+        <image src="/images/empty-appointment.png" class="empty-icon" mode="aspectFit" />
+        <text class="empty-text">暂无预约记录</text>
+        <button class="empty-btn" bindtap="goToPackageBook">立即预约</button>
+      </view>
+
+      <!-- 加载状态 -->
+      <view class="loading-state" wx:if="{{loading}}">
+        <text>加载中...</text>
+      </view>
+    </view>
+
+    <!-- 预约须知 -->
+    <view class="notice-section">
+      <view class="section-title">
+        <text class="title-icon">📋</text>
+        <text class="title-text">预约须知</text>
+      </view>
+      
+      <view class="notice-content">
+        <view class="notice-item">
+          <text class="notice-number">1</text>
+          <text class="notice-text">请提前至少1天预约，以便我们做好准备</text>
+        </view>
+        <view class="notice-item">
+          <text class="notice-number">2</text>
+          <text class="notice-text">预约成功后请准时到店，超时15分钟视为放弃</text>
+        </view>
+        <view class="notice-item">
+          <text class="notice-number">3</text>
+          <text class="notice-text">如需改约，请提前24小时通知客服</text>
+        </view>
+        <view class="notice-item">
+          <text class="notice-number">4</text>
+          <text class="notice-text">拍摄当天请携带身份证及相关证件</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 联系客服 -->
+    <view class="contact-section">
+      <button class="contact-btn" bindtap="contactService">
+        <text class="btn-icon">💬</text>
+        <text class="btn-text">联系客服</text>
+      </button>
+    </view>
+
+    <!-- 底部占位 -->
+    <view class="bottom-placeholder"></view>
+  </scroll-view>
+</view>

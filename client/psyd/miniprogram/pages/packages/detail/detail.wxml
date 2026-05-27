@@ -1,0 +1,149 @@
+<!--套系详情页-->
+<view class="container">
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="loading-container">
+    <view class="loading-text">加载中...</view>
+  </view>
+
+  <!-- 套系详情 -->
+  <view wx:else class="detail-content">
+    <!-- 轮播图 -->
+    <view class="swiper-container">
+      <swiper 
+        class="image-swiper"
+        indicator-dots
+        indicator-color="rgba(255, 255, 255, 0.5)"
+        indicator-active-color="#07c160"
+        circular
+        bindchange="onSwiperChange"
+      >
+        <swiper-item wx:for="{{package.images}}" wx:key="*this">
+          <image 
+            src="{{item}}" 
+            mode="aspectFit"
+            bindtap="previewImages"
+            class="swiper-image"
+          />
+        </swiper-item>
+      </swiper>
+      
+      <!-- 图片指示器 -->
+      <view class="image-indicator">
+        {{currentImageIndex + 1}}/{{package.images.length}}
+      </view>
+
+      <!-- 热门标签 -->
+      <view wx:if="{{package.isPopular}}" class="popular-badge">
+        ⭐ 热门套系
+      </view>
+    </view>
+
+    <!-- 套系基本信息 -->
+    <view class="info-section">
+      <view class="package-name">{{package.name}}</view>
+      
+      <!-- 分类和标签 -->
+      <view class="tags-container">
+        <view wx:if="{{package.packageCategory}}" class="tag category-tag">
+          {{package.packageCategory.name}}
+        </view>
+        <view wx:for="{{package.tags}}" wx:key="*this" wx:for-item="tag" class="tag">
+          {{tag}}
+        </view>
+      </view>
+
+      <!-- 价格信息 -->
+      <view class="price-container">
+        <view class="price-main">
+          <text class="price-label">套系价格</text>
+          <text class="price-value">￥{{package.price}}</text>
+        </view>
+        <view class="price-sub">
+          <text class="deposit-label">定金</text>
+          <text class="deposit-value">￥{{package.deposit}}</text>
+        </view>
+      </view>
+
+      <!-- 统计信息 -->
+      <view class="stats-container">
+        <view class="stat-item">
+          <text class="stat-icon">⏱</text>
+          <text class="stat-text">服务时长 {{package.durationMinutes}} 分钟</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-icon">📅</text>
+          <text class="stat-text">已有 {{package.salesVolume}} 人预约</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 服务内容 -->
+    <view class="service-section">
+      <view class="section-title">
+        <text class="title-text">服务内容</text>
+        <text class="title-icon">✨</text>
+      </view>
+      
+      <view class="service-list {{servicesExpanded ? 'expanded' : ''}}">
+        <view wx:for="{{package.includes}}" wx:key="*this" class="service-item">
+          <text class="service-dot">•</text>
+          <text class="service-text">{{item}}</text>
+        </view>
+      </view>
+
+      <!-- 展开/收起按钮 -->
+      <view 
+        wx:if="{{package.includes.length > 4}}" 
+        class="expand-btn"
+        bindtap="toggleServices"
+      >
+        <text>{{servicesExpanded ? '收起' : '查看全部'}}</text>
+        <text class="expand-icon">{{servicesExpanded ? '▲' : '▼'}}</text>
+      </view>
+    </view>
+
+    <!-- 套系说明 -->
+    <view wx:if="{{package.description}}" class="description-section">
+      <view class="section-title">
+        <text class="title-text">套系说明</text>
+        <text class="title-icon">📝</text>
+      </view>
+      <view class="description-text">{{package.description}}</view>
+    </view>
+
+    <!-- 温馨提示 -->
+    <view class="tips-section">
+      <view class="section-title">
+        <text class="title-text">温馨提示</text>
+        <text class="title-icon">💡</text>
+      </view>
+      <view class="tips-list">
+        <view class="tip-item">1. 请提前预约，以便我们为您安排最佳时段</view>
+        <view class="tip-item">2. 拍摄当天请准时到达，避免影响拍摄效果</view>
+        <view class="tip-item">3. 如需取消预约，请提前24小时联系客服</view>
+        <view class="tip-item">4. 定金支付后，预约即生效，请妥善安排时间</view>
+      </view>
+    </view>
+
+    <!-- 底部占位 -->
+    <view class="bottom-placeholder"></view>
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view wx:if="{{!loading}}" class="bottom-bar">
+    <view class="action-btns">
+      <view class="action-btn" bindtap="contactService">
+        <text class="action-icon">💬</text>
+        <text class="action-text">客服</text>
+      </view>
+      <view class="action-btn" bindtap="toggleFavorite">
+        <text class="action-icon">❤️</text>
+        <text class="action-text">收藏</text>
+      </view>
+    </view>
+    
+    <view class="book-btn" bindtap="onBookNow">
+      <text>立即预约</text>
+    </view>
+  </view>
+</view>

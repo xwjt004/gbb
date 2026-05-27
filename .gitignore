@@ -1,0 +1,84 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build output
+dist/
+build/
+*.tgz
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.sqlite
+
+# Upload files
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Scripts output
+scripts/*.txt
+scripts/*.log
+
+# Temp files
+*.tmp
+*.temp
+
+# Package manager lock files — committed for reproducible builds
+
+# Claude local settings
+.claude/
+
+# Uploaded files (dynamic data)
+server/baby-photo-backend/uploads/*
+!server/uploads/.gitkeep
+uploads/
+
+# Coverage reports
+server/baby-photo-backend/coverage/
+coverage/
+
+# E2E screenshots & reports
+playwright-report/
+test-results/
+**/e2e-screenshots/
+**/test-results/
+
+# Server backups
+backups/
+
+# Server build artifacts
+server/baby-photo-backend/dist/
+
+# SSL certificates (generated per-server)
+ssl/*.pem
+ssl/*.key
+ssl/*.crt
+
+# WeChat miniprogram npm dependencies
+**/miniprogram_npm/

@@ -1,0 +1,8 @@
+<!-- 欢迎页 - 简化版 -->
+<view class="welcome-page">
+  <view class="loading-container">
+    <view class="logo">📸</view>
+    <text class="title">影楼预约订单管理系统</text>
+    <text class="message">{{message}}</text>
+  </view>
+</view>

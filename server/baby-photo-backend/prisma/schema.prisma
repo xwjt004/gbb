@@ -1,0 +1,1633 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 Int                @id @default(autoincrement())
+  openid             String             @unique
+  nickname           String?
+  avatar             String?
+  phone              String?
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @default(now()) @updatedAt @map("updated_at")
+  status             UserStatus         @default(ACTIVE)
+  roleId             Int?                @map("role_id")
+  role               Role?               @relation(fields: [roleId], references: [id])
+  orders             Order[]
+  alertsHandled      StockAlert[]
+  checksApproved     StockCheck[]       @relation("CheckApprover")
+  checksCreated      StockCheck[]       @relation("CheckCreator")
+  outboundsApproved  StockOutbound[]    @relation("OutboundApprover")
+  outboundsSubmitted StockOutbound[]    @relation("OutboundSubmitter")
+  complaintsHandled  Complaint[]        @relation("ComplaintHandler")
+  photographerOrders Order[]           @relation("PhotographerOrders")
+  transactions       StockTransaction[]
+  transfersApproved  StockTransfer[]    @relation("TransferApprover")
+  transfersSubmitted StockTransfer[]    @relation("TransferSubmitter")
+  WxUser             WxUser[]
+
+  @@index([openid])
+  @@index([phone])
+  @@index([status])
+  @@map("users")
+}
+
+model Role {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  description String?
+  isSystem    Boolean          @default(false) @map("is_system") // 系统角色不可删除
+  status      String           @default("ACTIVE")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+  users       User[]
+  permissions RolePermission[]
+
+  @@index([status])
+  @@map("roles")
+}
+
+model RolePermission {
+  id         Int      @id @default(autoincrement())
+  roleId     Int      @map("role_id")
+  permission String   // 格式: "module:action"，如 "orders:edit", "users:delete"
+  role       Role     @relation(fields: [roleId], references: [id])
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([roleId, permission])
+  @@index([roleId])
+  @@map("role_permissions")
+}
+
+model PackageCategory {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  icon        String?
+  color       String?
+  sortOrder   Int       @default(0) @map("sort_order")
+  status      String    @default("ACTIVE")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  packages    Package[]
+
+  @@index([status])
+  @@index([sortOrder])
+  @@map("package_categories")
+}
+
+model Package {
+  id              Int              @id @default(autoincrement())
+  name            String
+  description     String?
+  price           Decimal          @db.Decimal(10, 2)
+  deposit         Decimal          @db.Decimal(10, 2)
+  durationMinutes Int              @map("duration_minutes")
+  includes        String[]         @default([])
+  createdAt       DateTime         @default(now()) @map("created_at")
+  status          PackageStatus    @default(ACTIVE)
+  isPopular       Boolean          @default(false) @map("is_popular")
+  images          String[]         @default([])
+  category        String?
+  tags            String[]         @default([])
+  categoryId      Int?             @map("category_id")
+  packageType     String           @default("CUSTOM") @map("package_type") @db.VarChar(20)
+  style           String?          @db.VarChar(100)
+  theme           String?          @db.VarChar(100)
+  detailImages    String[]         @default([]) @map("detail_images")
+  isOnSale        Boolean          @default(true) @map("is_on_sale")
+  salesVolume     Int              @default(0) @map("sales_volume")
+  baseSales       Int              @default(0) @map("base_sales") // 基础销量（用于展示的初始销量）
+  sortOrder       Int              @default(0) @map("sort_order")
+  videoUrl        String?          @map("video_url")
+  virtualSales    Int              @default(0) @map("virtual_sales")
+  // 促销相关
+  promotionPrice    Decimal?   @map("promotion_price") @db.Decimal(10, 2)
+  promotionStart    DateTime?  @map("promotion_start")
+  promotionEnd      DateTime?  @map("promotion_end")
+  // 团购相关
+  groupMinCount     Int?       @default(0) @map("group_min_count")
+  groupPrice        Decimal?   @map("group_price") @db.Decimal(10, 2)
+  // 关联
+  seasonalPrices    SeasonalPrice[]
+  crossSellPackages CrossSellPackage[] @relation("SourcePackage")
+  crossSellSource   CrossSellPackage[] @relation("RecommendedPackage")
+  cartItems         CartItem[]
+  orderItems        OrderItem[]
+  orders            Order[]
+  packageProducts   PackageProduct[]
+  packageServices   PackageService[]
+  packageCategory   PackageCategory? @relation(fields: [categoryId], references: [id])
+
+  @@index([categoryId])
+  @@index([packageType])
+  @@index([isOnSale])
+  @@index([salesVolume])
+  @@index([sortOrder])
+  @@map("packages")
+}
+
+model SeasonalPrice {
+  id        Int      @id @default(autoincrement())
+  packageId Int      @map("package_id")
+  startDate DateTime @map("start_date") @db.Date
+  endDate   DateTime @map("end_date") @db.Date
+  price     Decimal  @db.Decimal(10, 2)     // override price during this period
+  label     String?  @db.VarChar(50)         // e.g. "旺季", "淡季"
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  package   Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@index([packageId, startDate, endDate])
+  @@map("seasonal_prices")
+}
+
+model CrossSellPackage {
+  id                Int      @id @default(autoincrement())
+  sourcePkgId       Int      @map("source_pkg_id")
+  recommendedPkgId  Int      @map("recommended_pkg_id")
+  sortOrder         Int      @default(0) @map("sort_order")
+  createdAt         DateTime @default(now()) @map("created_at")
+  sourcePkg         Package  @relation("SourcePackage", fields: [sourcePkgId], references: [id], onDelete: Cascade)
+  recommended       Package  @relation("RecommendedPackage", fields: [recommendedPkgId], references: [id], onDelete: Cascade)
+
+  @@unique([sourcePkgId, recommendedPkgId])
+  @@map("cross_sell_packages")
+}
+
+model TimeSlot {
+  id              Int            @id @default(autoincrement())
+  date            DateTime       @db.Date
+  startTime       DateTime       @map("start_time") @db.Time(6)
+  endTime         DateTime       @map("end_time") @db.Time(6)
+  isBooked        Boolean        @default(false) @map("is_booked")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @default(now()) @updatedAt @map("updated_at")
+  availableCount  Int?           @map("available_count")
+  bookedCount     Int            @default(0) @map("booked_count")
+  capacity        Int            @default(3)
+  isHoliday       Boolean        @default(false) @map("is_holiday")
+  notes           String?
+  priceMultiplier Float          @default(1.0) @map("price_multiplier")
+  status          TimeSlotStatus @default(AVAILABLE)
+  orders          Order[]
+
+  @@unique([date, startTime])
+  @@index([date])
+  @@index([isBooked])
+  @@index([status])
+  @@map("time_slots")
+}
+
+model Order {
+  id                String            @id @default(uuid())
+  orderNo           String            @unique @map("order_no")
+  userId            Int               @map("user_id")
+  packageId         Int?              @map("package_id")
+  timeSlotId        Int?              @map("time_slot_id")
+  appointmentDate   DateTime?         @map("appointment_date")
+  totalAmount       Decimal           @map("total_amount") @db.Decimal(10, 2)
+  depositAmount     Decimal           @map("deposit_amount") @db.Decimal(10, 2)
+  paidAmount        Decimal           @default(0) @map("paid_amount") @db.Decimal(10, 2)
+  notes             String?
+  childrenCount     Int               @default(1) @map("children_count")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  customerName      String?           @map("customer_name")
+  customerPhone     String?           @map("customer_phone")
+  diyPackageId      Int?              @map("diy_package_id")
+  couponId          String?           @map("coupon_id")
+  discountAmount    Decimal           @default(0) @map("discount_amount") @db.Decimal(10, 2)
+  shippingAddressId String?           @map("shipping_address_id")
+  shippingInfo      Json?             @map("shipping_info")
+  source            OrderSource       @default(ADMIN)
+  wxUserId          String?           @map("wx_user_id")
+  deletedAt         DateTime?         @map("deleted_at")
+  depositTimeout    DateTime?         @map("deposit_timeout")
+  finalTimeout      DateTime?         @map("final_timeout")
+  paymentMode       PaymentMode       @default(FULL_ONLINE) @map("payment_mode")
+  paymentSummary    Json?             @map("payment_summary")
+  refundedAmount    Decimal           @default(0) @map("refunded_amount") @db.Decimal(10, 2)
+  remainingAmount   Decimal           @default(0) @map("remaining_amount") @db.Decimal(10, 2)
+  paymentStatus     PaymentStatus     @default(PENDING_PAYMENT) @map("payment_status")
+  orderStatus       OrderStatus       @default(PENDING) @map("order_status")
+  // 支付协议记录（新增字段）
+  agreementAccepted     Boolean?   @map("agreement_accepted")
+  agreementVersion      String?    @map("agreement_version")
+  agreementAcceptedAt   DateTime?  @map("agreement_accepted_at")
+  // 调度相关字段
+  photographerId     Int?        @map("photographer_id")
+  checkinStatus      String      @default("PENDING") @map("checkin_status")
+  checkinTime        DateTime?   @map("checkin_time")
+  reminderSentAt           DateTime?   @map("reminder_sent_at")
+  completedAt              DateTime?   @map("completed_at")
+  photoPickReminderSentAt  DateTime?   @map("photo_pick_reminder_sent_at")
+  items             OrderItem[]
+  diyPackage        DiyPackage?       @relation(fields: [diyPackageId], references: [id])
+  package           Package?          @relation(fields: [packageId], references: [id])
+  timeSlot          TimeSlot?         @relation(fields: [timeSlotId], references: [id])
+  user              User              @relation(fields: [userId], references: [id])
+  photographer      User?             @relation("PhotographerOrders", fields: [photographerId], references: [id])
+  wxUser            WxUser?           @relation("WxOrders", fields: [wxUserId], references: [id])
+  payments          Payment[]
+  refunds           Refund[]
+  statusChangeLogs  StatusChangeLog[]
+  outbounds         StockOutbound[]
+
+  @@index([diyPackageId])
+  @@index([wxUserId])
+  @@index([source])
+  @@index([depositTimeout])
+  @@index([finalTimeout])
+  @@index([checkinStatus])
+  @@map("orders")
+}
+
+model Payment {
+  id             String        @id @default(uuid())
+  orderId        String        @map("order_id")
+  amount         Decimal       @db.Decimal(10, 2)
+  transactionId  String?       @unique @map("transaction_id")
+  paidAt         DateTime?     @map("paid_at")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  notes          String?
+  refundReason   String?       @map("refund_reason")
+  refundedAt     DateTime?     @map("refunded_at")
+  expiredAt      DateTime?     @map("expired_at")
+  idempotencyKey String?       @unique @map("idempotency_key")
+  operatorId     String?       @map("operator_id")
+  operatorName   String?       @map("operator_name")
+  paymentMethod  PaymentMethod @map("payment_method")
+  receiptImage   String?       @map("receipt_image")
+  receiptImages  String[]      @default([]) @map("receipt_images")
+  receiptNo      String?       @map("receipt_no")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  paymentType    PaymentType   @map("payment_type")
+  status         PaymentStatus @default(PENDING_PAYMENT)
+  order          Order         @relation(fields: [orderId], references: [id])
+  sourceRefunds  Refund[]      @relation("RefundSource")
+
+  @@index([status, createdAt])
+  @@index([paymentType, status])
+  @@index([orderId])
+  @@index([transactionId])
+  @@index([idempotencyKey])
+  @@index([expiredAt])
+  @@map("payments")
+}
+
+model StatusChangeLog {
+  id        String   @id @default(uuid())
+  orderId   String   @map("order_id")
+  fieldName String   @map("field_name")
+  oldValue  String   @map("old_value")
+  newValue  String   @map("new_value")
+  operator  String?
+  reason    String?
+  ip        String?
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  order     Order    @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+  @@index([fieldName])
+  @@index([createdAt])
+  @@map("status_change_logs")
+}
+
+model RefundRequest {
+  id             String         @id @default(uuid())
+  orderId        String         @map("order_id")
+  orderNo        String         @map("order_no")
+  refundNo       String         @unique @map("refund_no")
+  refundType     RefundType     @default(PARTIAL) @map("refund_type")
+  refundAmount   Decimal        @map("refund_amount") @db.Decimal(10, 2)
+  refundReason   String         @map("refund_reason")
+  refundMethod   RefundMethod   @default(ORIGINAL) @map("refund_method")
+  applicantType  String         @default("USER") @map("applicant_type")
+  applicantId    String?        @map("applicant_id")
+  applicantName  String?        @map("applicant_name")
+  status         RefundStatus   @default(PENDING)
+  approvedBy     String?        @map("approved_by")
+  approvedAt     DateTime?      @map("approved_at")
+  rejectedBy     String?        @map("rejected_by")
+  rejectedAt     DateTime?      @map("rejected_at")
+  rejectReason   String?        @map("reject_reason")
+  refundedBy     String?        @map("refunded_by")
+  refundedAt     DateTime?      @map("refunded_at")
+  transactionId  String?        @map("transaction_id")
+  notes          String?
+  attachments    String[]       @default([])
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  refundToMethod PaymentMethod? @map("refund_to_method")
+  audits         RefundAudit[]
+  refunds        Refund[]
+
+  @@index([orderId])
+  @@index([orderNo])
+  @@index([refundNo])
+  @@index([status])
+  @@index([createdAt])
+  @@map("refund_requests")
+}
+
+model RefundAudit {
+  id              String         @id @default(uuid())
+  refundRequestId String?        @map("refund_request_id")
+  orderId         String         @map("order_id")
+  orderNo         String         @map("order_no")
+  action          String         @map("action")
+  amount          Decimal        @map("amount") @db.Decimal(10, 2)
+  beforePaid      Decimal        @map("before_paid") @db.Decimal(10, 2)
+  afterPaid       Decimal        @map("after_paid") @db.Decimal(10, 2)
+  operatorId      String?        @map("operator_id")
+  operatorName    String?        @map("operator_name")
+  notes           String?        @map("notes")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  refundRequest   RefundRequest? @relation(fields: [refundRequestId], references: [id])
+
+  @@index([refundRequestId])
+  @@index([orderId])
+  @@index([action])
+  @@map("refund_audits")
+}
+
+model Refund {
+  id                String                @id @default(uuid())
+  refundRequestId   String                @map("refund_request_id")
+  orderId           String                @map("order_id")
+  originalPaymentId String                @map("original_payment_id")
+  refundAmount      Decimal               @map("refund_amount") @db.Decimal(10, 2)
+  refundType        String                @map("refund_type")
+  refundMethod      String                @map("refund_method")
+  transactionId     String?               @map("transaction_id")
+  executionStatus   RefundExecutionStatus @default(PENDING) @map("execution_status")
+  retryCount        Int                   @default(0) @map("retry_count")
+  maxRetries        Int                   @default(3) @map("max_retries")
+  nextRetryAt       DateTime?             @map("next_retry_at")
+  errorMessage      String?               @map("error_message")
+  receiptImages     String[]              @default([]) @map("receipt_images")
+  notes             String?
+  createdAt         DateTime              @default(now()) @map("created_at")
+  updatedAt         DateTime              @updatedAt @map("updated_at")
+  completedAt       DateTime?             @map("completed_at")
+  order             Order                 @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  originalPayment   Payment               @relation("RefundSource", fields: [originalPaymentId], references: [id], onDelete: Cascade)
+  refundRequest     RefundRequest         @relation(fields: [refundRequestId], references: [id], onDelete: Cascade)
+
+  @@index([executionStatus])
+  @@index([originalPaymentId])
+  @@index([refundRequestId])
+  @@index([createdAt])
+  @@index([nextRetryAt])
+  @@index([orderId])
+  @@index([transactionId])
+  @@index([executionStatus, createdAt])
+  @@map("refunds")
+}
+
+model ProductCategory {
+  id          Int          @id @default(autoincrement())
+  name        String       @db.VarChar(50)
+  code        String       @unique @db.VarChar(20)
+  description String?
+  sortOrder   Int          @default(0) @map("sort_order")
+  isActive    Boolean      @default(true) @map("is_active")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  products    Product[]
+  stockChecks StockCheck[]
+
+  @@index([code])
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("product_categories")
+}
+
+model Product {
+  id              Int                 @id @default(autoincrement())
+  productNo       String              @unique @map("product_no") @db.VarChar(50)
+  name            String              @db.VarChar(100)
+  categoryId      Int                 @map("category_id")
+  specification   String?             @db.VarChar(100)
+  unit            String              @default("件") @db.VarChar(20)
+  costPrice       Decimal             @default(0) @map("cost_price") @db.Decimal(10, 2)
+  salePrice       Decimal             @default(0) @map("sale_price") @db.Decimal(10, 2)
+  marketPrice     Decimal?            @map("market_price") @db.Decimal(10, 2)
+  stockQuantity   Int                 @default(0) @map("stock_quantity")
+  lowStock        Int                 @default(10) @map("low_stock")
+  isTrackStock    Boolean             @default(true) @map("is_track_stock")
+  description     String?
+  images          Json?
+  attributes      Json?
+  status          String              @default("ACTIVE") @db.VarChar(20)
+  isActive        Boolean             @default(true) @map("is_active")
+  isFeatured      Boolean             @default(false) @map("is_featured")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+  maxStock        Int?                @map("max_stock")
+  minStock        Int?                @map("min_stock")
+  reorderPoint    Int?                @map("reorder_point")
+  safetyStock     Int                 @default(0) @map("safety_stock")
+  dailyConsumption Int                @default(0) @map("daily_consumption")
+  slowMovingDays  Int                 @default(90) @map("slow_moving_days")
+  brand           String?             @db.VarChar(50)
+  model           String?             @db.VarChar(50)
+  detailImages    String[]            @default([]) @map("detail_images")
+  isOnSale        Boolean             @default(true) @map("is_on_sale")
+  salesVolume     Int                 @default(0) @map("sales_volume")
+  sortOrder       Int                 @default(0) @map("sort_order")
+  virtualSales    Int                 @default(0) @map("virtual_sales")
+  deletedAt       DateTime?           @map("deleted_at")
+  detailContent   Json?               @map("detail_content")
+  baseSales       Int                 @default(0) @map("base_sales")
+  cartItems       CartItem[]
+  orderItems      OrderItem[]
+  packageProducts PackageProduct[]
+  category        ProductCategory     @relation(fields: [categoryId], references: [id])
+  purchaseItems   PurchaseOrderItem[]
+  alerts          StockAlert[]
+  purchaseSuggestions AutoPurchaseSuggestion[]
+  checkItems      StockCheckItem[]
+  outboundItems   StockOutboundItem[]
+  transactions    StockTransaction[]
+  transfers       StockTransfer[]
+
+  @@index([categoryId])
+  @@index([productNo])
+  @@index([status])
+  @@index([isActive])
+  @@index([isOnSale])
+  @@index([salesVolume])
+  @@index([sortOrder])
+  @@map("products")
+}
+
+model ServiceItem {
+  id              Int              @id @default(autoincrement())
+  serviceNo       String           @unique @map("service_no") @db.VarChar(50)
+  name            String           @db.VarChar(100)
+  category        String           @db.VarChar(50)
+  basePrice       Decimal          @default(0) @map("base_price") @db.Decimal(10, 2)
+  unitPrice       Decimal?         @map("unit_price") @db.Decimal(10, 2)
+  priceUnit       String?          @map("price_unit") @db.VarChar(20)
+  description     String?
+  duration        Int?
+  requirements    Json?
+  isActive        Boolean          @default(true) @map("is_active")
+  isRequired      Boolean          @default(false) @map("is_required")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  images          Json?
+  packageServices PackageService[]
+
+  @@index([serviceNo])
+  @@index([category])
+  @@index([isActive])
+  @@map("service_items")
+}
+
+model PackageProduct {
+  id         Int      @id @default(autoincrement())
+  packageId  Int      @map("package_id")
+  productId  Int      @map("product_id")
+  quantity   Int      @default(1)
+  isOptional Boolean  @default(false) @map("is_optional")
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+  package    Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id])
+
+  @@unique([packageId, productId])
+  @@index([packageId])
+  @@index([productId])
+  @@map("package_products")
+}
+
+model PackageService {
+  id          Int         @id @default(autoincrement())
+  packageId   Int         @map("package_id")
+  serviceId   Int         @map("service_id")
+  isIncluded  Boolean     @default(true) @map("is_included")
+  isOptional  Boolean     @default(false) @map("is_optional")
+  extraCharge Decimal?    @map("extra_charge") @db.Decimal(10, 2)
+  sortOrder   Int         @default(0) @map("sort_order")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  package     Package     @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  service     ServiceItem @relation(fields: [serviceId], references: [id])
+
+  @@unique([packageId, serviceId])
+  @@index([packageId])
+  @@index([serviceId])
+  @@map("package_services")
+}
+
+model StockOutbound {
+  id            String              @id @default(uuid())
+  outboundNo    String              @unique @map("outbound_no")
+  outboundType  String              @map("outbound_type")
+  outboundDate  DateTime            @map("outbound_date")
+  orderId       String?             @map("order_id")
+  status        String
+  totalAmount   Decimal             @map("total_amount") @db.Decimal(10, 2)
+  totalQuantity Int                 @map("total_quantity")
+  submitterId   Int                 @map("submitter_id")
+  submittedAt   DateTime            @default(now()) @map("submitted_at")
+  approverId    Int?                @map("approver_id")
+  approvedAt    DateTime?           @map("approved_at")
+  approvalNote  String?             @map("approval_note")
+  remark        String?
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+  items         StockOutboundItem[]
+  approver      User?               @relation("OutboundApprover", fields: [approverId], references: [id])
+  order         Order?              @relation(fields: [orderId], references: [id])
+  submitter     User                @relation("OutboundSubmitter", fields: [submitterId], references: [id])
+  transactions  StockTransaction[]  @relation("OutboundTransactions")
+
+  @@index([outboundNo])
+  @@index([outboundType])
+  @@index([status])
+  @@index([outboundDate])
+  @@index([orderId])
+  @@map("stock_outbounds")
+}
+
+model StockOutboundItem {
+  id         String        @id @default(uuid())
+  outboundId String        @map("outbound_id")
+  productId  Int           @map("product_id")
+  quantity   Int
+  unitPrice  Decimal       @map("unit_price") @db.Decimal(10, 2)
+  amount     Decimal       @db.Decimal(10, 2)
+  remark     String?
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+  outbound   StockOutbound @relation(fields: [outboundId], references: [id], onDelete: Cascade)
+  product    Product       @relation(fields: [productId], references: [id])
+
+  @@index([outboundId])
+  @@index([productId])
+  @@map("stock_outbound_items")
+}
+
+model StockCheck {
+  id             String             @id @default(uuid())
+  checkNo        String             @unique @map("check_no")
+  checkType      String             @map("check_type")
+  checkDate      DateTime           @map("check_date")
+  categoryId     Int?               @map("category_id")
+  status         String
+  totalItems     Int                @default(0) @map("total_items")
+  profitItems    Int                @default(0) @map("profit_items")
+  lossItems      Int                @default(0) @map("loss_items")
+  profitQuantity Int                @default(0) @map("profit_quantity")
+  lossQuantity   Int                @default(0) @map("loss_quantity")
+  profitAmount   Decimal            @default(0) @map("profit_amount") @db.Decimal(10, 2)
+  lossAmount     Decimal            @default(0) @map("loss_amount") @db.Decimal(10, 2)
+  creatorId      Int                @map("creator_id")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  approverId     Int?               @map("approver_id")
+  approvedAt     DateTime?          @map("approved_at")
+  approvalNote   String?            @map("approval_note")
+  remark         String?
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+  items          StockCheckItem[]
+  approver       User?              @relation("CheckApprover", fields: [approverId], references: [id])
+  category       ProductCategory?   @relation(fields: [categoryId], references: [id])
+  creator        User               @relation("CheckCreator", fields: [creatorId], references: [id])
+  transactions   StockTransaction[] @relation("CheckTransactions")
+
+  @@index([checkNo])
+  @@index([checkType])
+  @@index([status])
+  @@index([checkDate])
+  @@index([categoryId])
+  @@map("stock_checks")
+}
+
+model StockCheckItem {
+  id               String     @id @default(uuid())
+  checkId          String     @map("check_id")
+  productId        Int        @map("product_id")
+  systemQuantity   Int        @map("system_quantity")
+  actualQuantity   Int        @map("actual_quantity")
+  differenceQty    Int        @map("difference_qty")
+  unitPrice        Decimal    @map("unit_price") @db.Decimal(10, 2)
+  differenceAmount Decimal    @map("difference_amount") @db.Decimal(10, 2)
+  differenceType   String     @map("difference_type")
+  remark           String?
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+  check            StockCheck @relation(fields: [checkId], references: [id], onDelete: Cascade)
+  product          Product    @relation(fields: [productId], references: [id])
+
+  @@index([checkId])
+  @@index([productId])
+  @@index([differenceType])
+  @@map("stock_check_items")
+}
+
+model StockAlert {
+  id           String    @id @default(uuid())
+  alertNo      String    @unique @map("alert_no")
+  productId    Int       @map("product_id")
+  alertType    String    @map("alert_type")
+  currentStock Int       @map("current_stock")
+  threshold    Int
+  status       String
+  priority     String
+  handlerId    Int?      @map("handler_id")
+  handledAt    DateTime? @map("handled_at")
+  handleNote   String?   @map("handle_note")
+  alertedAt    DateTime  @default(now()) @map("alerted_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  handler      User?     @relation(fields: [handlerId], references: [id])
+  product      Product   @relation(fields: [productId], references: [id])
+
+  @@index([alertNo])
+  @@index([productId])
+  @@index([alertType])
+  @@index([status])
+  @@index([priority])
+  @@index([alertedAt])
+  @@map("stock_alerts")
+}
+
+model AutoPurchaseSuggestion {
+  id            String   @id @default(uuid())
+  productId     Int      @map("product_id")
+  productName   String   @map("product_name") @db.VarChar(200)
+  currentStock  Int      @map("current_stock")
+  minStock      Int      @map("min_stock")
+  suggestedQty  Int      @map("suggested_qty")
+  status        String   @default("PENDING")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  product       Product  @relation(fields: [productId], references: [id])
+
+  @@index([status, createdAt])
+  @@map("auto_purchase_suggestions")
+}
+
+model StockTransaction {
+  id              String         @id @default(uuid())
+  transactionNo   String         @unique @map("transaction_no")
+  productId       Int            @map("product_id")
+  transactionType String         @map("transaction_type")
+  quantity        Int
+  beforeStock     Int            @map("before_stock")
+  afterStock      Int            @map("after_stock")
+  refType         String?        @map("ref_type")
+  refId           String?        @map("ref_id")
+  outboundId      String?        @map("outbound_id")
+  checkId         String?        @map("check_id")
+  operatorId      Int            @map("operator_id")
+  remark          String?
+  createdAt       DateTime       @default(now()) @map("created_at")
+  check           StockCheck?    @relation("CheckTransactions", fields: [checkId], references: [id])
+  operator        User           @relation(fields: [operatorId], references: [id])
+  outbound        StockOutbound? @relation("OutboundTransactions", fields: [outboundId], references: [id])
+  product         Product        @relation(fields: [productId], references: [id])
+
+  @@index([transactionNo])
+  @@index([productId, createdAt])
+  @@index([transactionType, createdAt])
+  @@index([refType, refId])
+  @@map("stock_transactions")
+}
+
+model StockTransfer {
+  id            String    @id @default(uuid())
+  transferNo    String    @unique @map("transfer_no")
+  productId     Int       @map("product_id")
+  quantity      Int
+  fromWarehouse String    @default("MAIN") @map("from_warehouse")
+  toWarehouse   String    @default("BRANCH") @map("to_warehouse")
+  status        String    @default("PENDING")
+  submitterId   Int       @map("submitter_id")
+  submittedAt   DateTime  @default(now()) @map("submitted_at")
+  approverId    Int?      @map("approver_id")
+  approvedAt    DateTime? @map("approved_at")
+  shippedAt     DateTime? @map("shipped_at")
+  receivedAt    DateTime? @map("received_at")
+  completedAt   DateTime? @map("completed_at")
+  reason        String?
+  approvalNote  String?   @map("approval_note")
+  shippingNote  String?   @map("shipping_note")
+  receivingNote String?   @map("receiving_note")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  approver      User?     @relation("TransferApprover", fields: [approverId], references: [id])
+  product       Product   @relation(fields: [productId], references: [id])
+  submitter     User      @relation("TransferSubmitter", fields: [submitterId], references: [id])
+
+  @@index([transferNo])
+  @@index([productId])
+  @@index([status])
+  @@index([submitterId])
+  @@index([submittedAt])
+  @@map("stock_transfers")
+}
+
+model Supplier {
+  id              String                  @id @default(uuid())
+  supplierNo      String                  @unique @map("supplier_no")
+  name            String                  @db.VarChar(200)
+  shortName       String?                 @map("short_name") @db.VarChar(100)
+  contactPerson   String                  @map("contact_person") @db.VarChar(100)
+  contactPhone    String                  @map("contact_phone") @db.VarChar(50)
+  contactEmail    String?                 @map("contact_email") @db.VarChar(100)
+  address         String?                 @db.VarChar(500)
+  businessLicense String?                 @map("business_license") @db.VarChar(100)
+  taxId           String?                 @map("tax_id") @db.VarChar(100)
+  bankAccount     String?                 @map("bank_account") @db.VarChar(100)
+  bankName        String?                 @map("bank_name") @db.VarChar(200)
+  supplierType    String                  @default("PRODUCT") @map("supplier_type")
+  category        String?                 @db.VarChar(100)
+  status          String                  @default("ACTIVE")
+  creditLevel     String?                 @default("B") @map("credit_level")
+  paymentTerms    String?                 @map("payment_terms") @db.VarChar(200)
+  deliveryDays    Int?                    @default(7) @map("delivery_days")
+  minOrderAmount  Decimal?                @default(0) @map("min_order_amount") @db.Decimal(10, 2)
+  rating          Float?                  @default(5.0)
+  totalOrders     Int                     @default(0) @map("total_orders")
+  totalAmount     Decimal                 @default(0) @map("total_amount") @db.Decimal(12, 2)
+  remark          String?
+  createdBy       Int?                    @map("created_by")
+  createdAt       DateTime                @default(now()) @map("created_at")
+  updatedAt       DateTime                @updatedAt @map("updated_at")
+  businessScope   String?                 @map("business_scope")
+  douyinId        String?                 @map("douyin_id") @db.VarChar(100)
+  kuaishouId      String?                 @map("kuaishou_id") @db.VarChar(100)
+  legalPerson     String?                 @map("legal_person") @db.VarChar(100)
+  telephone       String?                 @map("telephone") @db.VarChar(50)
+  wechatId        String?                 @map("wechat_id") @db.VarChar(100)
+  xiaohongshuId   String?                 @map("xiaohongshu_id") @db.VarChar(100)
+  purchaseOrders  PurchaseOrder[]
+  ratingHistory   SupplierRatingHistory[]
+
+  @@index([supplierNo])
+  @@index([name])
+  @@index([status])
+  @@index([supplierType])
+  @@index([createdAt])
+  @@map("suppliers")
+}
+
+model SupplierRatingHistory {
+  id         String   @id @default(uuid())
+  supplierId String   @map("supplier_id")
+  rating     Float    @map("rating")
+  remark     String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  @@index([supplierId])
+  @@map("supplier_rating_history")
+}
+
+model ShopInfo {
+  id              Int      @id @default(autoincrement())
+  shopName        String   @map("shop_name") @db.VarChar(200)
+  address         String   @db.VarChar(500)
+  phone           String   @db.VarChar(50)
+  telephone       String?  @db.VarChar(50)
+  shopPhoto       String?  @map("shop_photo")
+  locationMap     String?  @map("location_map")
+  businessScope   String?  @map("business_scope")
+  wechatId        String?  @map("wechat_id") @db.VarChar(100)
+  douyinId        String?  @map("douyin_id") @db.VarChar(100)
+  kuaishouId      String?  @map("kuaishou_id") @db.VarChar(100)
+  xiaohongshuId   String?  @map("xiaohongshu_id") @db.VarChar(100)
+  businessLicense String?  @map("business_license") @db.VarChar(100)
+  businessHours   String?  @map("business_hours") @db.VarChar(200)
+  description     String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("shop_info")
+}
+
+model PrintSettings {
+  id                Int      @id @default(autoincrement())
+  showShopName      Boolean  @default(true) @map("show_shop_name")
+  showAddress       Boolean  @default(true) @map("show_address")
+  showPhone         Boolean  @default(true) @map("show_phone")
+  showTelephone     Boolean  @default(false) @map("show_telephone")
+  showWechatId      Boolean  @default(true) @map("show_wechat_id")
+  showDouyinId      Boolean  @default(false) @map("show_douyin_id")
+  showKuaishouId    Boolean  @default(false) @map("show_kuaishou_id")
+  showXiaohongshuId Boolean  @default(false) @map("show_xiaohongshu_id")
+  showBusinessScope Boolean  @default(true) @map("show_business_scope")
+  showBusinessHours Boolean  @default(true) @map("show_business_hours")
+  footerFontSize    Int      @default(12) @map("footer_font_size")
+  footerAlign       String   @default("center") @map("footer_align")
+  showDivider       Boolean  @default(true) @map("show_divider")
+  customText        String?  @map("custom_text")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("print_settings")
+}
+
+model PurchaseOrder {
+  id                 String                  @id @default(uuid())
+  purchaseNo         String                  @unique @map("purchase_no")
+  supplierId         String                  @map("supplier_id")
+  purchaseDate       DateTime                @map("purchase_date") @db.Date
+  expectedDate       DateTime                @map("expected_date") @db.Date
+  actualDate         DateTime?               @map("actual_date") @db.Date
+  totalQuantity      Int                     @default(0) @map("total_quantity")
+  totalAmount        Decimal                 @default(0) @map("total_amount") @db.Decimal(12, 2)
+  discountAmount     Decimal                 @default(0) @map("discount_amount") @db.Decimal(10, 2)
+  shippingFee        Decimal                 @default(0) @map("shipping_fee") @db.Decimal(10, 2)
+  finalAmount        Decimal                 @default(0) @map("final_amount") @db.Decimal(12, 2)
+  shippingCompany    String?                 @map("shipping_company") @db.VarChar(100)
+  trackingNo         String?                 @map("tracking_no") @db.VarChar(100)
+  shippingStatus     String                  @default("PENDING") @map("shipping_status")
+  status             String                  @default("DRAFT")
+  submitterId        Int?                    @map("submitter_id")
+  submittedAt        DateTime?               @map("submitted_at")
+  approverId         Int?                    @map("approver_id")
+  approvedAt         DateTime?               @map("approved_at")
+  rejectReason       String?                 @map("reject_reason")
+  receiverId         Int?                    @map("receiver_id")
+  receivedAt         DateTime?               @map("received_at")
+  receivedQuantity   Int?                    @default(0) @map("received_quantity")
+  qualityCheckStatus String?                 @default("PENDING") @map("quality_check_status")
+  qualityCheckRemark String?                 @map("quality_check_remark")
+  remark             String?
+  createdBy          Int?                    @map("created_by")
+  createdAt          DateTime                @default(now()) @map("created_at")
+  updatedAt          DateTime                @updatedAt @map("updated_at")
+  inTransitGoods     InTransitGoods[]
+  inboundRecords     InboundRecord[]
+  items              PurchaseOrderItem[]
+  supplier           Supplier                @relation(fields: [supplierId], references: [id])
+  payments           PurchasePayment[]
+  receiveRecords     PurchaseReceiveRecord[]
+  refunds            PurchaseRefund[]
+
+  @@index([purchaseNo])
+  @@index([supplierId])
+  @@index([status])
+  @@index([shippingStatus])
+  @@index([purchaseDate])
+  @@index([expectedDate])
+  @@index([submitterId])
+  @@index([createdAt])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id                String        @id @default(uuid())
+  purchaseOrderId   String        @map("purchase_order_id")
+  productId         Int?          @map("product_id")
+  quantity          Int
+  unitPrice         Decimal       @map("unit_price") @db.Decimal(10, 2)
+  totalPrice        Decimal       @map("total_price") @db.Decimal(10, 2)
+  receivedQuantity  Int           @default(0) @map("received_quantity")
+  qualifiedQuantity Int           @default(0) @map("qualified_quantity")
+  defectiveQuantity Int           @default(0) @map("defective_quantity")
+  remark            String?
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+  barcode           String?
+  brand             String?
+  costPrice         Decimal?      @map("cost_price") @db.Decimal(10, 2)
+  description       String?
+  images            String[]
+  model             String?
+  productCategoryId Int?          @map("product_category_id")
+  productName       String        @map("product_name")
+  productNo         String        @map("product_no")
+  salePrice         Decimal?      @map("sale_price") @db.Decimal(10, 2)
+  specification     String?
+  unit              String
+  product           Product?      @relation(fields: [productId], references: [id])
+  purchaseOrder     PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+
+  @@index([purchaseOrderId])
+  @@index([productId])
+  @@index([productNo])
+  @@map("purchase_order_items")
+}
+
+model PurchaseReceiveRecord {
+  id                 String        @id @default(uuid())
+  receiveNo          String        @unique @map("receive_no")
+  purchaseOrderId    String        @map("purchase_order_id")
+  receiveDate        DateTime      @map("receive_date") @db.Date
+  receiveQuantity    Int           @map("receive_quantity")
+  qualifiedQuantity  Int           @default(0) @map("qualified_quantity")
+  defectiveQuantity  Int           @default(0) @map("defective_quantity")
+  qualityCheckStatus String        @default("PASSED") @map("quality_check_status")
+  qualityCheckRemark String?       @map("quality_check_remark")
+  inboundStatus      String        @default("PENDING") @map("inbound_status")
+  inboundedAt        DateTime?     @map("inbounded_at")
+  receiverId         Int           @map("receiver_id")
+  remark             String?
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+  purchaseOrder      PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+
+  @@index([receiveNo])
+  @@index([purchaseOrderId])
+  @@index([receiveDate])
+  @@index([inboundStatus])
+  @@map("purchase_receive_records")
+}
+
+model PurchasePayment {
+  id              String           @id @default(uuid())
+  paymentNo       String           @unique @map("payment_no")
+  purchaseOrderId String           @map("purchase_order_id")
+  amount          Decimal          @map("amount") @db.Decimal(12, 2)
+  paymentMethod   String           @map("payment_method")
+  paymentDate     DateTime         @map("payment_date") @db.Date
+  transactionNo   String?          @map("transaction_no") @db.VarChar(100)
+  bankName        String?          @map("bank_name") @db.VarChar(100)
+  bankAccount     String?          @map("bank_account") @db.VarChar(50)
+  payee           String?          @map("payee") @db.VarChar(100)
+  status          String           @default("PENDING") @map("status")
+  confirmedBy     Int?             @map("confirmed_by")
+  confirmedAt     DateTime?        @map("confirmed_at")
+  remark          String?
+  createdBy       Int?             @map("created_by")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  purchaseOrder   PurchaseOrder    @relation(fields: [purchaseOrderId], references: [id])
+  refunds         PurchaseRefund[]
+
+  @@index([paymentNo])
+  @@index([purchaseOrderId])
+  @@index([paymentDate])
+  @@index([status])
+  @@map("purchase_payments")
+}
+
+model PurchaseRefund {
+  id              String           @id @default(uuid())
+  refundNo        String           @unique @map("refund_no")
+  purchaseOrderId String           @map("purchase_order_id")
+  paymentId       String?          @map("payment_id")
+  refundAmount    Decimal          @map("refund_amount") @db.Decimal(12, 2)
+  refundType      String           @map("refund_type")
+  reason          String           @map("reason")
+  applicantId     Int?             @map("applicant_id")
+  applicantName   String?          @map("applicant_name") @db.VarChar(100)
+  appliedAt       DateTime         @default(now()) @map("applied_at")
+  status          String           @default("PENDING") @map("status")
+  approvedBy      Int?             @map("approved_by")
+  approvedAt      DateTime?        @map("approved_at")
+  approvalRemark  String?          @map("approval_remark")
+  rejectedBy      Int?             @map("rejected_by")
+  rejectedAt      DateTime?        @map("rejected_at")
+  rejectReason    String?          @map("reject_reason")
+  completedBy     Int?             @map("completed_by")
+  completedAt     DateTime?        @map("completed_at")
+  transactionNo   String?          @map("transaction_no") @db.VarChar(100)
+  remark          String?
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  payment         PurchasePayment? @relation(fields: [paymentId], references: [id])
+  purchaseOrder   PurchaseOrder    @relation(fields: [purchaseOrderId], references: [id])
+
+  @@index([refundNo])
+  @@index([purchaseOrderId])
+  @@index([paymentId])
+  @@index([status])
+  @@index([appliedAt])
+  @@map("purchase_refunds")
+}
+
+model InTransitGoods {
+  id               String          @id @default(uuid())
+  transitNo        String          @unique @map("transit_no")
+  purchaseOrderId  String          @map("purchase_order_id")
+  totalQuantity    Int             @default(0) @map("total_quantity")
+  totalAmount      Decimal         @default(0) @map("total_amount") @db.Decimal(12, 2)
+  shippedDate      DateTime?       @map("shipped_date") @db.Date
+  shippedBy        String?         @map("shipped_by") @db.VarChar(100)
+  shippedFrom      String?         @map("shipped_from") @db.VarChar(200)
+  shippingCompany  String?         @map("shipping_company") @db.VarChar(100)
+  trackingNo       String?         @map("tracking_no") @db.VarChar(100)
+  shippingMethod   String?         @default("LAND") @map("shipping_method")
+  shippingStatus   String          @default("PREPARING") @map("shipping_status")
+  expectedDate     DateTime        @map("expected_date") @db.Date
+  estimatedDays    Int?            @default(0) @map("estimated_days")
+  actualDate       DateTime?       @map("actual_date") @db.Date
+  actualDays       Int?            @map("actual_days")
+  receivedBy       String?         @map("received_by") @db.VarChar(100)
+  receivedAt       DateTime?       @map("received_at")
+  receivedQuantity Int?            @default(0) @map("received_quantity")
+  currentLocation  String?         @map("current_location") @db.VarChar(200)
+  lastUpdateTime   DateTime?       @map("last_update_time")
+  trackingHistory  Json?           @map("tracking_history")
+  isDelayed        Boolean         @default(false) @map("is_delayed")
+  delayDays        Int?            @default(0) @map("delay_days")
+  delayReason      String?         @map("delay_reason")
+  hasException     Boolean         @default(false) @map("has_exception")
+  exceptionType    String?         @map("exception_type") @db.VarChar(50)
+  exceptionDesc    String?         @map("exception_desc")
+  exceptionHandled Boolean         @default(false) @map("exception_handled")
+  remark           String?
+  createdBy        Int?            @map("created_by")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+  purchaseOrder    PurchaseOrder   @relation(fields: [purchaseOrderId], references: [id])
+  inboundRecords   InboundRecord[]
+
+  @@index([transitNo])
+  @@index([purchaseOrderId])
+  @@index([trackingNo])
+  @@index([shippingStatus])
+  @@index([expectedDate])
+  @@index([shippedDate])
+  @@index([isDelayed])
+  @@index([hasException])
+  @@map("in_transit_goods")
+}
+
+model InboundRecord {
+  id                 String         @id @default(uuid())
+  inboundNo          String         @unique @map("inbound_no") @db.VarChar(50)
+  inTransitId        String         @map("in_transit_id")
+  purchaseOrderId    String         @map("purchase_order_id")
+  inboundDate        DateTime       @default(now()) @map("inbound_date")
+  inboundType        String         @default("PURCHASE") @map("inbound_type") @db.VarChar(50)
+  expectedQuantity   Int            @default(0) @map("expected_quantity")
+  actualQuantity     Int            @default(0) @map("actual_quantity")
+  qualifiedQuantity  Int            @default(0) @map("qualified_quantity")
+  defectiveQuantity  Int            @default(0) @map("defective_quantity")
+  qualityCheckStatus String         @default("PENDING") @map("quality_check_status")
+  qualityCheckBy     String?        @map("quality_check_by") @db.VarChar(100)
+  qualityCheckAt     DateTime?      @map("quality_check_at")
+  qualityCheckResult String?        @map("quality_check_result")
+  qualityCheckPhotos Json?          @map("quality_check_photos")
+  defectTypes        Json?          @map("defect_types")
+  defectDescription  String?        @map("defect_description")
+  inboundStatus      String         @default("PENDING") @map("inbound_status")
+  confirmedBy        String?        @map("confirmed_by") @db.VarChar(100)
+  confirmedAt        DateTime?      @map("confirmed_at")
+  inventoryUpdated   Boolean        @default(false) @map("inventory_updated")
+  inventoryUpdateAt  DateTime?      @map("inventory_update_at")
+  warehouseId        String?        @map("warehouse_id") @db.VarChar(100)
+  locationId         String?        @map("location_id") @db.VarChar(100)
+  totalAmount        Decimal        @default(0) @map("total_amount") @db.Decimal(10, 2)
+  taxAmount          Decimal?       @default(0) @map("tax_amount") @db.Decimal(10, 2)
+  packageCount       Int?           @default(0) @map("package_count")
+  packageType        String?        @map("package_type") @db.VarChar(50)
+  packageCondition   String?        @map("package_condition") @db.VarChar(50)
+  temperature        Decimal?       @map("temperature") @db.Decimal(5, 2)
+  humidity           Decimal?       @map("humidity") @db.Decimal(5, 2)
+  rejectionReason    String?        @map("rejection_reason")
+  returnRequested    Boolean        @default(false) @map("return_requested")
+  remark             String?
+  createdBy          Int?           @map("created_by")
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @updatedAt @map("updated_at")
+  inTransit          InTransitGoods @relation(fields: [inTransitId], references: [id])
+  purchaseOrder      PurchaseOrder  @relation(fields: [purchaseOrderId], references: [id])
+
+  @@index([inboundNo])
+  @@index([inTransitId])
+  @@index([purchaseOrderId])
+  @@index([inboundDate])
+  @@index([qualityCheckStatus])
+  @@index([inboundStatus])
+  @@index([inventoryUpdated])
+  @@map("inbound_records")
+}
+
+model DiscountRule {
+  id           Int          @id @default(autoincrement())
+  name         String
+  minAmount    Decimal      @map("min_amount")
+  maxAmount    Decimal      @map("max_amount")
+  discountRate Decimal      @map("discount_rate")
+  description  String?
+  isActive     Boolean      @default(true) @map("is_active")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  diyPackages  DiyPackage[]
+
+  @@index([minAmount, maxAmount])
+  @@index([isActive])
+  @@index([createdAt])
+  @@map("discount_rules")
+}
+
+model DiyPackage {
+  id             Int           @id @default(autoincrement())
+  packageName    String        @map("package_name")
+  customerId     Int?          @map("customer_id")
+  customerInfo   Json?         @map("customer_info")
+  selectedItems  Json          @map("selected_items")
+  originalAmount Decimal       @map("original_amount") @db.Decimal(10, 2)
+  discountAmount Decimal       @map("discount_amount") @db.Decimal(10, 2)
+  discountRate   Decimal       @map("discount_rate") @db.Decimal(5, 2)
+  savedAmount    Decimal       @map("saved_amount") @db.Decimal(10, 2)
+  discountRuleId Int?          @map("discount_rule_id")
+  status         String        @default("DRAFT")
+  expiresAt      DateTime?     @map("expires_at")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  wxUserId       String?       @map("wx_user_id")
+  discountRule   DiscountRule? @relation(fields: [discountRuleId], references: [id])
+  wxUser         WxUser?       @relation("WxDiyPackages", fields: [wxUserId], references: [id])
+  orders         Order[]
+
+  @@index([customerId])
+  @@index([wxUserId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([expiresAt])
+  @@index([discountRuleId])
+  @@map("diy_packages")
+}
+
+model WxUser {
+  id             String            @id @default(uuid())
+  openid         String            @unique
+  unionid        String?           @unique
+  sessionKey     String?           @map("session_key")
+  nickname       String?
+  avatar         String?
+  gender         Int?
+  phone          String?
+  phoneEncrypted String?           @map("phone_encrypted")
+  realName       String?           @map("real_name")
+  birthday       DateTime?         // 生日（月日，用于生日关怀）
+  height         Float?            // 身高(cm)
+  weight         Float?            // 体重(kg)
+  zodiac         String?           // 生肖
+  constellation  String?           // 星座
+  hundredDaysDate DateTime?        @map("hundred_days_date") // 百天日期
+  firstBirthdayDate DateTime?     @map("first_birthday_date") // 周岁日期
+  graspGift      String?           @map("grasp_gift")       // 抓周礼物
+  handFootPrint  String?           @map("hand_foot_print")  // 手脚印图
+  walletPhoto    String?           @map("wallet_photo")     // 钱包照
+  address        String?           // 家庭住址
+  schoolName     String?           @map("school_name")      // 学校名称
+  talent         String?           // 宝宝特长
+  status         WxUserStatus      @default(ACTIVE)
+  linkedUserId   Int?              @map("linked_user_id")
+  totalOrders    Int               @default(0) @map("total_orders")
+  totalAmount    Decimal           @default(0) @map("total_amount") @db.Decimal(12, 2)
+  memberLevel    String            @default("NORMAL") @map("member_level")
+  growthPoints   Int               @default(0) @map("growth_points")
+  lastOrderAt    DateTime?         @map("last_order_at")
+  churnStatus    String            @default("ACTIVE") @map("churn_status")
+  lastLoginAt    DateTime?         @map("last_login_at")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+  cartItems      CartItem[]
+  diyPackages    DiyPackage[]      @relation("WxDiyPackages")
+  orders         Order[]           @relation("WxOrders")
+  addresses      ShippingAddress[]
+  coupons        UserCoupon[]
+  complaints     Complaint[]
+  linkedUser     User?             @relation(fields: [linkedUserId], references: [id])
+
+  @@index([openid])
+  @@index([phone])
+  @@index([status])
+  @@index([memberLevel])
+  @@index([churnStatus])
+  @@index([lastOrderAt])
+  @@map("wx_users")
+}
+
+model CartItem {
+  id            String       @id @default(uuid())
+  wxUserId      String       @map("wx_user_id")
+  itemType      CartItemType @map("item_type")
+  productId     Int?         @map("product_id")
+  packageId     Int?         @map("package_id")
+  diyComponents Json?        @map("diy_components")
+  quantity      Int          @default(1)
+  isSelected    Boolean      @default(true) @map("is_selected")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  package       Package?     @relation(fields: [packageId], references: [id])
+  product       Product?     @relation(fields: [productId], references: [id])
+  wxUser        WxUser       @relation(fields: [wxUserId], references: [id], onDelete: Cascade)
+
+  @@index([wxUserId])
+  @@index([productId])
+  @@index([packageId])
+  @@map("cart_items")
+}
+
+model ShippingAddress {
+  id           String   @id @default(uuid())
+  wxUserId     String   @map("wx_user_id")
+  receiverName String   @map("receiver_name") @db.VarChar(50)
+  phone        String   @db.VarChar(20)
+  province     String   @db.VarChar(50)
+  city         String   @db.VarChar(50)
+  district     String   @db.VarChar(50)
+  detail       String   @db.VarChar(200)
+  postalCode   String?  @map("postal_code") @db.VarChar(10)
+  isDefault    Boolean  @default(false) @map("is_default")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  wxUser       WxUser   @relation(fields: [wxUserId], references: [id], onDelete: Cascade)
+
+  @@index([wxUserId])
+  @@index([isDefault])
+  @@map("shipping_addresses")
+}
+
+model MemberLevel {
+  id         Int      @id @default(autoincrement())
+  level      Int      @unique          // 1=普通, 2=白银, 3=黄金, 4=铂金, 5=钻石
+  name       String   @db.VarChar(50)  // 等级名称
+  minGrowth  Int      @map("min_growth")
+  maxGrowth  Int      @map("max_growth")
+  benefits   Json?    // 权益描述（JSON 数组）
+  icon       String?  // 等级图标
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([level])
+  @@map("member_levels")
+}
+
+model Complaint {
+  id          String   @id @default(uuid())
+  complaintNo String   @unique @map("complaint_no") // 自动生成投诉编号
+  wxUserId    String   @map("wx_user_id")
+  orderId     String?  @map("order_id")
+  title       String   @db.VarChar(200)
+  description String   @db.Text
+  status      String   @default("PENDING") // PENDING / PROCESSING / RESOLVED / CLOSED
+  priority    String   @default("NORMAL")  // LOW / NORMAL / HIGH / URGENT
+  handlerId   Int?     @map("handler_id")
+  resolution  String?  @db.Text           // 处理结果说明
+  handledAt   DateTime? @map("handled_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  wxUser      WxUser   @relation(fields: [wxUserId], references: [id])
+  handler     User?    @relation("ComplaintHandler", fields: [handlerId], references: [id])
+
+  @@index([wxUserId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([handlerId])
+  @@map("complaints")
+}
+
+model Coupon {
+  id             String       @id @default(uuid())
+  couponCode     String       @unique @map("coupon_code")
+  couponName     String       @map("coupon_name")
+  couponType     CouponType   @map("coupon_type")
+  discountType   DiscountType @map("discount_type")
+  discountValue  Decimal      @map("discount_value") @db.Decimal(10, 2)
+  minAmount      Decimal?     @map("min_amount") @db.Decimal(10, 2)
+  maxDiscount    Decimal?     @map("max_discount") @db.Decimal(10, 2)
+  totalCount     Int          @map("total_count")
+  usedCount      Int          @default(0) @map("used_count")
+  perUserLimit   Int          @default(1) @map("per_user_limit")
+  applicableType String       @default("ALL") @map("applicable_type")
+  applicableIds  Int[]        @map("applicable_ids")
+  startTime      DateTime     @map("start_time")
+  endTime        DateTime     @map("end_time")
+  status         CouponStatus @default(ACTIVE)
+  description    String?
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  userCoupons    UserCoupon[]
+
+  @@index([couponCode])
+  @@index([status])
+  @@index([startTime, endTime])
+  @@map("coupons")
+}
+
+model UserCoupon {
+  id         String           @id @default(uuid())
+  wxUserId   String           @map("wx_user_id")
+  couponId   String           @map("coupon_id")
+  status     UserCouponStatus @default(UNUSED)
+  usedAt     DateTime?        @map("used_at")
+  orderId    String?          @map("order_id")
+  receivedAt DateTime         @default(now()) @map("received_at")
+  expiredAt  DateTime         @map("expired_at")
+  coupon     Coupon           @relation(fields: [couponId], references: [id])
+  wxUser     WxUser           @relation(fields: [wxUserId], references: [id], onDelete: Cascade)
+
+  @@index([wxUserId])
+  @@index([couponId])
+  @@index([status])
+  @@map("user_coupons")
+}
+
+model AutomationRule {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(100)
+  description String?
+  trigger     String   @db.VarChar(50)
+  conditions  Json?
+  actions     Json
+  enabled     Boolean  @default(true)
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([trigger, enabled])
+  @@map("automation_rules")
+}
+
+model OrderItem {
+  id            String        @id @default(uuid())
+  orderId       String        @map("order_id")
+  itemType      OrderItemType @map("item_type")
+  productId     Int?          @map("product_id")
+  packageId     Int?          @map("package_id")
+  itemName      String        @map("item_name")
+  itemImage     String?       @map("item_image")
+  specification String?
+  quantity      Int           @default(1)
+  unitPrice     Decimal       @map("unit_price") @db.Decimal(10, 2)
+  totalPrice    Decimal       @map("total_price") @db.Decimal(10, 2)
+  diyMeta       Json?         @map("diy_meta")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  package       Package?      @relation(fields: [packageId], references: [id])
+  product       Product?      @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([packageId])
+  @@map("order_items")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PackageStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum TimeSlotStatus {
+  AVAILABLE
+  BOOKED
+  UNAVAILABLE
+}
+
+enum RefundType {
+  FULL
+  PARTIAL
+  DEPOSIT_ONLY
+}
+
+enum RefundMethod {
+  ORIGINAL
+  CASH
+  BANK
+}
+
+enum RefundStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum RefundExecutionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum PaymentMode {
+  FULL_ONLINE
+  DEPOSIT_ONLINE
+  FULL_OFFLINE
+  DEPOSIT_OFFLINE
+}
+
+enum PaymentType {
+  DEPOSIT
+  FINAL
+  FULL
+  REFUND
+}
+
+enum PaymentMethod {
+  WECHAT_PAY
+  CASH
+  WECHAT_TRANSFER
+  ALIPAY_TRANSFER
+  BANK_CARD
+}
+
+enum PaymentStatus {
+  PENDING_PAYMENT
+  PARTIAL_PAID
+  FULLY_PAID
+  REFUNDING
+  PARTIAL_REFUNDED
+  REFUNDED
+  CANCELLED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum WxUserStatus {
+  ACTIVE
+  INACTIVE
+  BANNED
+}
+
+enum CartItemType {
+  PRODUCT
+  PACKAGE
+  DIY_COMPONENT
+}
+
+enum CouponType {
+  REGISTER
+  PROMOTION
+  REBATE
+  BIRTHDAY
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
+enum CouponStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+}
+
+enum UserCouponStatus {
+  UNUSED
+  USED
+  EXPIRED
+}
+
+enum OrderItemType {
+  PRODUCT
+  PACKAGE
+  DIY_PACKAGE
+  SERVICE
+}
+
+enum OrderSource {
+  ADMIN
+  WXAPP
+  H5
+  API
+}
+
+enum NotificationType {
+  PUSH
+  EMAIL
+  SYSTEM
+  WECHAT
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model AppNotification {
+  id           String             @id @default(uuid())
+  type         NotificationType
+  title        String
+  content      String
+  status       NotificationStatus @default(PENDING)
+  recipient    String?            // email 地址或用户 ID
+  errorMessage String?            @map("error_message") // 发送失败时的错误信息
+  sentAt       DateTime?
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
+
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@map("app_notifications")
+}
+
+model NotificationTemplate {
+  id        String           @id @default(uuid())
+  name      String           @unique
+  type      NotificationType
+  title     String
+  content   String
+  variables String?          // JSON: ["name", "orderNo"]
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  @@map("notification_templates")
+}
+
+model OperationLog {
+  id           String   @id @default(uuid())
+  module       String   // 模块名: orders, users, payments 等
+  action       String   // 操作类型: CREATE, UPDATE, DELETE, APPROVE, REFUND 等
+  operatorId   String?  @map("operator_id")
+  operatorName String?  @map("operator_name")
+  targetId     String?  @map("target_id")
+  targetDesc   String?  @map("target_desc")
+  method       String   // HTTP 方法
+  path         String   // 请求路径
+  params       Json?    // 请求参数（脱敏后）
+  ip           String?  // 客户端 IP
+  duration     Int      // 耗时（ms）
+  statusCode   Int      @map("status_code")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([module])
+  @@index([operatorId])
+  @@index([createdAt])
+  @@index([module, createdAt])
+  @@map("operation_logs")
+}
+
+model CustomerSegment {
+  id             String   @id @default(uuid())
+  name           String   @db.VarChar(100)
+  description    String?
+  rules          Json                // [{field, operator, value}] same format as AutomationRule conditions
+  memberCount    Int      @default(0)
+  status         String   @default("ACTIVE")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  campaigns      MarketingCampaign[]
+
+  @@map("customer_segments")
+}
+
+model MarketingCampaign {
+  id             String            @id @default(uuid())
+  name           String            @db.VarChar(100)
+  description    String?
+  segmentId      String?
+  campaignType   String            // COUPON_PUSH | NOTIFICATION_PUSH
+  couponId       String?
+  title          String?
+  content        String?
+  status         String            @default("DRAFT") // DRAFT | SENDING | SENT | COMPLETED | CANCELLED
+  scheduledAt    DateTime?
+  sentCount      Int               @default(0)
+  openedCount    Int               @default(0)
+  clickedCount   Int               @default(0)
+  convertedCount Int               @default(0)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  segment        CustomerSegment?  @relation(fields: [segmentId], references: [id])
+  tracks         CampaignTrack[]
+
+  @@index([segmentId])
+  @@index([status])
+  @@map("marketing_campaigns")
+}
+
+model CampaignTrack {
+  id         String            @id @default(uuid())
+  campaignId String
+  wxUserId   String
+  event      String            // DELIVERED | OPENED | CLICKED | CONVERTED
+  orderId    String?
+  metadata   Json?
+  createdAt  DateTime          @default(now())
+  campaign   MarketingCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([wxUserId])
+  @@index([event])
+  @@map("campaign_tracks")
+}

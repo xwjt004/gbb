@@ -1,0 +1,290 @@
+/* 订单列表页样式 */
+.order-list-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f5f5f5;
+}
+
+/* 状态标签 */
+.status-tabs {
+  display: flex;
+  background: #fff;
+  padding: 0 32rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.tab-item {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24rpx 0;
+}
+
+.tab-label {
+  font-size: 28rpx;
+  color: #666;
+  transition: all 0.3s;
+}
+
+.tab-item.active .tab-label {
+  color: #ff5722;
+  font-weight: 600;
+  font-size: 30rpx;
+}
+
+.tab-indicator {
+  position: absolute;
+  bottom: 0;
+  width: 48rpx;
+  height: 4rpx;
+  background: linear-gradient(90deg, #ff5722, #ff9800);
+  border-radius: 2rpx;
+  animation: slide-in 0.3s ease;
+}
+
+@keyframes slide-in {
+  from {
+    width: 0;
+  }
+  to {
+    width: 48rpx;
+  }
+}
+
+/* 订单滚动区域 */
+.order-scroll {
+  flex: 1;
+  height: 100%;
+}
+
+.orders-wrapper {
+  padding: 20rpx 0;
+}
+
+/* 订单卡片 */
+.order-card {
+  background: #fff;
+  margin: 0 24rpx 24rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+/* 订单头部 */
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.order-no {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.order-status {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+/* 商品列表 */
+.order-items {
+  padding: 24rpx 32rpx;
+}
+
+.product-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.product-item:last-child {
+  margin-bottom: 0;
+}
+
+.product-image {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+  background: #f5f5f5;
+  margin-right: 24rpx;
+}
+
+.product-info {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.product-name {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 16rpx;
+}
+
+.product-quantity {
+  font-size: 26rpx;
+  color: #999;
+}
+
+.more-items {
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  color: #999;
+  text-align: center;
+}
+
+/* 预约信息 */
+.appointment-info {
+  padding: 16rpx 32rpx;
+  background: #f8f8f8;
+  font-size: 26rpx;
+  color: #666;
+}
+
+.appointment-label {
+  color: #999;
+}
+
+.appointment-value {
+  color: #333;
+  margin-left: 8rpx;
+}
+
+/* 订单底部 */
+.order-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 32rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.order-amount {
+  display: flex;
+  align-items: baseline;
+}
+
+.amount-label {
+  font-size: 26rpx;
+  color: #666;
+  margin-right: 8rpx;
+}
+
+.amount-value {
+  font-size: 32rpx;
+  color: #ff5722;
+  font-weight: 600;
+}
+
+.order-actions {
+  display: flex;
+  gap: 16rpx;
+}
+
+.action-btn {
+  padding: 12rpx 32rpx;
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  border: 1rpx solid #e0e0e0;
+  background: #fff;
+  color: #666;
+}
+
+.cancel-btn {
+  border-color: #ff5722;
+  color: #ff5722;
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #ff5722, #ff9800);
+  color: #fff;
+  border: none;
+}
+
+.delete-btn {
+  border-color: #f44336;
+  color: #f44336;
+}
+
+/* 加载状态 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 0;
+}
+
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 4rpx solid #f0f0f0;
+  border-top-color: #ff5722;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  margin-top: 24rpx;
+  font-size: 26rpx;
+  color: #999;
+}
+
+/* 加载更多 */
+.load-more {
+  padding: 32rpx 0;
+  text-align: center;
+  font-size: 26rpx;
+  color: #999;
+}
+
+.no-more {
+  color: #ccc;
+}
+
+/* 空状态 */
+.empty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 0;
+}
+
+.empty-image {
+  width: 300rpx;
+  height: 300rpx;
+  margin-bottom: 32rpx;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: #999;
+  margin-bottom: 48rpx;
+}
+
+.empty-btn {
+  padding: 20rpx 80rpx;
+  background: linear-gradient(135deg, #ff5722, #ff9800);
+  color: #fff;
+  border-radius: 48rpx;
+  font-size: 28rpx;
+  border: none;
+}

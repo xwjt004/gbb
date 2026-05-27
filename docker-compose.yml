@@ -1,0 +1,211 @@
+# Docker Compose 配置文件
+# 用于本地开发和测试环境
+
+services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:17-alpine
+    container_name: gbb-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: baby_photo_db
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+      TZ: Asia/Shanghai
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/baby-photo-backend/backups:/backups
+    networks:
+      - gbb-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 缓存（可选）
+  redis:
+    image: redis:7-alpine
+    container_name: gbb-redis
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - gbb-network
+    restart: unless-stopped
+    command: sh -c 'exec redis-server --appendonly yes ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}'
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # NestJS 后端 API
+  backend:
+    build:
+      context: ./server/baby-photo-backend
+      dockerfile: Dockerfile
+      target: runner  # 使用最终的运行阶段
+    container_name: gbb-backend
+    environment:
+      # 数据库配置
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/baby_photo_db
+      
+      # Redis 配置
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      
+      # 应用配置
+      NODE_ENV: production
+      PORT: 3000
+      
+      # JWT 配置（从 .env 文件读取）
+      JWT_SECRET: ${JWT_SECRET}
+
+      # CORS 配置（前端域名，多个用逗号分隔）
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://guaibaobao.cn,https://www.guaibaobao.cn}
+
+      # 加密配置
+      ENCRYPT_KEY: ${ENCRYPT_KEY}
+      
+      # 微信配置
+      WX_APP_ID: ${WX_APP_ID}
+      WX_APP_SECRET: ${WX_APP_SECRET}
+      
+      # 微信支付配置
+      WECHAT_MCH_ID: ${WECHAT_MCH_ID}
+      WECHAT_API_KEY: ${WECHAT_API_KEY}
+      
+      # Sentry 错误监控（可选）
+      SENTRY_DSN: ${SENTRY_DSN}
+      SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-0.1}
+
+      # 时区
+      TZ: Asia/Shanghai
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - gbb-network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/v1/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      # 持久化日志、上传文件和备份
+      - ./server/baby-photo-backend/logs:/app/logs
+      - ./server/baby-photo-backend/uploads:/app/uploads
+      - ./server/baby-photo-backend/backups:/app/backups
+
+  # Prisma Studio（数据库管理界面）
+  prisma-studio:
+    build:
+      context: ./server/baby-photo-backend
+      dockerfile: Dockerfile
+      target: base
+    container_name: gbb-prisma-studio
+    command: sh -c "npm ci && npx prisma generate && npx prisma studio --port 5555 --browser none"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/baby_photo_db
+    ports:
+      - "5555:5555"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - gbb-network
+    restart: unless-stopped
+    profiles:
+      - db-admin
+    volumes:
+      - ./server/baby-photo-backend:/app
+
+  # 前端管理后台（开发模式）
+  admin-frontend-dev:
+    build:
+      context: ./client/admin-frontend
+      dockerfile: Dockerfile.dev
+    container_name: gbb-admin-frontend-dev
+    profiles:
+      - dev
+    ports:
+      - "3001:3001"
+    depends_on:
+      - backend
+    networks:
+      - gbb-network
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=/api/v1
+      - VITE_HOST=0.0.0.0
+      - VITE_BACKEND_URL=http://gbb-backend:3000
+    volumes:
+      # 热重载：映射源代码
+      - ./client/admin-frontend:/app
+      - /app/node_modules
+
+  # 前端管理后台（生产模式）
+  admin-frontend:
+    build:
+      context: ./client/admin-frontend
+      dockerfile: Dockerfile
+    container_name: gbb-admin-frontend
+    ports:
+      - "3002:80"
+    depends_on:
+      - backend
+    networks:
+      - gbb-network
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    profiles:
+      - production
+
+  # Nginx 反向代理（可选）
+  nginx:
+    image: nginx:alpine
+    container_name: gbb-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+    networks:
+      - gbb-network
+    restart: unless-stopped
+    profiles:
+      - production
+
+# 数据卷
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# 网络
+networks:
+  gbb-network:
+    driver: bridge

@@ -1,0 +1,110 @@
+.rich-text-editor {
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  padding: 16px;
+  background: #fafafa;
+}
+
+.editor-block {
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.block-content {
+  padding: 0;
+}
+
+.editor-block .quill {
+  border: none;
+}
+
+.editor-block .ql-toolbar {
+  border: none;
+  border-bottom: 1px solid #d9d9d9;
+  background: #fafafa;
+}
+
+.editor-block .ql-container {
+  border: none;
+  min-height: 150px;
+}
+
+.block-media {
+  padding: 16px;
+}
+
+.block-media img,
+.block-media video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.media-caption {
+  margin-top: 8px;
+  padding: 8px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+}
+
+.block-actions {
+  padding: 8px 16px;
+  border-top: 1px solid #f0f0f0;
+  background: #fafafa;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.editor-toolbar {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #d9d9d9;
+}
+
+/* Quill 编辑器样式调整 */
+.ql-editor {
+  min-height: 150px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ql-editor.ql-blank::before {
+  color: #bfbfbf;
+  font-style: normal;
+}
+
+/* 工具栏按钮样式 */
+.ql-toolbar button {
+  width: 28px;
+  height: 24px;
+}
+
+.ql-toolbar button:hover {
+  color: #1890ff;
+}
+
+.ql-toolbar button.ql-active {
+  color: #1890ff;
+}
+
+/* 下拉选择器样式 */
+.ql-toolbar .ql-picker-label {
+  border: 1px solid #d9d9d9;
+  border-radius: 2px;
+}
+
+.ql-toolbar .ql-picker-label:hover {
+  color: #1890ff;
+}
+
+.ql-toolbar .ql-picker.ql-expanded .ql-picker-label {
+  color: #1890ff;
+  border-color: #1890ff;
+}

@@ -1,0 +1,40 @@
+<view class="login-container">
+  <!-- 顶部品牌区域 -->
+  <view class="brand-header">
+    <view class="logo-wrapper">
+      <image class="logo" src="/images/logo.png" mode="aspectFit"></image>
+    </view>
+    <text class="brand-title">乖宝宝儿童影楼</text>
+    <text class="brand-subtitle">专业儿童摄影服务</text>
+  </view>
+
+  <!-- 登录卡片 -->
+  <view class="login-card">
+    <view class="card-title">欢迎使用</view>
+    
+    <!-- 登录按钮 -->
+    <button 
+      class="login-button {{loading ? 'disabled' : ''}}" 
+      bindtap="onLogin"
+      disabled="{{loading}}"
+    >
+      <text wx:if="{{!loading}}">微信快捷登录</text>
+      <text wx:else>登录中...</text>
+    </button>
+
+    <!-- 错误提示 -->
+    <view class="error-tip" wx:if="{{error}}">
+      <text>{{error}}</text>
+    </view>
+
+    <!-- 登录说明 -->
+    <view class="login-desc">
+      <text>登录即可享受完整购物和预约服务</text>
+    </view>
+  </view>
+
+  <!-- 跳过按钮 -->
+  <view class="skip-wrapper">
+    <text class="skip-button" bindtap="skipLogin">暂不登录，随便看看</text>
+  </view>
+</view>

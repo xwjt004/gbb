@@ -1,0 +1,62 @@
+{
+  "pages": [
+    "pages/packages/list/list",
+    "pages/product/list",
+    "pages/cart/cart",
+    "pages/profile/profile",
+    "pages/welcome/welcome",
+    "pages/login/login",
+    "pages/test/test",
+    "pages/coupon/list",
+    "pages/coupon/my",
+    "pages/coupon/detail",
+    "pages/index/index",
+    "pages/product/detail",
+    "pages/packages/detail/detail",
+    "pages/booking/date/date",
+    "pages/booking/time/time",
+    "pages/booking/info/info",
+    "pages/booking/confirm/confirm",
+    "pages/order/confirm/confirm",
+    "pages/order/list/list",
+    "pages/order/detail/detail",
+    "pages/payment/payment",
+    "pages/payment/result/result",
+    "pages/address/list/list",
+    "pages/address/edit/edit",
+    "pages/appointment/appointment",
+    "pages/logs/logs"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "Weixin",
+    "navigationBarBackgroundColor": "#ffffff"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#FF6B9D",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/product/list",
+        "text": "商品"
+      },
+      {
+        "pagePath": "pages/cart/cart",
+        "text": "购物车"
+      },
+      {
+        "pagePath": "pages/packages/list/list",
+        "text": "预约"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的"
+      }
+    ]
+  },
+  "style": "v2",
+  "componentFramework": "glass-easel",
+  "lazyCodeLoading": "requiredComponents"
+}

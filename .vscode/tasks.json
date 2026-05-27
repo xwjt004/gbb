@@ -1,0 +1,69 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "启动开发服务器",
+			"type": "shell",
+			"command": "pnpm",
+			"args": [
+				"run",
+				"start:dev"
+			],
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"options": {
+				"env": {
+					"NODE_ENV": "development"
+				}
+			}
+		},
+		{
+			"label": "切换到 Claude Opus 4.6",
+			"type": "shell",
+			"command": "echo",
+			"args": [
+				"'{\"claude.model\":\"claude-opus-4-6\"}' | jq -s '.[0] * input' .vscode/settings.json > .vscode/settings.tmp.json && mv .vscode/settings.tmp.json .vscode/settings.json"
+			],
+			"windows": {
+				"command": "powershell",
+				"args": [
+					"-Command",
+					"$settings = Get-Content .vscode/settings.json | ConvertFrom-Json; $settings | Add-Member -Force -MemberType NoteProperty -Name 'claude.model' -Value 'claude-opus-4-6'; $settings | ConvertTo-Json | Set-Content .vscode/settings.json"
+				]
+			}
+		},
+		{
+			"label": "切换到 Claude Sonnet 4.6",
+			"type": "shell",
+			"command": "echo",
+			"args": [
+				"'{\"claude.model\":\"claude-sonnet-4-6\"}' | jq -s '.[0] * input' .vscode/settings.json > .vscode/settings.tmp.json && mv .vscode/settings.tmp.json .vscode/settings.json"
+			],
+			"windows": {
+				"command": "powershell",
+				"args": [
+					"-Command",
+					"$settings = Get-Content .vscode/settings.json | ConvertFrom-Json; $settings | Add-Member -Force -MemberType NoteProperty -Name 'claude.model' -Value 'claude-sonnet-4-6'; $settings | ConvertTo-Json | Set-Content .vscode/settings.json"
+				]
+			}
+		},
+		{
+			"label": "切换到 Claude Haiku 4.5",
+			"type": "shell",
+			"command": "echo",
+			"args": [
+				"'{\"claude.model\":\"claude-haiku-4-5-20251001\"}' | jq -s '.[0] * input' .vscode/settings.json > .vscode/settings.tmp.json && mv .vscode/settings.tmp.json .vscode/settings.json"
+			],
+			"windows": {
+				"command": "powershell",
+				"args": [
+					"-Command",
+					"$settings = Get-Content .vscode/settings.json | ConvertFrom-Json; $settings | Add-Member -Force -MemberType NoteProperty -Name 'claude.model' -Value 'claude-haiku-4-5-20251001'; $settings | ConvertTo-Json | Set-Content .vscode/settings.json"
+				]
+			}
+		}
+	]
+}

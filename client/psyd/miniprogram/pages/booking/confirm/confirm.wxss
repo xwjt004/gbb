@@ -1,0 +1,374 @@
+/* pages/booking/confirm/confirm.wxss */
+
+page {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  height: 100vh;
+}
+
+.container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==================== 顶部导航栏 ==================== */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 32rpx;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+}
+
+.navbar-back {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  color: #333;
+}
+
+.navbar-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.navbar-placeholder {
+  width: 60rpx;
+}
+
+/* ==================== 内容区域 ==================== */
+.content {
+  flex: 1;
+  padding: 24rpx 32rpx;
+}
+
+.bottom-placeholder {
+  height: 40rpx;
+}
+
+/* ==================== 信息卡片 ==================== */
+.info-card {
+  background: white;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.header-icon {
+  font-size: 36rpx;
+  margin-right: 12rpx;
+}
+
+.header-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16rpx 0;
+}
+
+.item-label {
+  font-size: 28rpx;
+  color: #666;
+  flex-shrink: 0;
+  width: 160rpx;
+}
+
+.item-value {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+  text-align: right;
+  flex: 1;
+}
+
+.item-value.notes {
+  text-align: left;
+  line-height: 1.6;
+  color: #666;
+}
+
+/* ==================== 价格明细 ==================== */
+.price-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 0;
+}
+
+.price-label {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.price-value {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.price-value.deposit {
+  color: #ff9800;
+}
+
+.price-divider {
+  height: 1rpx;
+  background: #f0f0f0;
+  margin: 16rpx 0;
+}
+
+.price-item.total {
+  padding: 20rpx 0 8rpx;
+}
+
+.price-item.total .price-label {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.price-item.total .price-value {
+  font-size: 40rpx;
+  font-weight: 700;
+}
+
+.price-value.highlight {
+  color: #ff6b6b;
+}
+
+/* ==================== 支付方式选择 ==================== */
+.payment-section {
+  background: white;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.title-icon {
+  font-size: 36rpx;
+  margin-right: 12rpx;
+}
+
+.payment-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.payment-option {
+  position: relative;
+  border: 3rpx solid #e0e0e0;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  background: #fafafa;
+  transition: all 0.3s ease;
+}
+
+.payment-option.selected {
+  border-color: #07c160;
+  background: linear-gradient(135deg, #e8f5e9 0%, #f1f8f4 100%);
+  box-shadow: 0 4rpx 16rpx rgba(7, 193, 96, 0.2);
+}
+
+.option-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.option-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.option-radio {
+  width: 44rpx;
+  height: 44rpx;
+  border: 3rpx solid #e0e0e0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.payment-option.selected .option-radio {
+  border-color: #07c160;
+  background: #07c160;
+}
+
+.radio-inner {
+  width: 20rpx;
+  height: 20rpx;
+  background: white;
+  border-radius: 50%;
+}
+
+.option-desc {
+  font-size: 24rpx;
+  color: #999;
+  line-height: 1.6;
+}
+
+.option-tag {
+  position: absolute;
+  top: -6rpx;
+  right: 24rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+  font-size: 20rpx;
+  font-weight: 600;
+}
+
+.option-tag.recommended {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+  color: white;
+  box-shadow: 0 2rpx 8rpx rgba(255, 107, 107, 0.4);
+}
+
+/* ==================== 注意事项 ==================== */
+.notice-section {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.notice-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.notice-icon {
+  font-size: 32rpx;
+  margin-right: 8rpx;
+}
+
+.notice-content {
+  font-size: 24rpx;
+  color: #666;
+  line-height: 2;
+}
+
+.notice-item {
+  margin-bottom: 8rpx;
+}
+
+/* ==================== 底部操作栏 ==================== */
+.footer {
+  background: white;
+  padding: 24rpx 32rpx;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  flex-shrink: 0;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  flex: 1;
+}
+
+.contact-service {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+}
+
+.service-icon {
+  font-size: 40rpx;
+}
+
+.service-text {
+  font-size: 20rpx;
+  color: #666;
+}
+
+.total-info {
+  flex: 1;
+}
+
+.total-label {
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 4rpx;
+}
+
+.total-amount {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #ff6b6b;
+}
+
+.submit-btn {
+  flex: 1;
+  height: 88rpx;
+  background: linear-gradient(135deg, #07c160 0%, #05a550 100%);
+  color: white;
+  font-size: 32rpx;
+  font-weight: 600;
+  border-radius: 44rpx;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 24rpx rgba(7, 193, 96, 0.3);
+  transition: all 0.3s ease;
+}
+
+.submit-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 4rpx 12rpx rgba(7, 193, 96, 0.2);
+}
+
+.submit-btn.disabled {
+  background: #cccccc;
+  box-shadow: none;
+}
+
+.submit-btn[disabled] {
+  opacity: 1;
+  background: #cccccc;
+}

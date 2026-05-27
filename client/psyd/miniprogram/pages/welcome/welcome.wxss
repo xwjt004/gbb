@@ -1,0 +1,32 @@
+/* 欢迎页 - 简化版样式 */
+.welcome-page {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.loading-container {
+  text-align: center;
+  color: white;
+}
+
+.logo {
+  font-size: 80rpx;
+  margin-bottom: 40rpx;
+}
+
+.title {
+  display: block;
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+}
+
+.message {
+  display: block;
+  font-size: 28rpx;
+  opacity: 0.8;
+}

@@ -1,0 +1,112 @@
+<!-- 支付页面 -->
+<view class="payment-container">
+  <!-- 顶部装饰 -->
+  <view class="header-decoration">
+    <view class="decoration-circle circle-1"></view>
+    <view class="decoration-circle circle-2"></view>
+    <view class="decoration-circle circle-3"></view>
+  </view>
+
+  <!-- 订单信息卡片 -->
+  <view class="order-card">
+    <view class="card-header">
+      <text class="card-title">📦 订单信息</text>
+    </view>
+    
+    <view class="order-info">
+      <view class="info-row">
+        <text class="label">订单编号</text>
+        <text class="value">{{orderNo}}</text>
+      </view>
+      <view class="info-row">
+        <text class="label">商品数量</text>
+        <text class="value">{{itemCount}} 件</text>
+      </view>
+      <view class="info-row">
+        <text class="label">订单金额</text>
+        <text class="value amount">¥{{orderAmount}}</text>
+      </view>
+      <view wx:if="{{discountAmount > 0}}" class="info-row discount">
+        <text class="label">优惠金额</text>
+        <text class="value">-¥{{discountAmount}}</text>
+      </view>
+    </view>
+
+    <!-- 应付金额 -->
+    <view class="total-amount">
+      <text class="total-label">应付金额</text>
+      <view class="total-value">
+        <text class="currency">¥</text>
+        <text class="amount-number">{{totalAmount}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 支付方式选择 -->
+  <view class="payment-methods">
+    <view class="section-title">
+      <text>💳 支付方式</text>
+    </view>
+    
+    <view 
+      class="method-item {{selectedMethod === 'WECHAT' ? 'selected' : ''}}"
+      bindtap="onSelectMethod"
+      data-method="WECHAT"
+    >
+      <view class="method-left">
+        <text class="method-icon-text">💚</text>
+        <text class="method-name">微信支付</text>
+      </view>
+      <view class="method-right">
+        <view wx:if="{{selectedMethod === 'WECHAT'}}" class="check-icon">✓</view>
+      </view>
+    </view>
+
+    <!-- 预留其他支付方式 -->
+    <!-- <view 
+      class="method-item {{selectedMethod === 'ALIPAY' ? 'selected' : ''}}"
+      bindtap="onSelectMethod"
+      data-method="ALIPAY"
+    >
+      <view class="method-left">
+        <image class="method-icon" src="/images/icon-alipay.png" mode="aspectFit"></image>
+        <text class="method-name">支付宝支付</text>
+      </view>
+      <view class="method-right">
+        <view wx:if="{{selectedMethod === 'ALIPAY'}}" class="check-icon">✓</view>
+      </view>
+    </view> -->
+  </view>
+
+  <!-- 支付协议 -->
+  <view class="payment-agreement">
+    <checkbox-group bindchange="onAgreementChange">
+      <label class="agreement-label">
+        <checkbox value="agree" checked="{{agreed}}" color="#FF6B9D"/>
+        <text class="agreement-text">
+          我已阅读并同意
+          <text class="link" bindtap="onViewAgreement" catchtap="onViewAgreement">《支付协议》</text>
+        </text>
+      </label>
+    </checkbox-group>
+  </view>
+
+  <!-- 支付按钮 -->
+  <view class="payment-footer">
+    <button 
+      class="pay-btn {{!agreed || loading ? 'disabled' : ''}}" 
+      bindtap="onPay"
+      disabled="{{!agreed || loading}}"
+      loading="{{loading}}"
+    >
+      <text wx:if="{{!loading}}">确认支付 ¥{{totalAmount}}</text>
+      <text wx:else>处理中...</text>
+    </button>
+  </view>
+
+  <!-- 安全提示 -->
+  <view class="security-tips">
+    <text class="tip-icon">🔒</text>
+    <text class="tip-text">您的支付信息已加密，请放心支付</text>
+  </view>
+</view>

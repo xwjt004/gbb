@@ -1,0 +1,173 @@
+<!--pages/booking/confirm/confirm.wxml-->
+<view class="container">
+  <!-- 顶部导航栏 -->
+  <view class="navbar">
+    <view class="navbar-back" bindtap="goBack">
+      <text class="iconfont icon-back">‹</text>
+    </view>
+    <view class="navbar-title">确认预约</view>
+    <view class="navbar-placeholder"></view>
+  </view>
+
+  <scroll-view class="content" scroll-y wx:if="{{bookingData}}">
+    <!-- 预约信息卡片 -->
+    <view class="info-card">
+      <view class="card-header">
+        <text class="header-icon">📋</text>
+        <text class="header-title">预约信息</text>
+      </view>
+      
+      <view class="info-item">
+        <view class="item-label">套系名称</view>
+        <view class="item-value">{{bookingData.packageInfo.name}}</view>
+      </view>
+      
+      <view class="info-item">
+        <view class="item-label">预约日期</view>
+        <view class="item-value">{{bookingData.dateDisplay}} {{bookingData.weekDay}}</view>
+      </view>
+      
+      <view class="info-item">
+        <view class="item-label">预约时间</view>
+        <view class="item-value">{{bookingData.slotInfo.startTime}} - {{bookingData.slotInfo.endTime}}</view>
+      </view>
+      
+      <view class="info-item">
+        <view class="item-label">服务时长</view>
+        <view class="item-value">约{{bookingData.packageInfo.duration}}分钟</view>
+      </view>
+      
+      <view class="info-item">
+        <view class="item-label">儿童数量</view>
+        <view class="item-value">{{bookingData.childrenCount}}位</view>
+      </view>
+    </view>
+
+    <!-- 联系人信息 -->
+    <view class="info-card">
+      <view class="card-header">
+        <text class="header-icon">👤</text>
+        <text class="header-title">联系人信息</text>
+      </view>
+      
+      <view class="info-item">
+        <view class="item-label">联系人</view>
+        <view class="item-value">{{bookingData.contactName}}</view>
+      </view>
+      
+      <view class="info-item">
+        <view class="item-label">联系电话</view>
+        <view class="item-value">{{bookingData.contactPhone}}</view>
+      </view>
+      
+      <view class="info-item" wx:if="{{bookingData.notes}}">
+        <view class="item-label">备注信息</view>
+        <view class="item-value notes">{{bookingData.notes}}</view>
+      </view>
+    </view>
+
+    <!-- 价格明细 -->
+    <view class="info-card">
+      <view class="card-header">
+        <text class="header-icon">💰</text>
+        <text class="header-title">价格明细</text>
+      </view>
+      
+      <view class="price-item">
+        <view class="price-label">套系价格</view>
+        <view class="price-value">¥{{bookingData.packageInfo.price}}</view>
+      </view>
+      
+      <view class="price-item">
+        <view class="price-label">定金金额</view>
+        <view class="price-value deposit">￥{{bookingData.packageInfo.depositAmount}}</view>
+      </view>
+      
+      <view class="price-divider"></view>
+      
+      <view class="price-item total">
+        <view class="price-label">应付金额</view>
+        <view class="price-value highlight">¥{{payAmount}}</view>
+      </view>
+    </view>
+
+    <!-- 支付方式选择 -->
+    <view class="payment-section">
+      <view class="section-title">
+        <text class="title-icon">💳</text>
+        <text>选择支付方式</text>
+      </view>
+      
+      <view class="payment-options">
+        <view 
+          class="payment-option {{paymentType === 'deposit' ? 'selected' : ''}}"
+          data-type="deposit"
+          bindtap="selectPaymentType"
+        >
+          <view class="option-header">
+            <view class="option-title">定金支付</view>
+            <view class="option-radio">
+              <view class="radio-inner" wx:if="{{paymentType === 'deposit'}}"></view>
+            </view>
+          </view>
+          <view class="option-desc">先付定金 ¥{{bookingData.packageInfo.depositAmount}}，到店后补齐余款</view>
+          <view class="option-tag recommended">推荐</view>
+        </view>
+        
+        <view 
+          class="payment-option {{paymentType === 'full' ? 'selected' : ''}}"
+          data-type="full"
+          bindtap="selectPaymentType"
+        >
+          <view class="option-header">
+            <view class="option-title">全款支付</view>
+            <view class="option-radio">
+              <view class="radio-inner" wx:if="{{paymentType === 'full'}}"></view>
+            </view>
+          </view>
+          <view class="option-desc">一次性支付全款 ¥{{bookingData.packageInfo.price}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 注意事项 -->
+    <view class="notice-section">
+      <view class="notice-title">
+        <text class="notice-icon">⚠️</text>
+        <text>预约须知</text>
+      </view>
+      <view class="notice-content">
+        <view class="notice-item">1. 请提前10分钟到店，以便做好拍摄准备</view>
+        <view class="notice-item">2. 如需改期或取消，请提前24小时联系客服</view>
+        <view class="notice-item">3. 定金支付后，到店时需补齐余款</view>
+        <view class="notice-item">4. 全款支付后如需退款，将按照退款政策执行</view>
+        <view class="notice-item">5. 拍摄当天请保持儿童良好的精神状态</view>
+      </view>
+    </view>
+
+    <!-- 底部占位 -->
+    <view class="bottom-placeholder"></view>
+  </scroll-view>
+
+  <!-- 底部操作栏 -->
+  <view class="footer">
+    <view class="footer-left">
+      <view class="contact-service" bindtap="contactService">
+        <text class="service-icon">📞</text>
+        <text class="service-text">客服</text>
+      </view>
+      <view class="total-info">
+        <view class="total-label">实付</view>
+        <view class="total-amount">¥{{payAmount}}</view>
+      </view>
+    </view>
+    <button 
+      class="submit-btn {{submitting ? 'disabled' : ''}}" 
+      bindtap="submitOrder"
+      disabled="{{submitting}}"
+      loading="{{submitting}}"
+    >
+      {{submitting ? '提交中...' : '确认支付'}}
+    </button>
+  </view>
+</view>

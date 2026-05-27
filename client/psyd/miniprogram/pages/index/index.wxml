@@ -1,0 +1,102 @@
+<!-- 商城首页 -->
+<view class="home-page">
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="loading-container">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 首页内容 -->
+  <scroll-view wx:else scroll-y class="scroll-container" enable-back-to-top>
+    <!-- 轮播图 -->
+    <swiper 
+      wx:if="{{banners.length > 0}}"
+      class="banner-swiper" 
+      indicator-dots 
+      autoplay 
+      circular
+      indicator-color="rgba(255,255,255,0.5)"
+      indicator-active-color="#667eea"
+    >
+      <swiper-item wx:for="{{banners}}" wx:key="id">
+        <image src="{{item.image}}" mode="aspectFill" class="banner-image" />
+      </swiper-item>
+    </swiper>
+
+    <!-- 四大分类导航 -->
+    <view class="category-nav-new">
+      <view class="category-item-new" bindtap="goToPackage">
+        <view class="category-icon-new">📸</view>
+        <text class="category-name-new">套系</text>
+      </view>
+      <view class="category-item-new" bindtap="goToDiyPackage">
+        <view class="category-icon-new">✨</view>
+        <text class="category-name-new">DIY套系</text>
+      </view>
+      <view class="category-item-new" bindtap="goToProduct">
+        <view class="category-icon-new">🎁</view>
+        <text class="category-name-new">商品</text>
+      </view>
+      <view class="category-item-new" bindtap="goToService">
+        <view class="category-icon-new">🔧</view>
+        <text class="category-name-new">服务</text>
+      </view>
+    </view>
+
+    <!-- 热门套系 -->
+    <view wx:if="{{hotPackages.length > 0}}" class="section">
+      <view class="section-header">
+        <text class="section-title">🔥 热门套系</text>
+        <text class="section-more" bindtap="viewMorePackages">更多 →</text>
+      </view>
+      <view class="package-list">
+        <view 
+          wx:for="{{hotPackages}}" 
+          wx:key="id" 
+          class="package-card"
+          data-id="{{item.id}}"
+          bindtap="viewPackageDetail"
+        >
+          <image src="{{item.images?.[0] || '/images/placeholder.png'}}" mode="aspectFill" class="package-image" />
+          <view class="package-info">
+            <text class="package-name">{{item.name}}</text>
+            <view class="package-meta">
+              <text class="package-price">¥{{item.price}}</text>
+              <text class="package-sales">已售{{item.salesVolume || 0}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 推荐商品 -->
+    <view wx:if="{{recommendProducts.length > 0}}" class="section">
+      <view class="section-header">
+        <text class="section-title">✨ 精选商品</text>
+        <text class="section-more" bindtap="viewMoreProducts">更多 →</text>
+      </view>
+      <view class="product-grid">
+        <view 
+          wx:for="{{recommendProducts}}" 
+          wx:key="id" 
+          class="product-card"
+          data-id="{{item.id}}"
+          bindtap="viewProductDetail"
+        >
+          <image src="{{item.images?.[0] || '/images/placeholder.png'}}" mode="aspectFill" class="product-image" />
+          <view class="product-info">
+            <text class="product-name">{{item.name}}</text>
+            <view class="product-price-row">
+              <text class="product-price">¥{{item.price}}</text>
+              <text wx:if="{{item.marketPrice > item.salePrice}}" class="product-original-price">¥{{item.marketPrice}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:if="{{!loading && hotPackages.length === 0 && recommendProducts.length === 0}}" class="empty-container">
+      <text class="empty-text">暂无商品</text>
+    </view>
+  </scroll-view>
+</view>

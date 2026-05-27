@@ -1,0 +1,303 @@
+/* pages/booking/info/info.wxss */
+
+page {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+}
+
+.container {
+  padding-bottom: 180rpx;
+}
+
+/* ==================== 顶部导航栏 ==================== */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 32rpx;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.08);
+}
+
+.navbar-back {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  color: #333;
+}
+
+.navbar-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.navbar-placeholder {
+  width: 60rpx;
+}
+
+/* ==================== 预约信息摘要 ==================== */
+.booking-summary {
+  margin: 24rpx 32rpx;
+  padding: 32rpx;
+  background: white;
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12rpx 0;
+}
+
+.summary-item:not(:last-child) {
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.summary-label {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.summary-value {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  text-align: right;
+  max-width: 400rpx;
+}
+
+/* ==================== 表单区域 ==================== */
+.form-container {
+  padding: 0 32rpx;
+}
+
+.form-section {
+  margin-bottom: 32rpx;
+  padding: 32rpx;
+  background: white;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 24rpx;
+  display: flex;
+  align-items: center;
+}
+
+.required {
+  color: #ff4d4f;
+  margin-right: 4rpx;
+}
+
+.optional {
+  font-size: 24rpx;
+  font-weight: normal;
+  color: #999;
+  margin-left: 8rpx;
+}
+
+.section-hint {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* ==================== 步进器 ==================== */
+.stepper-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32rpx;
+}
+
+.stepper-btn {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #07c160 0%, #05a550 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 12rpx rgba(7, 193, 96, 0.3);
+  transition: all 0.3s ease;
+}
+
+.stepper-btn:active {
+  transform: scale(0.95);
+}
+
+.stepper-btn.disabled {
+  background: #e0e0e0;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+.stepper-icon {
+  font-size: 48rpx;
+  font-weight: 600;
+  color: white;
+  line-height: 1;
+}
+
+.stepper-value {
+  font-size: 48rpx;
+  font-weight: 600;
+  color: #333;
+  min-width: 80rpx;
+  text-align: center;
+}
+
+/* ==================== 输入框 ==================== */
+.input-wrapper {
+  border: 2rpx solid #e0e0e0;
+  border-radius: 12rpx;
+  background: #fafafa;
+  transition: all 0.3s ease;
+}
+
+.input-wrapper.error {
+  border-color: #ff4d4f;
+  background: #fff5f5;
+}
+
+.form-input {
+  height: 88rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.textarea-wrapper {
+  border: 2rpx solid #e0e0e0;
+  border-radius: 12rpx;
+  background: #fafafa;
+  padding: 24rpx;
+  position: relative;
+}
+
+.form-textarea {
+  width: 100%;
+  min-height: 160rpx;
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.6;
+}
+
+.textarea-count {
+  text-align: right;
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 8rpx;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #ff4d4f;
+}
+
+.error-icon {
+  margin-right: 4rpx;
+}
+
+/* ==================== 温馨提示 ==================== */
+.tips-section {
+  margin-bottom: 32rpx;
+  padding: 32rpx;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.tips-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.tips-icon {
+  margin-right: 8rpx;
+  font-size: 32rpx;
+}
+
+.tips-content {
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.8;
+}
+
+.tip-item {
+  margin-bottom: 12rpx;
+}
+
+.tip-item:last-child {
+  margin-bottom: 0;
+}
+
+/* ==================== 底部提交按钮 ==================== */
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  padding: 24rpx 32rpx;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.price-info {
+  flex: 1;
+}
+
+.price-label {
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 4rpx;
+}
+
+.price-value {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #ff6b6b;
+}
+
+.submit-btn {
+  flex: 1;
+  height: 88rpx;
+  background: linear-gradient(135deg, #07c160 0%, #05a550 100%);
+  color: white;
+  font-size: 32rpx;
+  font-weight: 600;
+  border-radius: 44rpx;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 24rpx rgba(7, 193, 96, 0.3);
+  transition: all 0.3s ease;
+}
+
+.submit-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 4rpx 12rpx rgba(7, 193, 96, 0.2);
+}

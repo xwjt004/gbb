@@ -1,0 +1,116 @@
+<view class="product-list-container">
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <view class="search-input-wrapper">
+      <icon type="search" size="16" color="#999" />
+      <input 
+        class="search-input" 
+        placeholder="搜索商品名称" 
+        value="{{searchKeyword}}"
+        bindinput="onSearchInput"
+        bindconfirm="onSearch"
+      />
+      <text wx:if="{{searchKeyword}}" class="clear-btn" bindtap="onSearchClear">✕</text>
+    </view>
+    <view class="sort-btn" bindtap="showSortMenu">
+      <text>排序</text>
+      <icon type="success" size="12" />
+    </view>
+  </view>
+
+  <!-- 分类筛选 - 支持换行 -->
+  <view class="category-tabs">
+    <view 
+      wx:for="{{categories}}" 
+      wx:key="value"
+      class="category-item {{activeCategory === item.value ? 'active' : ''}}"
+      data-category="{{item.value}}"
+      bindtap="onCategoryChange"
+    >
+      {{item.label}}
+    </view>
+  </view>
+
+  <!-- 商品列表 -->
+  <view class="product-list">
+    <view 
+      wx:for="{{products}}" 
+      wx:key="id"
+      class="product-card"
+      data-id="{{item.id}}"
+      bindtap="viewDetail"
+    >
+      <view class="product-image-wrapper">
+        <image 
+          class="product-image" 
+          src="{{item.thumbnail || item.images[0]}}" 
+          mode="aspectFill"
+          show-menu-by-longpress="{{true}}"
+          webp="{{true}}"
+          binderror="onImageError"
+          bindload="onImageLoad"
+        />
+        <view wx:if="{{item.stock <= 0}}" class="stock-out-badge">已售罄</view>
+      </view>
+      
+      <view class="product-info">
+        <view class="product-name">{{item.name}}</view>
+        <view class="product-desc">{{item.description}}</view>
+        
+        <view class="product-footer">
+          <view class="price-wrapper">
+            <text class="price-symbol">¥</text>
+            <text class="price-value">{{item.price}}</text>
+            <text class="sales-count">已售{{item.salesCount || 0}}</text>
+          </view>
+          
+          <view 
+            wx:if="{{item.stock > 0}}"
+            class="cart-btn"
+            data-id="{{item.id}}"
+            data-name="{{item.name}}"
+            catchtap="addToCart"
+          >
+            <icon type="success_circle" size="18" color="#667eea" />
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view wx:if="{{loading && products.length > 0}}" class="loading-more">
+    <text>加载中...</text>
+  </view>
+
+  <!-- 没有更多 -->
+  <view wx:if="{{!hasMore && products.length > 0}}" class="no-more">
+    <text>没有更多商品了</text>
+  </view>
+
+  <!-- 空状态 -->
+  <empty-state
+    wx:if="{{!loading && products.length === 0}}"
+    message="暂无商品"
+  />
+
+  <!-- 排序菜单 -->
+  <view wx:if="{{showSortMenu}}" class="sort-menu-mask" bindtap="hideSortMenu">
+    <view class="sort-menu" catchtap="doNothing">
+      <view class="sort-menu-header">
+        <text class="sort-menu-title">排序方式</text>
+        <text class="sort-menu-close" bindtap="hideSortMenu">✕</text>
+      </view>
+      <view 
+        wx:for="{{sortOptions}}" 
+        wx:key="value"
+        class="sort-option {{sortBy === item.value && sortOrder === item.order ? 'active' : ''}}"
+        data-sortby="{{item.value}}"
+        data-order="{{item.order}}"
+        bindtap="onSortChange"
+      >
+        {{item.label}}
+      </view>
+    </view>
+  </view>
+</view>

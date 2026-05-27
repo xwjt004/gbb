@@ -1,0 +1,145 @@
+<!--pages/booking/info/info.wxml-->
+<view class="container">
+  <!-- 顶部导航栏 -->
+  <view class="navbar">
+    <view class="navbar-back" bindtap="goBack">
+      <text class="iconfont icon-back">‹</text>
+    </view>
+    <view class="navbar-title">填写信息</view>
+    <view class="navbar-placeholder"></view>
+  </view>
+
+  <!-- 预约信息摘要 -->
+  <view class="booking-summary">
+    <view class="summary-item">
+      <view class="summary-label">套系</view>
+      <view class="summary-value">{{packageInfo.name}}</view>
+    </view>
+    <view class="summary-item">
+      <view class="summary-label">日期</view>
+      <view class="summary-value">{{dateDisplay}} {{weekDay}}</view>
+    </view>
+    <view class="summary-item">
+      <view class="summary-label">时间</view>
+      <view class="summary-value">{{slotInfo.startTime}} - {{slotInfo.endTime}}</view>
+    </view>
+  </view>
+
+  <!-- 表单区域 -->
+  <view class="form-container">
+    <!-- 儿童数量 -->
+    <view class="form-section">
+      <view class="section-title">
+        <text class="required">*</text>
+        <text>儿童数量</text>
+      </view>
+      <view class="stepper-container">
+        <view 
+          class="stepper-btn {{childrenCount <= 1 ? 'disabled' : ''}}" 
+          bindtap="decreaseChildren"
+        >
+          <text class="stepper-icon">−</text>
+        </view>
+        <view class="stepper-value">{{childrenCount}}</view>
+        <view 
+          class="stepper-btn {{childrenCount >= 10 ? 'disabled' : ''}}" 
+          bindtap="increaseChildren"
+        >
+          <text class="stepper-icon">+</text>
+        </view>
+      </view>
+      <view class="section-hint">请选择参加拍摄的儿童人数</view>
+    </view>
+
+    <!-- 联系人姓名 -->
+    <view class="form-section">
+      <view class="section-title">
+        <text class="required">*</text>
+        <text>联系人姓名</text>
+      </view>
+      <view class="input-wrapper {{nameError ? 'error' : ''}}">
+        <input 
+          class="form-input"
+          type="text"
+          placeholder="请输入联系人姓名"
+          value="{{contactName}}"
+          bindinput="onNameInput"
+          bindblur="onNameBlur"
+          maxlength="20"
+        />
+      </view>
+      <view class="error-message" wx:if="{{nameError}}">
+        <text class="error-icon">⚠</text>
+        <text>{{nameError}}</text>
+      </view>
+    </view>
+
+    <!-- 联系电话 -->
+    <view class="form-section">
+      <view class="section-title">
+        <text class="required">*</text>
+        <text>联系电话</text>
+      </view>
+      <view class="input-wrapper {{phoneError ? 'error' : ''}}">
+        <input 
+          class="form-input"
+          type="number"
+          placeholder="请输入联系电话"
+          value="{{contactPhone}}"
+          bindinput="onPhoneInput"
+          bindblur="onPhoneBlur"
+          maxlength="11"
+        />
+      </view>
+      <view class="error-message" wx:if="{{phoneError}}">
+        <text class="error-icon">⚠</text>
+        <text>{{phoneError}}</text>
+      </view>
+      <view class="section-hint" wx:if="{{!phoneError}}">用于接收预约确认信息</view>
+    </view>
+
+    <!-- 备注信息 -->
+    <view class="form-section">
+      <view class="section-title">
+        <text>备注信息</text>
+        <text class="optional">（选填）</text>
+      </view>
+      <view class="textarea-wrapper">
+        <textarea 
+          class="form-textarea"
+          placeholder="请输入备注信息，如特殊需求、注意事项等"
+          value="{{notes}}"
+          bindinput="onNotesInput"
+          maxlength="200"
+          auto-height
+        />
+        <view class="textarea-count">{{notes.length}}/200</view>
+      </view>
+    </view>
+
+    <!-- 温馨提示 -->
+    <view class="tips-section">
+      <view class="tips-title">
+        <text class="tips-icon">💡</text>
+        <text>温馨提示</text>
+      </view>
+      <view class="tips-content">
+        <view class="tip-item">• 请提前10分钟到店，以便做好准备工作</view>
+        <view class="tip-item">• 建议儿童穿着舒适的衣物，方便更换服装</view>
+        <view class="tip-item">• 如需改期或取消，请提前24小时联系客服</view>
+        <view class="tip-item">• 拍摄当天请保持儿童充足的休息和良好的状态</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部提交按钮 -->
+  <view class="footer">
+    <view class="price-info">
+      <view class="price-label">套系价格</view>
+      <view class="price-value">¥{{packageInfo.price}}</view>
+    </view>
+    <button class="submit-btn" bindtap="submitForm">
+      下一步
+    </button>
+  </view>
+</view>

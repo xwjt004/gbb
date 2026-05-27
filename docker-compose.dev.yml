@@ -1,0 +1,103 @@
+# Docker 开发环境配置
+# 用于本地开发，支持热重载
+
+version: '3.8'
+
+services:
+  # PostgreSQL 开发环境
+  postgres:
+    image: postgres:17-alpine
+    container_name: gbb-postgres-dev
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: baby_photo_db
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./server/baby-photo-backend/backups:/backups
+    networks:
+      - gbb-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 开发环境
+  redis:
+    image: redis:7-alpine
+    container_name: gbb-redis-dev
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - gbb-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # 后端开发模式
+  backend:
+    build:
+      context: ./server/baby-photo-backend
+      dockerfile: Dockerfile
+      target: base
+    container_name: gbb-backend-dev
+    command: sh -c "npm ci && npm run start:dev"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/baby_photo_db
+      NODE_ENV: development
+      PORT: 3000
+    ports:
+      - "3000:3000"
+      - "9229:9229"  # Node.js 调试端口
+    volumes:
+      # 挂载源码以支持热重载
+      - ./server/baby-photo-backend:/app
+      - /app/node_modules
+      - /app/dist
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - gbb-network
+    restart: unless-stopped
+
+  # Prisma Studio（数据库管理）
+  prisma-studio:
+    build:
+      context: ./server/baby-photo-backend
+      dockerfile: Dockerfile
+      target: base
+    container_name: gbb-prisma-studio-dev
+    command: sh -c "npm ci && npx prisma generate && npx prisma studio --port 5555 --browser none"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/baby_photo_db
+    ports:
+      - "5555:5555"
+    volumes:
+      - ./server/baby-photo-backend:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - gbb-network
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:
+
+networks:
+  gbb-network:
+    driver: bridge

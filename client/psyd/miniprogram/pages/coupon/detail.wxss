@@ -1,0 +1,251 @@
+/* 优惠券详情页样式 */
+
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40rpx 30rpx 140rpx;
+}
+
+/* 优惠券卡片 */
+.coupon-card {
+  position: relative;
+  background: #fff;
+  border-radius: 30rpx;
+  padding: 60rpx 40rpx;
+  margin-bottom: 40rpx;
+  overflow: hidden;
+  box-shadow: 0 8rpx 30rpx rgba(0, 0, 0, 0.15);
+}
+
+.coupon-card.expired,
+.coupon-card.claimed {
+  opacity: 0.8;
+}
+
+/* 装饰背景 */
+.card-bg {
+  position: absolute;
+  top: -100rpx;
+  right: -100rpx;
+  width: 300rpx;
+  height: 300rpx;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+  border-radius: 50%;
+  opacity: 0.1;
+}
+
+/* 折扣展示 */
+.discount-section {
+  text-align: center;
+  margin-bottom: 40rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.discount-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  margin-bottom: 20rpx;
+}
+
+.discount-symbol {
+  font-size: 60rpx;
+  font-weight: bold;
+  color: #ff6b6b;
+  margin-right: 10rpx;
+}
+
+.discount-number {
+  font-size: 120rpx;
+  font-weight: bold;
+  color: #ff6b6b;
+  line-height: 1;
+}
+
+.discount-unit {
+  font-size: 60rpx;
+  font-weight: bold;
+  color: #ff6b6b;
+  margin-left: 10rpx;
+}
+
+.discount-condition {
+  font-size: 32rpx;
+  color: #666;
+  background: #f5f5f5;
+  padding: 15rpx 40rpx;
+  border-radius: 50rpx;
+  display: inline-block;
+}
+
+/* 优惠券信息 */
+.coupon-info {
+  text-align: center;
+  padding: 30rpx 0;
+  border-top: 2rpx dashed #e0e0e0;
+  border-bottom: 2rpx dashed #e0e0e0;
+  margin-bottom: 20rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.coupon-name {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.coupon-code {
+  font-size: 28rpx;
+  color: #667eea;
+  font-family: 'Courier New', monospace;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.copy-btn {
+  background: #667eea;
+  color: #fff;
+  border: none;
+  border-radius: 50rpx;
+  padding: 15rpx 40rpx;
+}
+
+/* 状态标签 */
+.status-badge {
+  position: absolute;
+  top: 30rpx;
+  right: 30rpx;
+  background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+  color: #fff;
+  padding: 15rpx 30rpx;
+  border-radius: 50rpx;
+  font-size: 24rpx;
+  font-weight: bold;
+  z-index: 2;
+}
+
+.status-badge.expired {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+}
+
+.status-badge.used {
+  background: linear-gradient(135deg, #999 0%, #bbb 100%);
+}
+
+/* 详细信息 */
+.detail-section {
+  margin-bottom: 40rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 20rpx;
+  padding-left: 20rpx;
+  border-left: 8rpx solid rgba(255, 255, 255, 0.8);
+}
+
+.info-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 40rpx;
+  margin-bottom: 40rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20rpx 0;
+  border-bottom: 2rpx solid #f5f5f5;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 28rpx;
+  color: #999;
+  flex-shrink: 0;
+  width: 180rpx;
+}
+
+.info-value {
+  font-size: 28rpx;
+  color: #333;
+  text-align: right;
+  flex: 1;
+  word-break: break-all;
+}
+
+/* 温馨提示 */
+.tips-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20rpx;
+  padding: 40rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+}
+
+.tip-item {
+  display: block;
+  font-size: 26rpx;
+  color: #666;
+  line-height: 2;
+  margin-bottom: 10rpx;
+}
+
+.tip-item:last-child {
+  margin-bottom: 0;
+}
+
+/* 底部操作按钮 */
+.footer-actions {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  padding: 20rpx 30rpx;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.action-btn {
+  width: 100%;
+  border-radius: 50rpx;
+  padding: 30rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  border: none;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+  color: #fff;
+}
+
+.action-btn.disabled {
+  background: #e0e0e0;
+  color: #999;
+}
+
+/* 加载状态 */
+.loading-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.loading-text {
+  font-size: 32rpx;
+  color: #fff;
+}

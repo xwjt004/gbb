@@ -1,0 +1,106 @@
+<!-- 支付结果页面 -->
+<view class="result-container">
+  <!-- 结果图标和文字 -->
+  <view class="result-content">
+    <!-- 成功状态 -->
+    <view wx:if="{{status === 'success'}}" class="result-success">
+      <view class="success-icon-wrapper">
+        <view class="success-icon">✓</view>
+      </view>
+      <view class="result-title">支付成功！</view>
+      <view class="result-desc">您的订单已支付成功，我们会尽快为您安排</view>
+      
+      <!-- 订单信息 -->
+      <view class="order-summary">
+        <view class="summary-item">
+          <text class="summary-label">订单编号</text>
+          <text class="summary-value">{{orderNo}}</text>
+        </view>
+        <view class="summary-item">
+          <text class="summary-label">支付金额</text>
+          <text class="summary-value amount">¥{{amount}}</text>
+        </view>
+        <view class="summary-item">
+          <text class="summary-label">支付时间</text>
+          <text class="summary-value">{{payTime}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 失败状态 -->
+    <view wx:elif="{{status === 'fail'}}" class="result-fail">
+      <view class="fail-icon-wrapper">
+        <view class="fail-icon">✕</view>
+      </view>
+      <view class="result-title fail-title">支付失败</view>
+      <view class="result-desc">{{failReason || '很抱歉，支付未成功，请重试'}}</view>
+    </view>
+
+    <!-- 处理中状态 -->
+    <view wx:elif="{{status === 'pending'}}" class="result-pending">
+      <view class="pending-icon-wrapper">
+        <view class="pending-icon">⏳</view>
+      </view>
+      <view class="result-title">支付处理中...</view>
+      <view class="result-desc">正在确认您的支付，请稍候</view>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="result-actions">
+    <!-- 成功状态按钮 -->
+    <block wx:if="{{status === 'success'}}">
+      <button class="action-btn secondary-btn" bindtap="onBackHome">
+        返回首页
+      </button>
+      <button class="action-btn primary-btn" bindtap="onViewOrder">
+        查看订单
+      </button>
+    </block>
+
+    <!-- 失败状态按钮 -->
+    <block wx:elif="{{status === 'fail'}}">
+      <button class="action-btn secondary-btn" bindtap="onBackOrder">
+        返回订单
+      </button>
+      <button class="action-btn primary-btn" bindtap="onRetryPay">
+        重新支付
+      </button>
+    </block>
+
+    <!-- 处理中按钮 -->
+    <block wx:elif="{{status === 'pending'}}">
+      <button class="action-btn secondary-btn" bindtap="onRefresh">
+        刷新状态
+      </button>
+      <button class="action-btn primary-btn" bindtap="onViewOrder">
+        查看订单
+      </button>
+    </block>
+  </view>
+
+  <!-- 温馨提示 -->
+  <view class="tips-section">
+    <view class="tips-title">💡 温馨提示</view>
+    <view class="tips-content">
+      <view wx:if="{{status === 'success'}}" class="tip-item">
+        • 我们会在1-3个工作日内与您联系确认拍摄时间
+      </view>
+      <view wx:if="{{status === 'success'}}" class="tip-item">
+        • 您可以在"我的订单"中查看订单详情和物流信息
+      </view>
+      <view wx:if="{{status === 'fail'}}" class="tip-item">
+        • 如果多次支付失败，请联系客服协助处理
+      </view>
+      <view wx:if="{{status === 'fail'}}" class="tip-item">
+        • 确保您的微信账户余额充足或绑定了有效的支付方式
+      </view>
+    </view>
+  </view>
+
+  <!-- 客服入口 -->
+  <view class="service-entry" bindtap="onContactService">
+    <text class="service-icon">💬</text>
+    <text class="service-text">联系客服</text>
+  </view>
+</view>

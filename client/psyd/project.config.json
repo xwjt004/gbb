@@ -1,0 +1,83 @@
+{
+  "description": "乖宝宝儿童影楼商城小程序",
+  "miniprogramRoot": "miniprogram/",
+  "compileType": "miniprogram",
+  "setting": {
+    "useCompilerPlugins": [
+      "typescript"
+    ],
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    },
+    "coverView": true,
+    "postcss": false,
+    "minified": false,
+    "enhance": true,
+    "showShadowRootInWxmlPanel": true,
+    "packNpmRelationList": [],
+    "ignoreUploadUnusedFiles": false,
+    "compileHotReLoad": true,
+    "skylineRenderEnable": false,
+    "es6": true,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "packNpmManually": false,
+    "minifyWXSS": false,
+    "minifyWXML": false,
+    "localPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true,
+    "disableUseStrict": false,
+    "urlCheck": false,
+    "nodeModules": true,
+    "autoAudits": false,
+    "useIsolateContext": true,
+    "useCompilerModule": false,
+    "userConfirmedUseCompilerModuleSwitch": false,
+    "userConfirmedBundleSwitch": false,
+    "checkInvalidKey": true,
+    "checkSiteMap": true,
+    "scopeDataCheck": false
+  },
+  "simulatorType": "wechat",
+  "simulatorPluginLibVersion": {},
+  "condition": {},
+  "srcMiniprogramRoot": "miniprogram/",
+  "editorSetting": {
+    "tabIndent": "insertSpaces",
+    "tabSize": 2
+  },
+  "libVersion": "3.11.2",
+  "packOptions": {
+    "ignore": [
+      {
+        "value": "node_modules/**",
+        "type": "folder"
+      },
+      {
+        "value": ".git/**",
+        "type": "folder"
+      },
+      {
+        "value": ".vscode/**",
+        "type": "folder"
+      },
+      {
+        "value": "**/*.md",
+        "type": "suffix"
+      },
+      {
+        "value": "**/*.map",
+        "type": "suffix"
+      }
+    ],
+    "include": []
+  },
+  "appid": "wx9cc0b9d42349bc3e",
+  "projectname": "baby-photo-mall",
+  "cloudfunctionRoot": ""
+}

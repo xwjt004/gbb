@@ -1,0 +1,113 @@
+<!--套系列表页-->
+<view class="container">
+  <!-- 顶部分类导航 -->
+  <view class="category-nav">
+    <scroll-view scroll-x class="category-scroll">
+      <view class="category-list">
+        <view 
+          class="category-item {{activeCategory === 0 ? 'active' : ''}}"
+          bindtap="onCategoryChange"
+          data-id="{{0}}"
+        >
+          <text>全部</text>
+        </view>
+        <view 
+          wx:for="{{categories}}" 
+          wx:key="id"
+          class="category-item {{activeCategory === item.id ? 'active' : ''}}"
+          bindtap="onCategoryChange"
+          data-id="{{item.id}}"
+        >
+          <text>{{item.name}}</text>
+        </view>
+      </view>
+    </scroll-view>
+    
+    <!-- 热门筛选按钮 -->
+    <view class="filter-btn" bindtap="onPopularToggle">
+      <text class="{{showPopular ? 'active' : ''}}">⭐ 热门</text>
+    </view>
+  </view>
+
+  <!-- 套系列表 -->
+  <view class="package-list">
+    <view 
+      wx:for="{{packages}}" 
+      wx:key="id"
+      class="package-card"
+      bindtap="goToDetail"
+      data-id="{{item.id}}"
+    >
+      <!-- 套系图片 -->
+      <view class="package-image">
+        <image 
+          src="{{item.coverImage || '/images/placeholder.png'}}" 
+          mode="aspectFit"
+          lazy-load
+        />
+        <!-- 热门标签 -->
+        <view wx:if="{{item.isPopular}}" class="popular-tag">
+          ⭐ 热门
+        </view>
+      </view>
+
+      <!-- 套系信息 -->
+      <view class="package-info">
+        <!-- 套系名称和分类 -->
+        <view class="package-header">
+          <view class="package-name">{{item.name}}</view>
+          <view wx:if="{{item.packageCategory}}" class="category-badge">
+            {{item.packageCategory.name}}
+          </view>
+        </view>
+        
+        <!-- 套系描述 -->
+        <view class="package-desc">{{item.description}}</view>
+        
+        <!-- 价格信息卡片 -->
+        <view class="price-card">
+          <view class="price-section">
+            <view class="price-label">套系价格</view>
+            <view class="price-amount">
+              <text class="price-symbol">¥</text>
+              <text class="price-number">{{item.price}}</text>
+            </view>
+          </view>
+          <view class="divider"></view>
+          <view class="deposit-section" wx:if="{{item.depositAmount}}">
+            <view class="deposit-label">预付定金</view>
+            <view class="deposit-amount">¥{{item.depositAmount}}</view>
+          </view>
+        </view>
+
+        <!-- 底部信息栏 -->
+        <view class="package-footer">
+          <view class="footer-info">
+            <text class="info-icon">👁</text>
+            <text class="info-text">{{item.salesVolume || 0}}人已购</text>
+          </view>
+          <view class="book-hint">
+            <text>立即预约</text>
+            <text class="arrow">→</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载状态 -->
+    <view wx:if="{{loading}}" class="loading">
+      <text>加载中...</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:if="{{!loading && packages.length === 0}}" class="empty">
+      <image src="/images/placeholder.png" mode="aspectFit" />
+      <text>暂无套系</text>
+    </view>
+
+    <!-- 没有更多 -->
+    <view wx:if="{{!hasMore && packages.length > 0}}" class="no-more">
+      <text>没有更多了</text>
+    </view>
+  </view>
+</view>

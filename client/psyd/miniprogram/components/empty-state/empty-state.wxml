@@ -1,0 +1,20 @@
+<!-- 空状态组件 -->
+<view class="empty-state">
+  <view wx:if="{{!image}}" class="empty-icon-wrapper">
+    <text class="empty-icon-text">📦</text>
+  </view>
+  <image 
+    wx:else
+    class="empty-image" 
+    src="{{image}}" 
+    mode="aspectFit"
+  />
+  <text class="empty-text">{{message || '暂无数据'}}</text>
+  <button 
+    wx:if="{{buttonText}}" 
+    class="empty-button" 
+    bindtap="onButtonTap"
+  >
+    {{buttonText}}
+  </button>
+</view>

@@ -1,0 +1,43 @@
+<!-- 富文本内容渲染组件 -->
+<view class="rich-content">
+  <block wx:if="{{processedBlocks && processedBlocks.length > 0}}">
+    <block wx:for="{{processedBlocks}}" wx:key="index">
+      <!-- 文本块 -->
+      <view wx:if="{{item.type === 'text'}}" class="content-block text-block">
+        <rich-text nodes="{{item.content}}"></rich-text>
+      </view>
+
+      <!-- 图片块 -->
+      <view wx:if="{{item.type === 'image'}}" class="content-block image-block">
+        <image 
+          src="{{item.url}}" 
+          mode="widthFix"
+          class="content-image"
+          show-menu-by-longpress="{{true}}"
+          bindtap="previewImage"
+          data-url="{{item.url}}"
+          data-urls="{{imageUrls}}"
+        />
+        <view wx:if="{{item.caption}}" class="caption">{{item.caption}}</view>
+      </view>
+
+      <!-- 视频块 -->
+      <view wx:if="{{item.type === 'video'}}" class="content-block video-block">
+        <video 
+          src="{{item.url}}"
+          poster="{{item.poster}}"
+          controls
+          show-center-play-btn
+          object-fit="contain"
+          class="content-video"
+        />
+        <view wx:if="{{item.caption}}" class="caption">{{item.caption}}</view>
+      </view>
+    </block>
+  </block>
+
+  <!-- 无内容时显示 -->
+  <view wx:else class="no-content">
+    <text>暂无详细介绍</text>
+  </view>
+</view>

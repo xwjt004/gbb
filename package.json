@@ -1,0 +1,23 @@
+{
+	"scripts": {
+		"test:e2e": "playwright test",
+		"test:e2e:ui": "playwright test --ui",
+		"test:e2e:debug": "playwright test --debug",
+		"test:e2e:report": "playwright show-report",
+		"seed:e2e": "node server/scripts/seed-e2e.js"
+	},
+	"devDependencies": {
+		"@playwright/test": "^1.56.1",
+		"@types/node": "^24.10.0",
+		"husky": "^9.0.0",
+		"lint-staged": "^15.0.0"
+	},
+	"lint-staged": {
+		"server/baby-photo-backend/**/*.ts": [
+			"eslint --fix"
+		],
+		"client/admin-frontend/**/*.{ts,tsx}": [
+			"eslint --fix"
+		]
+	}
+}

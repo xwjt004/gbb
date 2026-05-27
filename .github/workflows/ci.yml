@@ -1,0 +1,167 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 20
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache backend npm
+        uses: actions/cache@v4
+        with:
+          path: server/baby-photo-backend/node_modules
+          key: ${{ runner.os }}-backend-${{ hashFiles('server/baby-photo-backend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-backend-
+
+      - name: Cache frontend npm
+        uses: actions/cache@v4
+        with:
+          path: client/admin-frontend/node_modules
+          key: ${{ runner.os }}-frontend-${{ hashFiles('client/admin-frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-
+
+      - name: Install backend dependencies
+        working-directory: server/baby-photo-backend
+        run: npm ci
+
+      - name: Lint backend
+        working-directory: server/baby-photo-backend
+        run: npm run lint
+
+      - name: TypeCheck backend
+        working-directory: server/baby-photo-backend
+        run: npm run typecheck
+
+      - name: Install frontend dependencies
+        working-directory: client/admin-frontend
+        run: npm ci --legacy-peer-deps
+
+      - name: Lint frontend
+        working-directory: client/admin-frontend
+        run: npm run lint
+
+      - name: TypeCheck frontend
+        working-directory: client/admin-frontend
+        run: npm run typecheck
+
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache backend npm
+        uses: actions/cache@v4
+        with:
+          path: server/baby-photo-backend/node_modules
+          key: ${{ runner.os }}-backend-${{ hashFiles('server/baby-photo-backend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-backend-
+
+      - name: Install dependencies
+        working-directory: server/baby-photo-backend
+        run: npm ci
+
+      - name: Generate Prisma Client
+        working-directory: server/baby-photo-backend
+        run: npx prisma generate
+
+      - name: Run tests
+        working-directory: server/baby-photo-backend
+        run: npm test
+
+  test-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache frontend npm
+        uses: actions/cache@v4
+        with:
+          path: client/admin-frontend/node_modules
+          key: ${{ runner.os }}-frontend-${{ hashFiles('client/admin-frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-
+
+      - name: Install dependencies
+        working-directory: client/admin-frontend
+        run: npm ci --legacy-peer-deps
+
+      - name: Run tests
+        working-directory: client/admin-frontend
+        run: npx vitest run
+
+  build:
+    name: Build
+    needs: [lint, test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache backend npm
+        uses: actions/cache@v4
+        with:
+          path: server/baby-photo-backend/node_modules
+          key: ${{ runner.os }}-backend-${{ hashFiles('server/baby-photo-backend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-backend-
+
+      - name: Cache frontend npm
+        uses: actions/cache@v4
+        with:
+          path: client/admin-frontend/node_modules
+          key: ${{ runner.os }}-frontend-${{ hashFiles('client/admin-frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-
+
+      - name: Build backend
+        working-directory: server/baby-photo-backend
+        run: |
+          npm ci
+          npx prisma generate
+          npm run typecheck
+          npm run build
+
+      - name: Build frontend
+        working-directory: client/admin-frontend
+        run: |
+          npm ci --legacy-peer-deps
+          npm run typecheck
+          npm run build

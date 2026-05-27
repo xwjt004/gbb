@@ -1,0 +1,178 @@
+<!-- 订单确认页面 -->
+<view class="confirm-container">
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="loading-container">
+    <view class="loading-text">加载中...</view>
+  </view>
+
+  <view wx:else class="confirm-content">
+    <!-- 收货地址 -->
+    <view class="address-section" bindtap="onSelectAddress">
+      <view wx:if="{{address}}" class="address-card">
+        <view class="address-icon">📍</view>
+        <view class="address-info">
+          <view class="address-user">
+            <text class="user-name">{{address.receiverName}}</text>
+            <text class="user-phone">{{address.phone}}</text>
+          </view>
+          <view class="address-detail">
+            {{address.province}} {{address.city}} {{address.district}} {{address.detail}}
+          </view>
+        </view>
+        <view class="address-arrow">›</view>
+      </view>
+      <view wx:else class="address-empty">
+        <view class="empty-icon">+</view>
+        <view class="empty-text">请选择收货地址</view>
+        <view class="address-arrow">›</view>
+      </view>
+    </view>
+
+    <!-- 商品列表 -->
+    <view class="goods-section">
+      <view class="section-title">商品清单</view>
+      <view class="goods-list">
+        <view wx:for="{{items}}" wx:key="id" class="goods-item">
+          <image class="goods-image" src="{{item.image}}" mode="aspectFill"></image>
+          <view class="goods-info">
+            <view class="goods-name">{{item.name}}</view>
+            <view class="goods-spec">{{item.specification}}</view>
+            <view class="goods-bottom">
+              <view class="goods-price">¥{{item.price || 0}}</view>
+              <view class="goods-quantity">×{{item.quantity}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 预约信息 -->
+    <view class="appointment-section">
+      <view class="section-title">预约信息</view>
+      
+      <!-- 预约日期 -->
+      <view class="appointment-item">
+        <view class="appointment-label">预约日期</view>
+        <picker
+          mode="date"
+          value="{{appointmentDate}}"
+          start="{{today}}"
+          bindchange="onSelectDate"
+        >
+          <view class="appointment-picker">
+            <text wx:if="{{appointmentDate}}" class="appointment-value">{{appointmentDate}}</text>
+            <text wx:else class="appointment-placeholder">请选择预约日期</text>
+            <text class="arrow">›</text>
+          </view>
+        </picker>
+      </view>
+
+      <!-- 预约时间 -->
+      <view wx:if="{{appointmentDate}}" class="appointment-item">
+        <view class="appointment-label">预约时间</view>
+        <view class="timeslot-list">
+          <view
+            wx:for="{{availableTimeSlots}}"
+            wx:key="id"
+            class="timeslot-item {{selectedTimeSlot && selectedTimeSlot.id === item.id ? 'selected' : ''}}"
+            data-index="{{index}}"
+            bindtap="onSelectTimeSlot"
+          >
+            <view class="timeslot-time">{{item.startTime}} - {{item.endTime}}</view>
+            <view class="timeslot-info">
+              <text class="timeslot-available">剩余{{item.availableCount}}</text>
+              <text wx:if="{{item.isHoliday}}" class="timeslot-holiday">节假日</text>
+            </view>
+          </view>
+          <view wx:if="{{availableTimeSlots.length === 0}}" class="timeslot-empty">
+            该日期暂无可用时间段
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 配送方式 -->
+    <view class="delivery-section">
+      <view class="section-title">配送方式</view>
+      <view class="delivery-list">
+        <view
+          wx:for="{{deliveryMethods}}"
+          wx:key="value"
+          class="delivery-item {{deliveryMethod === item.value ? 'active' : ''}}"
+          data-value="{{item.value}}"
+          bindtap="onSelectDelivery"
+        >
+          <view class="delivery-radio">
+            <icon
+              class="radio-icon"
+              type="{{deliveryMethod === item.value ? 'success' : 'circle'}}"
+              size="20"
+            ></icon>
+          </view>
+          <view class="delivery-info">
+            <text class="delivery-label">{{item.label}}</text>
+            <text class="delivery-fee" wx:if="{{item.fee > 0}}">¥{{item.fee}}</text>
+            <text class="delivery-fee free" wx:else>免费</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 优惠券 - 暂时隐藏 -->
+    <!--
+    <view class="coupon-section" bindtap="onSelectCoupon">
+      <view class="coupon-label">优惠券</view>
+      <view class="coupon-value">
+        <text wx:if="{{coupon}}" class="coupon-text">-¥{{coupon.amount}}</text>
+        <text wx:elif="{{availableCoupons > 0}}" class="coupon-count">{{availableCoupons}}张可用</text>
+        <text wx:else class="coupon-none">暂无可用</text>
+      </view>
+      <view class="coupon-arrow">›</view>
+    </view>
+    -->
+
+    <!-- 订单备注 -->
+    <view class="remark-section">
+      <view class="section-title">订单备注</view>
+      <textarea
+        class="remark-input"
+        placeholder="选填，建议填写您对商品的特殊要求"
+        maxlength="200"
+        value="{{remark}}"
+        bindinput="onRemarkInput"
+      ></textarea>
+      <view class="remark-count">{{remark.length}}/200</view>
+    </view>
+
+    <!-- 价格明细 -->
+    <view class="price-section">
+      <view class="price-item">
+        <text class="price-label">商品总价</text>
+        <text class="price-value">¥{{goodsAmount || 0}}</text>
+      </view>
+      <view class="price-item">
+        <text class="price-label">运费</text>
+        <text class="price-value" wx:if="{{shippingFee > 0}}">¥{{shippingFee}}</text>
+        <text class="price-value free" wx:else>免运费</text>
+      </view>
+      <view wx:if="{{discountAmount > 0}}" class="price-item discount">
+        <text class="price-label">优惠券</text>
+        <text class="price-value">-¥{{discountAmount}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部提交栏 -->
+  <view wx:if="{{!loading}}" class="footer-bar">
+    <view class="footer-left">
+      <text class="total-label">合计：</text>
+      <text class="total-price">¥{{totalAmount || 0}}</text>
+    </view>
+    <view
+      class="submit-btn {{submitting ? 'disabled' : ''}}"
+      bindtap="onSubmit"
+    >
+      {{submitting ? '提交中...' : '提交订单'}}
+    </view>
+  </view>
+</view>

@@ -1,0 +1,141 @@
+<view class="product-detail-container">
+  <view wx:if="{{loading}}" class="loading-container">
+    <text>加载中...</text>
+  </view>
+
+  <view wx:else class="detail-content">
+    <!-- 商品图片轮播 -->
+    <view wx:if="{{product.images.length > 0}}" class="image-swiper-wrapper">
+      <swiper
+        class="image-swiper"
+        indicator-dots
+        indicator-color="rgba(255,255,255,0.5)"
+        indicator-active-color="#fff"
+        bindchange="onImageChange"
+      >
+        <swiper-item wx:for="{{product.images}}" wx:key="index">
+          <image
+            class="swiper-image"
+            src="{{item}}"
+            mode="aspectFill"
+            data-current="{{item}}"
+            bindtap="previewImage"
+          />
+        </swiper-item>
+      </swiper>
+      <view class="image-indicator">
+        {{currentImageIndex + 1}} / {{product.images.length}}
+      </view>
+    </view>
+    <view wx:else class="image-swiper-wrapper no-image">
+      <image src="/images/placeholder.png" mode="aspectFit" class="swiper-image" />
+    </view>
+
+    <!-- 商品信息 -->
+    <view class="product-info-section">
+      <view class="price-wrapper">
+        <text class="price-symbol">¥</text>
+        <text class="price-value">{{product.price}}</text>
+        <text class="price-label">价格</text>
+      </view>
+      
+      <view class="product-title">{{product.name}}</view>
+      <view class="product-subtitle">{{product.description}}</view>
+      
+      <view class="product-meta">
+        <view class="meta-item">
+          <text class="meta-label">商品编号</text>
+          <text class="meta-value">{{product.productNo}}</text>
+        </view>
+      </view>
+      
+      <!-- 库存状态和销量单独一行 -->
+      <view class="stock-sales-row">
+        <view class="stock-status">
+          <text class="stock-label">库存状态</text>
+          <text class="stock-value {{product.stock <= 0 ? 'stock-out' : 'stock-available'}}">
+            {{product.stock > 0 ? '有货' : '已售罄'}}
+          </text>
+        </view>
+        <view class="sales-info">
+          <text class="sales-label">销量</text>
+          <text class="sales-value">{{product.salesCount || 0}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 数量选择 -->
+    <view class="quantity-section">
+      <view class="section-title">购买数量</view>
+      <view class="quantity-selector">
+        <view 
+          class="quantity-btn {{quantity <= 1 ? 'disabled' : ''}}" 
+          bindtap="decreaseQuantity"
+        >
+          −
+        </view>
+        <input 
+          class="quantity-input" 
+          type="number" 
+          value="{{quantity}}"
+          bindinput="onQuantityInput"
+        />
+        <view 
+          class="quantity-btn {{quantity >= maxQuantity ? 'disabled' : ''}}" 
+          bindtap="increaseQuantity"
+        >
+          +
+        </view>
+      </view>
+    </view>
+
+    <!-- 商品详情 -->
+    <view class="detail-section">
+      <view class="section-title">商品详情</view>
+      <!-- 使用富文本组件渲染详情 -->
+      <block wx:if="{{product.detailContent}}">
+        <rich-content content="{{product.detailContent}}" />
+      </block>
+      <!-- 降级显示简单文本 -->
+      <view wx:elif="{{product.details}}" class="detail-content-text">
+        <text>{{product.details}}</text>
+      </view>
+      <!-- 无内容提示 -->
+      <view wx:else class="detail-content-text">
+        <text class="no-detail">暂无详细介绍</text>
+      </view>
+    </view>
+
+    <!-- 占位符，防止底部按钮遮挡内容 -->
+    <view class="bottom-placeholder"></view>
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view wx:if="{{!loading}}" class="bottom-bar">
+    <view class="bar-left">
+      <view class="bar-btn" bindtap="goHome">
+        <icon type="success_no_circle" size="20" />
+        <text class="bar-btn-text">首页</text>
+      </view>
+      <view class="bar-btn" bindtap="contactService">
+        <icon type="info_circle" size="20" />
+        <text class="bar-btn-text">客服</text>
+      </view>
+    </view>
+    
+    <view class="bar-right">
+      <view 
+        class="action-btn secondary" 
+        bindtap="addToCart"
+      >
+        加入购物车
+      </view>
+      <view 
+        class="action-btn primary {{product.stock <= 0 ? 'disabled' : ''}}" 
+        bindtap="buyNow"
+      >
+        立即购买
+      </view>
+    </view>
+  </view>
+</view>

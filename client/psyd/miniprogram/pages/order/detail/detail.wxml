@@ -1,0 +1,190 @@
+<!-- 订单详情页 -->
+<view class="detail-container">
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="loading-container">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 订单内容 -->
+  <scroll-view wx:else class="detail-scroll" scroll-y refresher-enabled bindrefresherrefresh="onPullDownRefresh">
+    <!-- 状态头部 -->
+    <view class="status-header" style="background: linear-gradient(135deg, {{statusColor}}, {{statusColor}}dd)">
+      <view class="status-icon">
+        <text wx:if="{{order.orderStatus === 'PENDING'}}">⏳</text>
+        <text wx:elif="{{order.orderStatus === 'CONFIRMED'}}">✅</text>
+        <text wx:elif="{{order.orderStatus === 'IN_PROGRESS'}}">📸</text>
+        <text wx:elif="{{order.orderStatus === 'COMPLETED'}}">🎉</text>
+        <text wx:elif="{{order.orderStatus === 'CANCELLED'}}">❌</text>
+        <text wx:else>📦</text>
+      </view>
+      <text class="status-text">{{orderStatusText}}</text>
+      <!-- 只在待支付、部分支付、支付失败时显示支付状态 -->
+      <text 
+        wx:if="{{order.paymentStatus === 'PENDING_PAYMENT' || order.paymentStatus === 'PARTIAL_PAID' || order.paymentStatus === 'FAILED'}}"
+        class="payment-status"
+      >
+        {{paymentStatusText}}
+      </text>
+    </view>
+
+    <!-- 状态时间线 -->
+    <view class="timeline-section">
+      <view class="timeline-title">订单进度</view>
+      <view class="timeline-list">
+        <view 
+          wx:for="{{timeline}}" 
+          wx:key="status" 
+          class="timeline-item {{index <= currentStatusIndex ? 'active' : ''}}"
+        >
+          <view class="timeline-dot">
+            <text class="timeline-icon">{{item.icon}}</text>
+          </view>
+          <view class="timeline-content">
+            <text class="timeline-label">{{item.label}}</text>
+          </view>
+          <view wx:if="{{index < timeline.length - 1}}" class="timeline-line"></view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 收货地址 -->
+    <view wx:if="{{order.shippingInfo}}" class="section address-section">
+      <view class="section-header">
+        <text class="section-title">📍 收货地址</text>
+      </view>
+      <view class="address-card">
+        <view class="address-user">
+          <text class="user-name">{{order.shippingInfo.name}}</text>
+          <text class="user-phone" bindtap="onCallPhone">{{order.shippingInfo.phone}}</text>
+        </view>
+        <view class="address-detail">
+          {{order.shippingInfo.province}} {{order.shippingInfo.city}} {{order.shippingInfo.district}} {{order.shippingInfo.detail}}
+        </view>
+      </view>
+    </view>
+
+    <!-- 商品清单 -->
+    <view class="section goods-section">
+      <view class="section-header">
+        <text class="section-title">🛍️ 商品清单</text>
+      </view>
+      <view class="goods-list">
+        <view 
+          wx:for="{{order.items}}" 
+          wx:key="id" 
+          class="goods-item"
+          bindtap="onViewProduct"
+          data-id="{{item.productId || item.packageId}}"
+          data-type="{{item.itemType}}"
+        >
+          <image 
+            class="goods-image" 
+            src="{{item.itemImage || '/images/placeholder.png'}}" 
+            mode="aspectFill"
+          ></image>
+          <view class="goods-info">
+            <view class="goods-name">{{item.itemName}}</view>
+            <view wx:if="{{item.specification}}" class="goods-spec">{{item.specification}}</view>
+            <view class="goods-bottom">
+              <view class="goods-price">¥{{item.unitPrice}}</view>
+              <view class="goods-quantity">×{{item.quantity}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 预约信息 -->
+    <view wx:if="{{order.appointmentDate}}" class="section appointment-section">
+      <view class="section-header">
+        <text class="section-title">📅 预约信息</text>
+      </view>
+      <view class="info-row">
+        <text class="info-label">预约日期</text>
+        <text class="info-value">{{order.appointmentDate}}</text>
+      </view>
+      <view wx:if="{{order.timeSlot}}" class="info-row">
+        <text class="info-label">预约时段</text>
+        <text class="info-value">{{order.timeSlot.startTime}} - {{order.timeSlot.endTime}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-label">儿童数量</text>
+        <text class="info-value">{{order.childrenCount}}位</text>
+      </view>
+    </view>
+
+    <!-- 订单信息 -->
+    <view class="section order-info-section">
+      <view class="section-header">
+        <text class="section-title">📝 订单信息</text>
+      </view>
+      <view class="info-row">
+        <text class="info-label">订单编号</text>
+        <view class="info-value-with-action">
+          <text class="info-value">{{order.orderNo}}</text>
+          <button class="copy-btn" size="mini" bindtap="onCopyOrderNo">复制</button>
+        </view>
+      </view>
+      <view class="info-row">
+        <text class="info-label">下单时间</text>
+        <text class="info-value">{{order.createdAt}}</text>
+      </view>
+      <view wx:if="{{order.customerName}}" class="info-row">
+        <text class="info-label">客户姓名</text>
+        <text class="info-value">{{order.customerName}}</text>
+      </view>
+      <view wx:if="{{order.notes}}" class="info-row">
+        <text class="info-label">订单备注</text>
+        <text class="info-value remark">{{order.notes}}</text>
+      </view>
+    </view>
+
+    <!-- 金额明细 -->
+    <view class="section amount-section">
+      <view class="section-header">
+        <text class="section-title">💰 金额明细</text>
+      </view>
+      <view class="amount-row">
+        <text class="amount-label">商品总额</text>
+        <text class="amount-value">¥{{order.totalAmount}}</text>
+      </view>
+      <view wx:if="{{order.discountAmount > 0}}" class="amount-row discount">
+        <text class="amount-label">
+          优惠金额
+          <text wx:if="{{order.coupon}}" class="coupon-name">({{order.coupon.name}})</text>
+        </text>
+        <text class="amount-value">-¥{{order.discountAmount}}</text>
+      </view>
+      <view class="amount-row total">
+        <text class="amount-label">实付金额</text>
+        <text class="amount-value primary">¥{{order.totalAmount - order.discountAmount}}</text>
+      </view>
+      <view class="amount-row">
+        <text class="amount-label">已支付</text>
+        <text class="amount-value">¥{{order.paidAmount}}</text>
+      </view>
+    </view>
+
+    <!-- 底部占位 -->
+    <view class="bottom-placeholder"></view>
+  </scroll-view>
+
+  <!-- 底部操作栏 -->
+  <view wx:if="{{!loading && order}}" class="footer-bar">
+    <view class="footer-left">
+      <button class="contact-btn" bindtap="onContactService">
+        <text class="btn-icon">💬</text>
+        <text>客服</text>
+      </button>
+    </view>
+    <view class="footer-right">
+      <button wx:if="{{canCancel}}" class="action-btn cancel-btn" bindtap="onCancelOrder">
+        取消订单
+      </button>
+      <button wx:if="{{canPay}}" class="action-btn primary-btn" bindtap="onPayOrder">
+        立即支付
+      </button>
+    </view>
+  </view>
+</view>

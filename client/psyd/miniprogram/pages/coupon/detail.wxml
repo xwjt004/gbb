@@ -1,0 +1,147 @@
+<view class="container" wx:if="{{coupon}}">
+  <!-- 优惠券卡片 -->
+  <view class="coupon-card {{coupon.isExpired ? 'expired' : ''}} {{coupon.isClaimed && !coupon.isUsed ? 'claimed' : ''}}">
+    <!-- 装饰背景 -->
+    <view class="card-bg"></view>
+    
+    <!-- 折扣展示 -->
+    <view class="discount-section">
+      <view class="discount-main">
+        <text class="discount-symbol" wx:if="{{coupon.discountType === 'FIXED'}}">¥</text>
+        <text class="discount-number" wx:if="{{coupon.discountType === 'FIXED'}}">{{coupon.discountValue}}</text>
+        <text class="discount-number" wx:else>{{coupon.discountValue * 10}}</text>
+        <text class="discount-unit" wx:if="{{coupon.discountType === 'PERCENTAGE'}}">折</text>
+      </view>
+      <text class="discount-condition" wx:if="{{coupon.minAmount}}">满 ¥{{coupon.minAmount}} 可用</text>
+      <text class="discount-condition" wx:else>无门槛使用</text>
+    </view>
+
+    <!-- 优惠券信息 -->
+    <view class="coupon-info">
+      <text class="coupon-name">{{coupon.name}}</text>
+      <text class="coupon-code">优惠码: {{coupon.code}}</text>
+      <button class="copy-btn" size="mini" bindtap="copyCouponCode">复制</button>
+    </view>
+
+    <!-- 状态标签 -->
+    <view class="status-badge" wx:if="{{coupon.isClaimed && !coupon.isUsed}}">已领取</view>
+    <view class="status-badge expired" wx:elif="{{coupon.isExpired}}">已过期</view>
+    <view class="status-badge used" wx:elif="{{coupon.isUsed}}">已使用</view>
+  </view>
+
+  <!-- 详细信息 -->
+  <view class="detail-section">
+    <view class="section-title">📋 使用说明</view>
+    
+    <view class="info-card">
+      <view class="info-item">
+        <text class="info-label">优惠券名称</text>
+        <text class="info-value">{{coupon.name}}</text>
+      </view>
+
+      <view class="info-item">
+        <text class="info-label">优惠类型</text>
+        <text class="info-value">
+          {{coupon.discountType === 'FIXED' ? '满减优惠' : '折扣优惠'}}
+        </text>
+      </view>
+
+      <view class="info-item">
+        <text class="info-label">优惠金额</text>
+        <text class="info-value" wx:if="{{coupon.discountType === 'FIXED'}}">
+          减免 ¥{{coupon.discountValue}}
+        </text>
+        <text class="info-value" wx:else>
+          享{{coupon.discountValue * 10}}折优惠
+        </text>
+      </view>
+
+      <view class="info-item" wx:if="{{coupon.minAmount}}">
+        <text class="info-label">使用门槛</text>
+        <text class="info-value">满 ¥{{coupon.minAmount}} 可用</text>
+      </view>
+
+      <view class="info-item" wx:if="{{coupon.maxDiscount}}">
+        <text class="info-label">最高优惠</text>
+        <text class="info-value">最多减 ¥{{coupon.maxDiscount}}</text>
+      </view>
+
+      <view class="info-item">
+        <text class="info-label">有效期</text>
+        <text class="info-value">{{coupon.startTime}} 至 {{coupon.endTime}}</text>
+      </view>
+
+      <view class="info-item">
+        <text class="info-label">库存数量</text>
+        <text class="info-value">
+          剩余 {{coupon.totalCount - coupon.usedCount}} / {{coupon.totalCount}}
+        </text>
+      </view>
+
+      <view class="info-item" wx:if="{{coupon.receivedAt}}">
+        <text class="info-label">领取时间</text>
+        <text class="info-value">{{coupon.receivedAt}}</text>
+      </view>
+
+      <view class="info-item" wx:if="{{coupon.usedAt}}">
+        <text class="info-label">使用时间</text>
+        <text class="info-value">{{coupon.usedAt}}</text>
+      </view>
+    </view>
+
+    <!-- 使用说明 -->
+    <view class="section-title">💡 温馨提示</view>
+    <view class="tips-card">
+      <text class="tip-item">• {{coupon.description}}</text>
+      <text class="tip-item">• 每个用户只能领取一次</text>
+      <text class="tip-item">• 优惠券不可转赠他人</text>
+      <text class="tip-item">• 使用前请确认是否在有效期内</text>
+      <text class="tip-item" wx:if="{{coupon.minAmount}}">• 订单金额需满 ¥{{coupon.minAmount}} 方可使用</text>
+      <text class="tip-item" wx:if="{{coupon.maxDiscount}}">• 单笔订单最多优惠 ¥{{coupon.maxDiscount}}</text>
+    </view>
+  </view>
+
+  <!-- 底部操作按钮 -->
+  <view class="footer-actions">
+    <button 
+      wx:if="{{!coupon.isClaimed && !coupon.isExpired && coupon.isAvailable}}"
+      class="action-btn primary" 
+      bindtap="claimCoupon"
+    >
+      立即领取
+    </button>
+    <button 
+      wx:elif="{{coupon.isClaimed && !coupon.isUsed && !coupon.isExpired}}"
+      class="action-btn primary" 
+      bindtap="useCoupon"
+    >
+      立即使用
+    </button>
+    <button 
+      wx:elif="{{coupon.isExpired}}"
+      class="action-btn disabled"
+      disabled
+    >
+      优惠券已过期
+    </button>
+    <button 
+      wx:elif="{{coupon.isUsed}}"
+      class="action-btn disabled"
+      disabled
+    >
+      优惠券已使用
+    </button>
+    <button 
+      wx:elif="{{!coupon.isAvailable}}"
+      class="action-btn disabled"
+      disabled
+    >
+      优惠券已抢光
+    </button>
+  </view>
+</view>
+
+<!-- 加载状态 -->
+<view class="loading-container" wx:if="{{loading}}">
+  <view class="loading-text">加载中...</view>
+</view>

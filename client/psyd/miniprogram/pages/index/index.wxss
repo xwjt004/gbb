@@ -1,0 +1,274 @@
+/* 商城首页样式 */
+.home-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+/* 加载状态 */
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+/* 滚动容器 */
+.scroll-container {
+  height: 100vh;
+}
+
+/* 轮播图 */
+.banner-swiper {
+  width: 100%;
+  height: 400rpx;
+}
+
+.banner-image {
+  width: 100%;
+  height: 100%;
+}
+
+/* 四大分类导航 - 新版 */
+.category-nav-new {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  background: #ffffff;
+  padding: 32rpx 16rpx;
+  margin: 16rpx;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.category-item-new {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  padding: 16rpx 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.category-item-new:active {
+  transform: scale(0.95);
+}
+
+.category-icon-new {
+  width: 100rpx;
+  height: 100rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 52rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 24rpx;
+  box-shadow: 0 6rpx 20rpx rgba(102, 126, 234, 0.35);
+  transition: all 0.3s ease;
+}
+
+.category-item-new:nth-child(2) .category-icon-new {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  box-shadow: 0 6rpx 20rpx rgba(240, 147, 251, 0.35);
+}
+
+.category-item-new:nth-child(3) .category-icon-new {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  box-shadow: 0 6rpx 20rpx rgba(79, 172, 254, 0.35);
+}
+
+.category-item-new:nth-child(4) .category-icon-new {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  box-shadow: 0 6rpx 20rpx rgba(67, 233, 123, 0.35);
+}
+
+.category-item-new:active .category-icon-new {
+  box-shadow: 0 3rpx 10rpx rgba(102, 126, 234, 0.25);
+}
+
+.category-name-new {
+  font-size: 26rpx;
+  color: #333333;
+  font-weight: 500;
+}
+
+/* 保留旧版样式作为备用 */
+.category-nav {
+  display: flex;
+  justify-content: space-around;
+  background: #fff;
+  padding: 30rpx 0;
+  margin: 20rpx 0;
+}
+
+.category-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.category-icon {
+  width: 100rpx;
+  height: 100rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
+}
+
+.category-name {
+  font-size: 24rpx;
+  color: #333;
+}
+
+/* 区块 */
+.section {
+  background: #fff;
+  margin: 20rpx 0;
+  padding: 30rpx;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.section-more {
+  font-size: 26rpx;
+  color: #667eea;
+}
+
+/* 套系列表 */
+.package-list {
+  display: flex;
+  gap: 20rpx;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.package-card {
+  display: inline-block;
+  width: 280rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.1);
+  background: #fff;
+}
+
+.package-image {
+  width: 100%;
+  height: 280rpx;
+}
+
+.package-info {
+  padding: 20rpx;
+}
+
+.package-name {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 10rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.package-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.package-price {
+  font-size: 32rpx;
+  color: #ff6b6b;
+  font-weight: bold;
+}
+
+.package-sales {
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* 商品网格 */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20rpx;
+}
+
+.product-card {
+  background: #fff;
+  border-radius: 12rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+
+.product-image {
+  width: 100%;
+  height: 300rpx;
+}
+
+.product-info {
+  padding: 20rpx;
+}
+
+.product-name {
+  font-size: 26rpx;
+  color: #333;
+  display: block;
+  margin-bottom: 10rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-price-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.product-price {
+  font-size: 30rpx;
+  color: #ff6b6b;
+  font-weight: bold;
+}
+
+.product-original-price {
+  font-size: 24rpx;
+  color: #999;
+  text-decoration: line-through;
+}
+
+/* 空状态 */
+.empty-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 100rpx 0;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: #999;
+}

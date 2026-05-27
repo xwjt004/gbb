@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "选购商品",
+  "enablePullDownRefresh": true,
+  "backgroundColor": "#f5f5f5",
+  "usingComponents": {
+    "empty-state": "/components/empty-state/empty-state"
+  }
+}
