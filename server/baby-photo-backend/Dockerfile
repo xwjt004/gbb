@@ -13,7 +13,7 @@ EXPOSE 3000
 # ===== Stage 2: builder (编译构建) =====
 FROM base AS builder
 ENV NODE_OPTIONS="--max-old-space-size=2048"
-RUN npx prisma generate && npm run build
+RUN npx prisma generate && npx tsc
 
 # ===== Stage 3: runner (生产运行) =====
 FROM node:20-alpine AS runner
