@@ -99,8 +99,8 @@
           <!-- 预约信息 -->
           <view class="appointment-info">
             <view class="info-row">
-              <text class="label">📸 预约类型:</text>
-              <text class="value">{{item.type}}</text>
+              <text class="label">📸 套系名称:</text>
+              <text class="value">{{item.packageName}}</text>
             </view>
             <view class="info-row">
               <text class="label">📅 预约日期:</text>
@@ -109,6 +109,10 @@
             <view class="info-row">
               <text class="label">⏰ 预约时段:</text>
               <text class="value highlight">{{item.timeSlot}}</text>
+            </view>
+            <view class="info-row">
+              <text class="label">👶 拍摄人数:</text>
+              <text class="value">{{item.childrenCount}}人</text>
             </view>
             <view class="info-row" wx:if="{{item.customerName}}">
               <text class="label">👤 客户姓名:</text>

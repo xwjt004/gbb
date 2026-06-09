@@ -87,6 +87,8 @@ export class OrderTimeoutScheduler {
         appointmentDate: { gte: yesterday, lt: today },
         checkinStatus: 'PENDING',
         orderStatus: { notIn: ['CANCELLED', 'REJECTED'] },
+        // 排除已支付订单 — 已付款客户不能自动标记缺席，需人工确认
+        paymentStatus: { notIn: ['FULLY_PAID', 'PARTIAL_PAID'] },
       },
       include: { timeSlot: true },
     });

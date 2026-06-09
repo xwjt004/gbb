@@ -101,9 +101,18 @@ export class WxUserService {
       throw new NotFoundException('客户不存在');
     }
 
+    // 转换日期字段：YYYY-MM-DD → Date 对象，Prisma DateTime 需要完整时间
+    const data: any = { ...dto };
+    if (typeof data.hundredDaysDate === 'string' && data.hundredDaysDate.length === 10) {
+      data.hundredDaysDate = new Date(data.hundredDaysDate + 'T00:00:00.000Z');
+    }
+    if (typeof data.firstBirthdayDate === 'string' && data.firstBirthdayDate.length === 10) {
+      data.firstBirthdayDate = new Date(data.firstBirthdayDate + 'T00:00:00.000Z');
+    }
+
     const updated = await this.prisma.wxUser.update({
       where: { id },
-      data: dto as any,
+      data,
     });
 
     return { code: 200, message: '更新成功', data: updated };

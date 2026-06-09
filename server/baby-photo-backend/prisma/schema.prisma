@@ -123,6 +123,7 @@ model Package {
   packageProducts   PackageProduct[]
   packageServices   PackageService[]
   packageCategory   PackageCategory? @relation(fields: [categoryId], references: [id])
+  favorites         UserFavorite[]
 
   @@index([categoryId])
   @@index([packageType])
@@ -458,6 +459,7 @@ model Product {
   outboundItems   StockOutboundItem[]
   transactions    StockTransaction[]
   transfers       StockTransfer[]
+  favorites       UserFavorite[]
 
   @@index([categoryId])
   @@index([productNo])
@@ -802,6 +804,8 @@ model ShopInfo {
   telephone       String?  @db.VarChar(50)
   shopPhoto       String?  @map("shop_photo")
   locationMap     String?  @map("location_map")
+  latitude        Decimal? @map("latitude") @db.Decimal(10, 7)
+  longitude       Decimal? @map("longitude") @db.Decimal(10, 7)
   businessScope   String?  @map("business_scope")
   wechatId        String?  @map("wechat_id") @db.VarChar(100)
   douyinId        String?  @map("douyin_id") @db.VarChar(100)
@@ -810,6 +814,8 @@ model ShopInfo {
   businessLicense String?  @map("business_license") @db.VarChar(100)
   businessHours   String?  @map("business_hours") @db.VarChar(200)
   description     String?
+  banners         Json?    @map("banners")
+  bannerInterval  Int?     @default(4000) @map("banner_interval")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
@@ -1197,6 +1203,7 @@ model WxUser {
   coupons        UserCoupon[]
   complaints     Complaint[]
   linkedUser     User?             @relation(fields: [linkedUserId], references: [id])
+  favorites      UserFavorite[]
 
   @@index([openid])
   @@index([phone])
@@ -1205,6 +1212,25 @@ model WxUser {
   @@index([churnStatus])
   @@index([lastOrderAt])
   @@map("wx_users")
+}
+
+model UserFavorite {
+  id          String   @id @default(uuid())
+  wxUserId    String   @map("wx_user_id")
+  packageId   Int?     @map("package_id")
+  productId   Int?     @map("product_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  wxUser   WxUser   @relation(fields: [wxUserId], references: [id], onDelete: Cascade)
+  package  Package? @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  product  Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([wxUserId, packageId])
+  @@unique([wxUserId, productId])
+  @@index([wxUserId])
+  @@index([packageId])
+  @@index([productId])
+  @@map("user_favorites")
 }
 
 model CartItem {

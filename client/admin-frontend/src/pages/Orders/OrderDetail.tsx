@@ -925,15 +925,8 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     if (!raw) return '';
     // 若已是完整URL
     if (/^https?:\/\//.test(raw)) return raw;
-    // 解析后端基址
-    const rawApi = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
-    let baseOrigin: string;
-    try {
-      const u = new URL(rawApi.startsWith('http') ? rawApi : `http://localhost:3000${rawApi}`);
-      baseOrigin = `${u.protocol}//${u.hostname}${u.port ? ':'+u.port : ''}`;
-    } catch {
-      baseOrigin = 'http://localhost:3000';
-    }
+    // 使用当前页面 origin（nginx 反向代理会自动转发到后端）
+    const baseOrigin = window.location.origin;
     // 规范路径前缀
     if (raw.startsWith('/uploads/')) return baseOrigin + raw;
     if (raw.includes('/uploads/')) {
@@ -973,6 +966,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     const statusMap = {
       'PENDING_PAYMENT': '待支付',
       'PARTIAL_PAID': '部分支付',
+      'FULLY_PAID': '已支付',
       'PAID': '已支付',
       'FAILED': '支付失败',
       'REFUNDING': '退款中',
@@ -989,6 +983,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     const classMap: Record<string, string> = {
       'PENDING_PAYMENT': 'status-warning',
       'PARTIAL_PAID': 'status-info',
+      'FULLY_PAID': 'status-success',
       'PAID': 'status-success',
       'FAILED': 'status-error',
       'REFUNDING': 'status-warning',
@@ -1194,8 +1189,11 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
               const paymentStatus = (order as any).paymentStatus;
               const paymentConfig: { [key: string]: { color: string; text: string } } = {
                 'PENDING': { color: 'orange', text: '待支付' },
+                'PENDING_PAYMENT': { color: 'orange', text: '待支付' },
                 'PROCESSING': { color: 'blue', text: '处理中' },
                 'PARTIAL': { color: 'gold', text: '部分支付' },
+                'PARTIAL_PAID': { color: 'gold', text: '部分支付' },
+                'FULLY_PAID': { color: 'green', text: '已支付' },
                 'PAID': { color: 'green', text: '已支付' },
                 'FAILED': { color: 'red', text: '支付失败' },
                 'CANCELLED': { color: 'default', text: '已取消' },

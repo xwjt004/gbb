@@ -158,7 +158,7 @@ const ThemedApp: React.FC = () => {
       <AntdApp>
         <NetworkMonitor />
         <ErrorBoundary>
-        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Router basename="/admin" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route

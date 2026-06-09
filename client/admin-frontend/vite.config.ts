@@ -5,6 +5,7 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  base: '/admin/',
 
   // 路径别名配置
   resolve: {
@@ -29,7 +30,7 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': {
-        target: process.env.VITE_BACKEND_URL || 'http://127.0.0.1:3000' || 'http://192.168.1.3:3001/' || 'http://192.168.16.1:3001/' , // Docker 中使用容器名，本地使用 127.0.0.1
+        target: process.env.VITE_BACKEND_URL || 'http://127.0.0.1:3000', // Docker 中使用容器名，本地使用 127.0.0.1
         changeOrigin: true,
         secure: false,
         // 移除 rewrite，保持 /api 路径不变

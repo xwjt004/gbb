@@ -1,7 +1,10 @@
-/* pages/booking/confirm/confirm.wxss */
+/* ============================================
+   流光金属 · 确认预约页
+   Luminous Metal — Booking Confirmation
+   ============================================ */
 
 page {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #fff5f7;
   height: 100vh;
 }
 
@@ -11,92 +14,171 @@ page {
   flex-direction: column;
 }
 
-/* ==================== 顶部导航栏 ==================== */
-.navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20rpx 32rpx;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.08);
-  flex-shrink: 0;
-}
-
-.navbar-back {
-  width: 60rpx;
-  height: 60rpx;
+/* ==================== 进度指示器 ==================== */
+.stepper {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 48rpx;
-  color: #333;
+  padding: 48rpx 48rpx 16rpx;
+  gap: 0;
+  flex-shrink: 0;
 }
 
-.navbar-title {
-  font-size: 36rpx;
-  font-weight: 600;
-  color: #333;
+.step-item {
+  display: flex;
+  align-items: center;
+  flex: 1;
 }
 
-.navbar-placeholder {
-  width: 60rpx;
+.step-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.step-circle {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: 700;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 2rpx solid rgba(42, 39, 36, 0.2);
+  background: #ffffff;
+  color: rgba(26, 24, 22, 0.86);
+}
+
+.step-circle.active {
+  background: linear-gradient(135deg, #ff69b4, #ff85c8);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 4rpx 24rpx rgba(255, 105, 180, 0.45);
+  transform: scale(1.08);
+}
+
+.step-circle.done {
+  background: rgba(76, 175, 132, 0.15);
+  border-color: #4caf84;
+  color: #4caf84;
+  font-size: 28rpx;
+}
+
+.step-label {
+  font-size: 20rpx;
+  color: rgba(26, 24, 22, 0.93);
+  font-weight: 500;
+  letter-spacing: 0.5rpx;
+  white-space: nowrap;
+}
+
+.step-label.active {
+  color: #ff69b4;
+}
+
+.step-label.done {
+  color: rgba(76, 175, 132, 0.7);
+}
+
+.step-line {
+  flex: 1;
+  height: 2rpx;
+  background: rgba(0, 0, 0, 0.06);
+  margin: 0 16rpx;
+  margin-bottom: 48rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+.step-line-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #ff69b4, #4caf84);
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* ==================== 内容区域 ==================== */
 .content {
   flex: 1;
-  padding: 24rpx 32rpx;
-}
-
-.bottom-placeholder {
-  height: 40rpx;
+  padding: 8rpx 28rpx 28rpx;
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ==================== 信息卡片 ==================== */
 .info-card {
-  background: white;
-  border-radius: 16rpx;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, rgba(255, 105, 180, 0.04), #ffffff);
+  backdrop-filter: blur(20rpx);
+  -webkit-backdrop-filter: blur(20rpx);
+  border: 1rpx solid rgba(255, 105, 180, 0.12);
+  border-radius: 24rpx;
+  padding: 32rpx 32rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.06), 0 2rpx 8rpx rgba(0, 0, 0, 0.03), 0 0 0 1rpx rgba(255, 105, 180, 0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.info-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4rpx;
+  height: 100%;
+  background: linear-gradient(180deg, #ff69b4, #ff9ec4);
+  border-radius: 0 2rpx 2rpx 0;
+  opacity: 0.6;
 }
 
 .card-header {
   display: flex;
   align-items: center;
-  margin-bottom: 24rpx;
+  gap: 10rpx;
+  margin-bottom: 20rpx;
   padding-bottom: 16rpx;
-  border-bottom: 2rpx solid #f0f0f0;
+  border-bottom: 1rpx solid rgba(255, 105, 180, 0.08);
 }
 
 .header-icon {
-  font-size: 36rpx;
-  margin-right: 12rpx;
+  font-size: 32rpx;
+  opacity: 0.6;
 }
 
 .header-title {
-  font-size: 32rpx;
+  font-size: 26rpx;
   font-weight: 600;
-  color: #333;
+  color: rgba(26, 24, 22, 0.93);
+  letter-spacing: 1rpx;
+  text-transform: uppercase;
 }
 
 .info-item {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 16rpx 0;
+  padding: 14rpx 0;
+}
+
+.info-item:not(:last-child) {
+  border-bottom: 1rpx solid rgba(255, 105, 180, 0.06);
 }
 
 .item-label {
-  font-size: 28rpx;
-  color: #666;
+  font-size: 26rpx;
+  color: rgba(26, 24, 22, 0.9);
   flex-shrink: 0;
-  width: 160rpx;
+  width: 140rpx;
 }
 
 .item-value {
-  font-size: 28rpx;
-  color: #333;
+  font-size: 26rpx;
+  color: #1a1816;
   font-weight: 500;
   text-align: right;
   flex: 1;
@@ -105,7 +187,7 @@ page {
 .item-value.notes {
   text-align: left;
   line-height: 1.6;
-  color: #666;
+  color: rgba(26, 24, 22, 0.9);
 }
 
 /* ==================== 价格明细 ==================== */
@@ -113,110 +195,146 @@ page {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16rpx 0;
+  padding: 14rpx 0;
 }
 
 .price-label {
-  font-size: 28rpx;
-  color: #666;
+  font-size: 26rpx;
+  color: rgba(26, 24, 22, 0.9);
 }
 
-.price-value {
-  font-size: 28rpx;
-  color: #333;
+.price-amount {
+  font-size: 26rpx;
+  color: #1a1816;
   font-weight: 500;
 }
 
-.price-value.deposit {
-  color: #ff9800;
+.price-amount.deposit {
+  color: #ff69b4;
 }
 
 .price-divider {
   height: 1rpx;
-  background: #f0f0f0;
+  background: linear-gradient(90deg, transparent, rgba(255, 105, 180, 0.15), transparent);
   margin: 16rpx 0;
 }
 
 .price-item.total {
-  padding: 20rpx 0 8rpx;
+  padding: 20rpx 0 4rpx;
 }
 
 .price-item.total .price-label {
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: 600;
-  color: #333;
+  color: rgba(26, 24, 22, 0.9);
 }
 
-.price-item.total .price-value {
-  font-size: 40rpx;
-  font-weight: 700;
+.price-amount.highlight {
+  font-size: 38rpx;
+  font-weight: 800;
+  color: #ff69b4;
+  text-shadow: 0 0 30rpx rgba(255, 105, 180, 0.15);
 }
 
-.price-value.highlight {
-  color: #ff6b6b;
-}
-
-/* ==================== 支付方式选择 ==================== */
+/* ==================== 支付方式 ==================== */
 .payment-section {
-  background: white;
-  border-radius: 16rpx;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, rgba(255, 105, 180, 0.04), #ffffff);
+  backdrop-filter: blur(20rpx);
+  -webkit-backdrop-filter: blur(20rpx);
+  border: 1rpx solid rgba(255, 105, 180, 0.12);
+  border-radius: 24rpx;
+  padding: 32rpx 32rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.06), 0 2rpx 8rpx rgba(0, 0, 0, 0.03), 0 0 0 1rpx rgba(255, 105, 180, 0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.payment-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4rpx;
+  height: 100%;
+  background: linear-gradient(180deg, #ff69b4, #ff9ec4);
+  border-radius: 0 2rpx 2rpx 0;
+  opacity: 0.5;
 }
 
 .section-title {
   display: flex;
   align-items: center;
+  gap: 10rpx;
   margin-bottom: 24rpx;
-  font-size: 32rpx;
+  font-size: 26rpx;
   font-weight: 600;
-  color: #333;
+  color: rgba(26, 24, 22, 0.93);
+  letter-spacing: 1rpx;
+  text-transform: uppercase;
 }
 
 .title-icon {
-  font-size: 36rpx;
-  margin-right: 12rpx;
+  font-size: 28rpx;
+  opacity: 0.6;
 }
 
 .payment-options {
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
+  gap: 14rpx;
 }
 
 .payment-option {
   position: relative;
-  border: 3rpx solid #e0e0e0;
-  border-radius: 12rpx;
-  padding: 24rpx;
-  background: #fafafa;
+  border: 1rpx solid rgba(255, 105, 180, 0.1);
+  border-radius: 16rpx;
+  padding: 28rpx 28rpx;
+  background: rgba(255, 255, 255, 0.8);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+}
+
+.payment-option::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4rpx;
+  height: 100%;
+  background: transparent;
   transition: all 0.3s ease;
+  border-radius: 0 2rpx 2rpx 0;
 }
 
 .payment-option.selected {
-  border-color: #07c160;
-  background: linear-gradient(135deg, #e8f5e9 0%, #f1f8f4 100%);
-  box-shadow: 0 4rpx 16rpx rgba(7, 193, 96, 0.2);
+  border-color: rgba(255, 105, 180, 0.3);
+  background: rgba(255, 105, 180, 0.06);
+  box-shadow: 0 4rpx 20rpx rgba(255, 105, 180, 0.08), 0 1rpx 4rpx rgba(0, 0, 0, 0.04);
+}
+
+.payment-option.selected::before {
+  background: linear-gradient(180deg, #ff69b4, #ff85c8);
+  box-shadow: 0 0 16rpx rgba(255, 105, 180, 0.3);
 }
 
 .option-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12rpx;
+  margin-bottom: 10rpx;
 }
 
-.option-title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #333;
+.option-left {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
 }
 
 .option-radio {
-  width: 44rpx;
-  height: 44rpx;
-  border: 3rpx solid #e0e0e0;
+  width: 40rpx;
+  height: 40rpx;
+  border: 2rpx solid rgba(0, 0, 0,0.15);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -225,87 +343,96 @@ page {
 }
 
 .payment-option.selected .option-radio {
-  border-color: #07c160;
-  background: #07c160;
+  border-color: #ff69b4;
+  background: linear-gradient(135deg, #ff69b4, #ff85c8);
 }
 
 .radio-inner {
-  width: 20rpx;
-  height: 20rpx;
-  background: white;
+  width: 16rpx;
+  height: 16rpx;
+  background: #ffffff;
   border-radius: 50%;
+  display: none;
 }
 
-.option-desc {
-  font-size: 24rpx;
-  color: #999;
-  line-height: 1.6;
+.payment-option.selected .radio-inner {
+  display: block;
+}
+
+.option-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1a1816;
 }
 
 .option-tag {
-  position: absolute;
-  top: -6rpx;
-  right: 24rpx;
   padding: 4rpx 16rpx;
   border-radius: 20rpx;
   font-size: 20rpx;
   font-weight: 600;
+  background: linear-gradient(135deg, #ff69b4, #ff85c8);
+  color: #ffffff;
+  letter-spacing: 0.5rpx;
 }
 
-.option-tag.recommended {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
-  color: white;
-  box-shadow: 0 2rpx 8rpx rgba(255, 107, 107, 0.4);
+.option-desc {
+  font-size: 24rpx;
+  color: rgba(26, 24, 22, 0.86);
+  line-height: 1.6;
+  padding-left: 52rpx;
 }
 
-/* ==================== 注意事项 ==================== */
+/* ==================== 预约须知 ==================== */
 .notice-section {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 16rpx;
-  padding: 32rpx;
+  background: linear-gradient(135deg, rgba(255, 105, 180, 0.04), #ffffff);
+  border: 1rpx solid rgba(255, 105, 180, 0.1);
+  border-radius: 20rpx;
+  padding: 28rpx 32rpx;
   margin-bottom: 24rpx;
+  box-shadow: 0 6rpx 32rpx rgba(0, 0, 0, 0.05), 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
 }
 
 .notice-title {
   display: flex;
   align-items: center;
-  margin-bottom: 20rpx;
-  font-size: 30rpx;
+  gap: 8rpx;
+  margin-bottom: 16rpx;
+  font-size: 24rpx;
   font-weight: 600;
-  color: #333;
+  color: rgba(26, 24, 22, 0.9);
+  letter-spacing: 1rpx;
+  text-transform: uppercase;
 }
 
 .notice-icon {
-  font-size: 32rpx;
-  margin-right: 8rpx;
+  font-size: 24rpx;
+  opacity: 0.5;
 }
 
 .notice-content {
-  font-size: 24rpx;
-  color: #666;
-  line-height: 2;
-}
-
-.notice-item {
-  margin-bottom: 8rpx;
+  font-size: 22rpx;
+  color: rgba(26, 24, 22, 0.78);
+  line-height: 2.2;
 }
 
 /* ==================== 底部操作栏 ==================== */
 .footer {
-  background: white;
-  padding: 24rpx 32rpx;
+  background: rgba(255, 245, 247, 0.95);
+  backdrop-filter: blur(30rpx);
+  -webkit-backdrop-filter: blur(30rpx);
+  border-top: 1rpx solid rgba(0, 0, 0,0.06);
+  padding: 24rpx 28rpx;
   padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
-  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
-  gap: 24rpx;
+  gap: 20rpx;
   flex-shrink: 0;
 }
 
 .footer-left {
   display: flex;
   align-items: center;
-  gap: 24rpx;
+  gap: 20rpx;
   flex: 1;
 }
 
@@ -313,62 +440,83 @@ page {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 4rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 12rpx;
+  background: #ffffff;
+  border: 1rpx solid rgba(0, 0, 0,0.06);
+  transition: all 0.3s ease;
+}
+
+.contact-service:active {
+  background: #ffffff;
+  transform: scale(0.96);
 }
 
 .service-icon {
-  font-size: 40rpx;
+  font-size: 36rpx;
+  opacity: 0.6;
 }
 
 .service-text {
-  font-size: 20rpx;
-  color: #666;
+  font-size: 18rpx;
+  color: rgba(26, 24, 22, 0.86);
+  font-weight: 500;
 }
 
 .total-info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2rpx;
 }
 
 .total-label {
-  font-size: 24rpx;
-  color: #999;
-  margin-bottom: 4rpx;
+  font-size: 20rpx;
+  color: rgba(26, 24, 22, 0.86);
+  font-weight: 500;
+  letter-spacing: 0.5rpx;
+  text-transform: uppercase;
 }
 
 .total-amount {
   font-size: 40rpx;
-  font-weight: 700;
-  color: #ff6b6b;
+  font-weight: 800;
+  color: #ff69b4;
+  text-shadow: 0 0 30rpx rgba(255, 105, 180, 0.1);
 }
 
 .submit-btn {
   flex: 1;
-  height: 88rpx;
-  background: linear-gradient(135deg, #07c160 0%, #05a550 100%);
-  color: white;
+  height: 96rpx;
+  background: linear-gradient(135deg, #ff69b4, #ff85c8);
+  color: #ffffff;
   font-size: 32rpx;
-  font-weight: 600;
-  border-radius: 44rpx;
+  font-weight: 700;
+  border-radius: 48rpx;
   border: none;
+  box-shadow: 0 12rpx 48rpx rgba(255, 105, 180, 0.4), 0 4rpx 16rpx rgba(255, 105, 180, 0.2);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  letter-spacing: 2rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 24rpx rgba(7, 193, 96, 0.3);
-  transition: all 0.3s ease;
+  gap: 8rpx;
 }
 
 .submit-btn:active {
-  transform: scale(0.98);
-  box-shadow: 0 4rpx 12rpx rgba(7, 193, 96, 0.2);
+  transform: translateY(2rpx) scale(0.98);
+  box-shadow: 0 6rpx 24rpx rgba(255, 105, 180, 0.3), 0 2rpx 8rpx rgba(255, 105, 180, 0.15);
 }
 
 .submit-btn.disabled {
-  background: #cccccc;
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(26, 24, 22, 0.72);
   box-shadow: none;
 }
 
 .submit-btn[disabled] {
   opacity: 1;
-  background: #cccccc;
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(26, 24, 22, 0.72);
 }

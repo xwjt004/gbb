@@ -32,9 +32,9 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import ImageUpload from '@/components/ImageUpload';
 import RichTextEditor from '@/components/RichTextEditor';
+import { formatImageUrl } from '@/utils/image';
 import productService from '@/services/products';
 import productCategoryService from '@/services/productCategories';
-import { formatImageUrl } from '@/utils/image';
 import type {
   Product,
   ProductCategory,
@@ -297,24 +297,36 @@ const ProductList: React.FC = () => {
       fixed: 'left',
       render: (images: string[]) => {
         const firstImage = images && images.length > 0 ? images[0] : null;
-        // 格式化图片 URL
         const imageUrl = firstImage ? formatImageUrl(firstImage) : null;
         return imageUrl ? (
-          <Image
-            src={imageUrl}
-            alt="商品图片"
-            width={50}
-            height={50}
-            style={{ objectFit: 'cover', borderRadius: 4 }}
-            preview={{
-              src: imageUrl,
+          <div
+            style={{
+              width: 50,
+              height: 50,
+              borderRadius: 4,
+              overflow: 'hidden',
+              display: 'inline-block',
+              background: '#f0f0f0',
+              cursor: 'pointer',
             }}
-          />
+            onClick={() => window.open(imageUrl, '_blank')}
+          >
+            <img
+              src={imageUrl}
+              alt="商品图片"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                display: 'block',
+              }}
+            />
+          </div>
         ) : (
-          <div style={{ 
-            width: 50, 
-            height: 50, 
-            background: '#f0f0f0', 
+          <div style={{
+            width: 50,
+            height: 50,
+            background: '#f0f0f0',
             borderRadius: 4,
             display: 'flex',
             alignItems: 'center',
@@ -911,7 +923,7 @@ const ProductList: React.FC = () => {
           <Form.Item
             label="商品图片"
             name="images"
-            extra="支持上传多张图片，第一张将作为缩略图展示"
+            extra="建议分辨率 800×600 px 以上，72 DPI 网页分辨率，文件大小 100KB ~ 5MB，支持 JPG/PNG。第一张将作为缩略图展示"
           >
             <ImageUpload maxCount={5} />
           </Form.Item>

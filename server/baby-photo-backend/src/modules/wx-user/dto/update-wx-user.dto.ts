@@ -3,6 +3,14 @@ import { IsOptional, IsString, IsEnum, IsNumber, IsDateString } from 'class-vali
 export class UpdateWxUserDto {
   @IsOptional()
   @IsString()
+  nickname?: string;
+
+  @IsOptional()
+  @IsString()
+  avatar?: string;
+
+  @IsOptional()
+  @IsString()
   memberLevel?: string;
 
   @IsOptional()

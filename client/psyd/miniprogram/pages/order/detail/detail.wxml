@@ -11,20 +11,20 @@
     <!-- 状态头部 -->
     <view class="status-header" style="background: linear-gradient(135deg, {{statusColor}}, {{statusColor}}dd)">
       <view class="status-icon">
-        <text wx:if="{{order.orderStatus === 'PENDING'}}">⏳</text>
+        <text wx:if="{{order.orderStatus === 'PENDING' && order.paymentStatus === 'PENDING_PAYMENT'}}">⏳</text>
+        <text wx:elif="{{order.orderStatus === 'PENDING' && (order.paymentStatus === 'FULLY_PAID' || order.paymentStatus === 'PAID')}}">✅</text>
+        <text wx:elif="{{order.orderStatus === 'PENDING' && order.paymentStatus === 'PARTIAL_PAID'}}">💰</text>
         <text wx:elif="{{order.orderStatus === 'CONFIRMED'}}">✅</text>
         <text wx:elif="{{order.orderStatus === 'IN_PROGRESS'}}">📸</text>
         <text wx:elif="{{order.orderStatus === 'COMPLETED'}}">🎉</text>
         <text wx:elif="{{order.orderStatus === 'CANCELLED'}}">❌</text>
         <text wx:else>📦</text>
       </view>
-      <text class="status-text">{{orderStatusText}}</text>
-      <!-- 只在待支付、部分支付、支付失败时显示支付状态 -->
-      <text 
-        wx:if="{{order.paymentStatus === 'PENDING_PAYMENT' || order.paymentStatus === 'PARTIAL_PAID' || order.paymentStatus === 'FAILED'}}"
-        class="payment-status"
-      >
-        {{paymentStatusText}}
+      <text class="status-text">
+        <text wx:if="{{order.orderStatus === 'PENDING' && order.paymentStatus === 'PENDING_PAYMENT'}}">等您付款哟~</text>
+        <text wx:elif="{{order.orderStatus === 'PENDING' && (order.paymentStatus === 'FULLY_PAID' || order.paymentStatus === 'PAID')}}">亲，谢谢您的全款</text>
+        <text wx:elif="{{order.orderStatus === 'PENDING' && order.paymentStatus === 'PARTIAL_PAID'}}">谢谢您的订金，亲，记得付尾款哟</text>
+        <text wx:else>{{orderStatusText}}</text>
       </text>
     </view>
 
@@ -102,7 +102,7 @@
       </view>
       <view class="info-row">
         <text class="info-label">预约日期</text>
-        <text class="info-value">{{order.appointmentDate}}</text>
+        <text class="info-value">{{order.appointmentDateDisplay}}</text>
       </view>
       <view wx:if="{{order.timeSlot}}" class="info-row">
         <text class="info-label">预约时段</text>
@@ -128,7 +128,7 @@
       </view>
       <view class="info-row">
         <text class="info-label">下单时间</text>
-        <text class="info-value">{{order.createdAt}}</text>
+        <text class="info-value">{{order.createdAtDisplay}}</text>
       </view>
       <view wx:if="{{order.customerName}}" class="info-row">
         <text class="info-label">客户姓名</text>

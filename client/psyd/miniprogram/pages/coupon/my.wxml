@@ -1,105 +1,109 @@
-<view class="container">
-  <!-- 顶部标题栏 -->
-  <view class="header">
-    <text class="page-title">我的优惠券</text>
-  </view>
+<view class="page">
+  <!-- 顶部渐变区 -->
+  <view class="header-area">
+    <view class="header-bg"></view>
+    <view class="header-content">
+      <text class="page-title">我的优惠券</text>
+      <text class="page-subtitle">共 {{total}} 张优惠券</text>
+    </view>
 
-  <!-- Tab切换 -->
-  <view class="tabs-wrapper">
+    <!-- Tab 切换 -->
     <view class="tabs">
       <view
         wx:for="{{tabs}}"
         wx:key="value"
-        class="tab-item {{activeTab === item.value ? 'active' : ''}}"
+        class="tab {{activeTab === item.value ? 'tab-active' : ''}}"
         data-tab="{{item.value}}"
         bindtap="onTabChange"
       >
-        <text class="tab-text">{{item.label}}</text>
-        <view class="tab-indicator" wx:if="{{activeTab === item.value}}"></view>
+        <text class="tab-label">{{item.label}}</text>
+        <text wx:if="{{item.count > 0}}" class="tab-count">{{item.count}}</text>
+        <view wx:if="{{activeTab === item.value}}" class="tab-line"></view>
       </view>
     </view>
   </view>
 
-  <!-- 优惠券列表 -->
-  <scroll-view class="coupon-list" scroll-y enhanced show-scrollbar="{{false}}">
+  <!-- 列表 -->
+  <scroll-view
+    scroll-y
+    class="list-scroll"
+    enhanced
+    show-scrollbar="{{false}}"
+    refresher-enabled
+    refresher-triggered="{{loading}}"
+    bindrefresherrefresh="onPullDownRefresh"
+    bindscrolltolower="onReachBottom"
+  >
+
     <!-- 优惠券卡片 -->
-    <view 
-      class="coupon-item {{item.status === 'USED' ? 'used' : ''}} {{item.status === 'EXPIRED' ? 'expired' : ''}}"
-      wx:for="{{coupons}}" 
-      wx:key="id" 
-      data-id="{{item.id}}" 
+    <view
+      wx:for="{{coupons}}"
+      wx:key="id"
+      class="coupon-card {{item.status !== 'AVAILABLE' ? 'inactive' : ''}}"
+      data-id="{{item.id}}"
       bindtap="viewDetail"
     >
-      <view class="coupon-main">
-        <!-- 左侧金额区 -->
-        <view class="amount-section">
-          <view class="amount-wrapper">
-            <text class="currency">¥</text>
-            <text class="amount" wx:if="{{item.discountType === 'FIXED'}}">{{item.discountValue}}</text>
-            <text class="amount" wx:elif="{{item.discountType === 'PERCENTAGE'}}">{{item.discountValue}}折</text>
-          </view>
-          <text class="threshold" wx:if="{{item.minAmount}}">满{{item.minAmount}}可用</text>
-          <text class="threshold" wx:else>无门槛</text>
+      <!-- 左侧金额 -->
+      <view class="coupon-left">
+        <view class="coupon-amount">
+          <text class="amount-symbol" wx:if="{{item.discountType === 'FIXED'}}">¥</text>
+          <text class="amount-value">{{item.discountType === 'FIXED' ? item.discountValue : item.discountValue + '折'}}</text>
         </view>
-
-        <!-- 分隔线 -->
-        <view class="divider">
-          <view class="circle top"></view>
-          <view class="dash-line"></view>
-          <view class="circle bottom"></view>
-        </view>
-
-        <!-- 右侧信息区 -->
-        <view class="info-section">
-          <view class="coupon-title">{{item.name}}</view>
-          <view class="coupon-subtitle">{{item.description}}</view>
-          <view class="validity">
-            <text class="validity-text">有效期至 {{item.endTime}}</text>
-          </view>
-        </view>
+        <text class="coupon-condition">
+          <text wx:if="{{item.minAmount}}">满{{item.minAmount}}可用</text>
+          <text wx:else>无门槛</text>
+        </text>
       </view>
 
-      <!-- 底部操作栏 -->
-      <view class="coupon-footer" wx:if="{{item.status === 'AVAILABLE'}}">
-        <button class="use-button" size="mini" data-id="{{item.id}}" catchtap="useCoupon">
-          立即使用
-        </button>
+      <!-- 虚线分隔 -->
+      <view class="coupon-divider">
+        <view class="dot dot-top"></view>
+        <view class="dash"></view>
+        <view class="dot dot-bottom"></view>
       </view>
 
-      <!-- 状态标签 -->
-      <view class="status-tag" wx:if="{{item.status !== 'AVAILABLE'}}">
-        <text wx:if="{{item.status === 'USED'}}">已使用</text>
-        <text wx:elif="{{item.status === 'EXPIRED'}}">已过期</text>
+      <!-- 右侧信息 -->
+      <view class="coupon-right">
+        <view class="coupon-info">
+          <text class="coupon-name">{{item.name}}</text>
+          <text class="coupon-desc">{{item.description}}</text>
+        </view>
+        <view class="coupon-bottom">
+          <text class="coupon-time">有效期至 {{item.endTime || item.expiredAt}}</text>
+          <view class="coupon-status" wx:if="{{item.status !== 'AVAILABLE'}}">
+            <text wx:if="{{item.status === 'USED'}}" class="status-used">已使用</text>
+            <text wx:elif="{{item.status === 'EXPIRED'}}" class="status-expired">已过期</text>
+          </view>
+        </view>
       </view>
     </view>
 
     <!-- 空状态 -->
-    <view class="empty-state" wx:if="{{!loading && coupons.length === 0}}">
-      <image class="empty-icon" src="/images/empty-coupon.png" mode="aspectFit"></image>
-      <text class="empty-text">暂无优惠券</text>
-      <button class="empty-button" bindtap="goToList">去领券中心</button>
+    <view wx:if="{{!loading && coupons.length === 0}}" class="empty-state">
+      <text class="empty-icon">🎫</text>
+      <text class="empty-text">{{emptyText}}</text>
+      <view class="empty-btn" bindtap="goToList">去领券</view>
     </view>
 
-    <!-- 加载状态 -->
-    <view class="loading-tip" wx:if="{{loading}}">
-      <text>加载中...</text>
+    <!-- 加载/底部提示 -->
+    <view wx:if="{{loading && coupons.length > 0}}" class="list-footer">
+      <text class="footer-text">加载中...</text>
     </view>
-
-    <!-- 底部提示 -->
-    <view class="list-footer" wx:if="{{!loading && coupons.length > 0}}">
-      <text class="footer-text">{{hasMore ? '上拉加载更多' : '已加载全部'}}</text>
+    <view wx:elif="{{!loading && coupons.length > 0 && !hasMore}}" class="list-footer">
+      <text class="footer-text">— 没有更多了 —</text>
     </view>
   </scroll-view>
 
-  <!-- 底部导航栏 -->
-  <view class="bottom-nav">
-    <view class="nav-item" bindtap="goToList">
-      <view class="nav-icon">🎁</view>
-      <text class="nav-label">领券中心</text>
+  <!-- 底部操作栏 -->
+  <view class="bottom-bar">
+    <view class="bar-item" bindtap="goToList">
+      <text class="bar-icon">🎁</text>
+      <text class="bar-label">领券中心</text>
     </view>
-    <view class="nav-item" bindtap="goToProducts">
-      <view class="nav-icon">🛍️</view>
-      <text class="nav-label">去购物</text>
+    <view class="bar-divider"></view>
+    <view class="bar-item" bindtap="goToProducts">
+      <text class="bar-icon">🛍️</text>
+      <text class="bar-label">去购物</text>
     </view>
   </view>
 </view>

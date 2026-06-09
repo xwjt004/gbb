@@ -70,14 +70,18 @@ export class TimeSlotsController {
   @Get('available')
   @ApiOperation({ summary: '获取可用时间槽' })
   @ApiQuery({ name: 'date', required: false, description: '指定日期（可选）' })
+  @ApiQuery({ name: 'startDate', required: false, description: '开始日期（与 endDate 搭配使用）' })
+  @ApiQuery({ name: 'endDate', required: false, description: '结束日期（与 startDate 搭配使用）' })
   @ApiQuery({ name: 'limit', required: false, description: '限制数量（可选）' })
   @ApiResponse({ status: 200, description: '成功获取可用时间槽' })
   findAvailable(
     @Query('date') date?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
     @Query('limit') limit?: string,
   ) {
     const limitNum = limit ? parseInt(limit, 10) : undefined;
-    return this.timeSlotsService.getAvailableSlots(date, limitNum);
+    return this.timeSlotsService.getAvailableSlots(date, limitNum, startDate, endDate);
   }
 
   @Get('statistics/overview')

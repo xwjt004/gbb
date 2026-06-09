@@ -4,8 +4,6 @@
 
 // 获取服务器基础 URL
 const getServerBaseUrl = () => {
-  // 后端端口，优先从环境变量读取
-  const backendPort = import.meta.env.VITE_BACKEND_PORT || '3000';
   // 从环境变量获取 API URL
   const apiUrl = import.meta.env.VITE_API_URL || '';
 
@@ -15,9 +13,8 @@ const getServerBaseUrl = () => {
     return `${url.protocol}//${url.host}`;
   }
 
-  // 如果是相对路径,使用当前页面的协议+域名+端口
-  const { protocol, hostname } = window.location;
-  return `${protocol}//${hostname}:${backendPort}`;
+  // 如果是相对路径,使用当前页面 origin（nginx 反向代理会自动转发到后端）
+  return window.location.origin;
 };
 
 /**

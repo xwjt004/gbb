@@ -84,14 +84,18 @@ export class ShopInfoController {
     }
 
     // 验证字段名
-    if (fieldName !== 'shopPhoto' && fieldName !== 'locationMap') {
+    if (!['shopPhoto', 'locationMap', 'banner'].includes(fieldName)) {
       throw new BadRequestException('无效的字段名称');
     }
 
     // 生成访问URL
     const fileUrl = `/uploads/shop-info/${file.filename}`;
-    
+
     this.logger.log(`上传店铺图片: ${fieldName} = ${fileUrl}`);
+
+    if (fieldName === 'banner') {
+      return { code: 200, message: '上传成功', data: { url: fileUrl } };
+    }
 
     return this.shopInfoService.uploadShopImage(
       fieldName as 'shopPhoto' | 'locationMap',

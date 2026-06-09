@@ -31,6 +31,7 @@ interface Coupon {
   id: number;
   name: string;
   amount: number;
+  discountType?: string;
 }
 
 interface TimeSlot {
@@ -262,16 +263,25 @@ Page({
    */
   async loadAvailableCoupons() {
     try {
-      // TODO: 实现优惠券模块后，获取可用优惠券数量
-      // const coupons = await request({
-      //   url: '/wx-coupon/available',
-      //   method: 'GET',
-      //   needAuth: true
-      // });
-      // this.setData({ availableCoupons: coupons.length });
+      const token = wx.getStorageSync('accessToken');
+      if (!token) return;
 
-      // 临时：使用模拟数据
-      this.setData({ availableCoupons: 0 });
+      const res: any = await new Promise((resolve, reject) => {
+        wx.request({
+          url: `${getApp().globalData.apiBaseUrl || 'http://192.168.1.3:3000/api/v1'}/wx-coupon/my?page=1&limit=1&status=AVAILABLE`,
+          method: 'GET',
+          header: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          success: resolve,
+          fail: reject
+        });
+      });
+
+      if (res.statusCode === 200) {
+        this.setData({ availableCoupons: res.data.total || 0 });
+      }
     } catch (error: any) {
       console.error('加载优惠券失败:', error);
     }
@@ -374,22 +384,10 @@ Page({
    * 选择优惠券
    */
   onSelectCoupon() {
-    if (this.data.availableCoupons === 0) {
-      wx.showToast({
-        title: '暂无可用优惠券',
-        icon: 'none'
-      });
-      return;
-    }
-
-    wx.showToast({
-      title: '优惠券功能开发中',
-      icon: 'none'
+    const goodsAmount = this.data.goodsAmount;
+    wx.navigateTo({
+      url: `/pages/coupon/select/select?amount=${goodsAmount}`
     });
-    // TODO: 跳转优惠券选择页
-    // wx.navigateTo({
-    //   url: '/pages/coupon/list?select=true'
-    // });
   },
 
   /**
@@ -481,11 +479,10 @@ Page({
       // 4. 准备订单数据
       const orderData: any = {
         shippingAddressId: this.data.address.id,
-        appointmentDate: new Date(this.data.appointmentDate).toISOString(), // 转换为ISO格式
-        timeSlotId: parseInt(String(this.data.selectedTimeSlot!.id)), // 确保是整数
+        appointmentDate: new Date(this.data.appointmentDate).toISOString(),
+        timeSlotId: parseInt(String(this.data.selectedTimeSlot!.id)),
         customerName: this.data.address.receiverName,
         customerPhone: this.data.address.phone,
-        deliveryMethod: this.data.deliveryMethod,
         notes: this.data.remark || undefined,
         childrenCount: 1,
       };

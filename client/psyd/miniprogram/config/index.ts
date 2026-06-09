@@ -22,8 +22,8 @@ const configs = {
   },
   production: {
     // 生产环境：使用服务器域名
-    baseUrl: 'https://guaibaobao.net/api/v1',
-    fallbackUrl: 'https://guaibaobao.net/api/v1',
+    baseUrl: 'https://guaibaobao.cn/api/v1',
+    fallbackUrl: 'https://guaibaobao.cn/api/v1',
   }
 };
 

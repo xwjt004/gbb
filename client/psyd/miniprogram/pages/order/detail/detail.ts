@@ -1,27 +1,37 @@
 import { request } from '../../../utils/request';
 import { getImageUrl } from '../../../utils/image';
+import { toBeijingDate } from '../../../utils/format';
 
 /**
  * 订单详情页
  * 功能：展示订单详细信息，包括状态时间线、地址、商品、预约信息、金额明细
  */
 
-// 订单状态文本映射
-const ORDER_STATUS_TEXT: Record<string, string> = {
-  'PENDING': '待确认',
-  'CONFIRMED': '已确认',
-  'IN_PROGRESS': '进行中',
-  'COMPLETED': '已完成',
-  'CANCELLED': '已取消',
-  'REFUNDED': '已退款',
-};
+// 订单状态文本映射（客户友好版）
+function getOrderStatusText(orderStatus: string, paymentStatus: string): string {
+  if ((paymentStatus === 'FULLY_PAID' || paymentStatus === 'PAID') && orderStatus === 'PENDING') {
+    return '已付款，等待商家确认';
+  }
+  const map: Record<string, string> = {
+    'PENDING': '',
+    'CONFIRMED': '商家已接单，等您和宝贝儿，大驾光临',
+    'IN_PROGRESS': '拍摄中，请您稍候。。。',
+    'COMPLETED': '订单已完成，感谢您的信任和支持！',
+    'CANCELLED': '已取消',
+    'REFUNDED': '已退款',
+  };
+  return map[orderStatus] || orderStatus;
+}
 
-// 支付状态文本映射（统一使用新格式）
+// 支付状态文本映射
 const PAYMENT_STATUS_TEXT: Record<string, string> = {
+  'PENDING': '待支付',
   'PENDING_PAYMENT': '待支付',
   'PROCESSING': '处理中',
-  'PARTIAL_PAID': '部分支付',
-  'PAID': '已支付',
+  'PARTIAL': '部分支付',
+  'PARTIAL_PAID': '已付定金',
+  'FULLY_PAID': '已付款',
+  'PAID': '已付款',
   'OVERPAID': '多收款',
   'FREE': '免费订单',
   'FAILED': '支付失败',
@@ -40,13 +50,41 @@ const STATUS_COLORS: Record<string, string> = {
   'REFUNDED': '#f44336',
 };
 
-// 订单状态流程（用于时间线展示）
-const STATUS_TIMELINE = [
-  { status: 'PENDING', label: '订单待确认', icon: '📝' },
-  { status: 'CONFIRMED', label: '订单已确认', icon: '✅' },
-  { status: 'IN_PROGRESS', label: '服务进行中', icon: '📸' },
-  { status: 'COMPLETED', label: '订单已完成', icon: '🎉' },
-];
+/**
+ * 根据支付状态获取客户友好的时间线配置
+ */
+function getTimeline(paymentStatus: string) {
+  const isPaid = paymentStatus === 'FULLY_PAID' || paymentStatus === 'PAID';
+  const isPartialPaid = paymentStatus === 'PARTIAL_PAID';
+
+  // 未支付：第一步显示"等您付款哟"
+  if (!isPaid && !isPartialPaid) {
+    return [
+      { status: 'PENDING', label: '等您付款哟~', icon: '⏳' },
+      { status: 'CONFIRMED', label: '商家已接单', icon: '✅' },
+      { status: 'IN_PROGRESS', label: '拍摄中', icon: '📸' },
+      { status: 'COMPLETED', label: '订单已完成', icon: '🎉' },
+    ];
+  }
+
+  // 已付定金
+  if (isPartialPaid) {
+    return [
+      { status: 'PENDING', label: '谢谢您的订金', icon: '💰' },
+      { status: 'CONFIRMED', label: '商家已接单', icon: '✅' },
+      { status: 'IN_PROGRESS', label: '拍摄中', icon: '📸' },
+      { status: 'COMPLETED', label: '订单已完成', icon: '🎉' },
+    ];
+  }
+
+  // 已付全款
+  return [
+    { status: 'PENDING', label: '亲，谢谢您的全款', icon: '✅' },
+    { status: 'CONFIRMED', label: '商家已接单', icon: '📋' },
+    { status: 'IN_PROGRESS', label: '拍摄中', icon: '📸' },
+    { status: 'COMPLETED', label: '订单已完成', icon: '🎉' },
+  ];
+}
 
 interface OrderDetail {
   id: string;
@@ -98,16 +136,16 @@ Page({
     orderId: '',
     order: null as OrderDetail | null,
     loading: true,
-    
+
     // 状态信息
     orderStatusText: '',
     paymentStatusText: '',
     statusColor: '',
-    
-    // 时间线
-    timeline: STATUS_TIMELINE,
+
+    // 时间线（根据支付状态动态生成）
+    timeline: getTimeline('PENDING_PAYMENT'),
     currentStatusIndex: 0,
-    
+
     // 操作按钮显示控制
     canPay: false,
     canCancel: false,
@@ -165,12 +203,13 @@ Page({
       });
       
       // 处理订单状态
-      const orderStatusText = ORDER_STATUS_TEXT[data.orderStatus] || data.orderStatus;
+      const orderStatusText = getOrderStatusText(data.orderStatus, data.paymentStatus);
       const paymentStatusText = PAYMENT_STATUS_TEXT[data.paymentStatus] || data.paymentStatus;
       const statusColor = STATUS_COLORS[data.orderStatus] || '#9e9e9e';
       
       // 计算当前状态在时间线中的位置
-      const currentStatusIndex = STATUS_TIMELINE.findIndex(
+      const timeline = getTimeline(data.paymentStatus);
+      const currentStatusIndex = timeline.findIndex(
         item => item.status === data.orderStatus
       );
       
@@ -179,13 +218,20 @@ Page({
       const canCancel = data.orderStatus === 'PENDING' || data.orderStatus === 'CONFIRMED';
       const canContact = data.orderStatus === 'IN_PROGRESS' || data.orderStatus === 'COMPLETED';
       
-      // 转换订单项中的图片 URL
+      // 转换订单项中的图片 URL，添加格式化显示字段
       const orderWithImages = {
         ...data,
         items: data.items?.map((item: any) => ({
           ...item,
           itemImage: getImageUrl(item.itemImage) || '/images/placeholder.png',
         })) || [],
+        // 北京时间格式化显示
+        appointmentDateDisplay: data.appointmentDate
+          ? toBeijingDate(data.appointmentDate, 'YYYY年MM月DD日')
+          : '',
+        createdAtDisplay: data.createdAt
+          ? toBeijingDate(data.createdAt, 'YYYY-MM-DD HH:mm')
+          : '',
       };
       
       this.setData({
@@ -193,6 +239,7 @@ Page({
         orderStatusText,
         paymentStatusText,
         statusColor,
+        timeline,
         currentStatusIndex,
         canPay,
         canCancel,
@@ -318,7 +365,7 @@ Page({
   onContactService() {
     wx.showModal({
       title: '联系客服',
-      content: '客服电话：400-123-4567\n工作时间：9:00-18:00',
+      content: '客服电话：0416-5577456\n营业时间：8:30-16:00',
       showCancel: false,
       confirmText: '拨打电话',
       success: (res) => {

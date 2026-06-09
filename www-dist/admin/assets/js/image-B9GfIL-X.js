@@ -1,0 +1,1 @@
+const s=()=>{const t="/api/v1";if(/^https?:\/\//i.test(t)){const r=new URL(t);return`${r.protocol}//${r.host}`}return window.location.origin},e=t=>t?t.startsWith("http://")||t.startsWith("https://")?t:`${s()}${t.startsWith("/")?t:`/${t}`}`:"";export{e as f};

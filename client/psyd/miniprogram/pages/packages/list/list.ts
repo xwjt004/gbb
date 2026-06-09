@@ -82,15 +82,19 @@ Page({
     try {
       this.setData({ categoriesLoading: true });
       
-      const res = await request({
+      const res = await request<any>({
         url: '/wx-mall/categories',
         method: 'GET'
       });
 
-      if (res.statusCode === 200 && res.data) {
-        const categories = res.data.data || res.data || [];
-        this.setData({ 
+      if (res && res.data) {
+        const categories = res.data || [];
+        this.setData({
           categories: categories.filter((cat: any) => cat.status === 'ACTIVE')
+        });
+      } else if (Array.isArray(res)) {
+        this.setData({
+          categories: res.filter((cat: any) => cat.status === 'ACTIVE')
         });
       }
     } catch (error) {

@@ -1,115 +1,222 @@
-/* pages/booking/info/info.wxss */
+/* ============================================
+   流光金属 · 信息填写页
+   Luminous Metal — Information Form
+   ============================================ */
 
 page {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #fff5f7;
   min-height: 100vh;
 }
 
 .container {
-  padding-bottom: 180rpx;
+  min-height: 100vh;
+  padding-bottom: 200rpx;
 }
 
-/* ==================== 顶部导航栏 ==================== */
-.navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20rpx 32rpx;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.08);
-}
-
-.navbar-back {
-  width: 60rpx;
-  height: 60rpx;
+/* ==================== 进度指示器 ==================== */
+.stepper {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 48rpx;
-  color: #333;
+  padding: 48rpx 48rpx 16rpx;
+  gap: 0;
 }
 
-.navbar-title {
-  font-size: 36rpx;
-  font-weight: 600;
-  color: #333;
+.step-item {
+  display: flex;
+  align-items: center;
+  flex: 1;
 }
 
-.navbar-placeholder {
-  width: 60rpx;
+.step-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.step-circle {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: 700;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 2rpx solid rgba(42, 39, 36, 0.2);
+  background: #ffffff;
+  color: rgba(26, 24, 22, 0.86);
+}
+
+.step-circle.active {
+  background: linear-gradient(135deg, #ff69b4, #ff85c8);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 4rpx 24rpx rgba(255, 105, 180, 0.45);
+  transform: scale(1.08);
+}
+
+.step-circle.done {
+  background: rgba(76, 175, 132, 0.15);
+  border-color: #4caf84;
+  color: #4caf84;
+  font-size: 28rpx;
+}
+
+.step-label {
+  font-size: 20rpx;
+  color: rgba(26, 24, 22, 0.93);
+  font-weight: 500;
+  letter-spacing: 0.5rpx;
+  white-space: nowrap;
+}
+
+.step-label.active {
+  color: #ff69b4;
+}
+
+.step-label.done {
+  color: rgba(76, 175, 132, 0.7);
+}
+
+.step-line {
+  flex: 1;
+  height: 2rpx;
+  background: rgba(0, 0, 0, 0.06);
+  margin: 0 16rpx;
+  margin-bottom: 48rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+.step-line-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #ff69b4, #4caf84);
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* ==================== 预约信息摘要 ==================== */
 .booking-summary {
-  margin: 24rpx 32rpx;
-  padding: 32rpx;
-  background: white;
-  border-radius: 16rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+  margin: 12rpx 28rpx 24rpx;
+  padding: 36rpx 32rpx;
+  background: #ffffff;
+  backdrop-filter: blur(20rpx);
+  -webkit-backdrop-filter: blur(20rpx);
+  border: 1rpx solid rgba(255, 105, 180, 0.15);
+  border-radius: 24rpx;
+  box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.05), 0 0 0 1rpx rgba(255, 105, 180, 0.04);
+  position: relative;
+  overflow: hidden;
 }
 
-.summary-item {
+.booking-summary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1rpx;
+  background: linear-gradient(90deg, transparent, rgba(255, 105, 180, 0.3), transparent);
+}
+
+.summary-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 12rpx 0;
+  padding: 20rpx 0;
+  gap: 24rpx;
 }
 
-.summary-item:not(:last-child) {
-  border-bottom: 1rpx solid #f0f0f0;
+.summary-row:not(:last-child) {
+  border-bottom: 1rpx solid rgba(255, 105, 180, 0.08);
+}
+
+.summary-icon {
+  width: 56rpx;
+  font-size: 44rpx;
+  text-align: center;
+  flex-shrink: 0;
+  opacity: 0.65;
+}
+
+.summary-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
 }
 
 .summary-label {
-  font-size: 28rpx;
-  color: #666;
+  font-size: 24rpx;
+  color: rgba(26, 24, 22, 0.86);
+  font-weight: 500;
+  letter-spacing: 1rpx;
+  text-transform: uppercase;
 }
 
 .summary-value {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #333;
-  text-align: right;
-  max-width: 400rpx;
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #1a1816;
+  letter-spacing: 0.5rpx;
 }
 
-/* ==================== 表单区域 ==================== */
+/* ==================== 表单容器 ==================== */
 .form-container {
-  padding: 0 32rpx;
+  padding: 0 28rpx;
 }
 
+/* ==================== 表单区块 ==================== */
 .form-section {
-  margin-bottom: 32rpx;
-  padding: 32rpx;
-  background: white;
-  border-radius: 16rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+  margin-bottom: 24rpx;
+  padding: 28rpx 28rpx;
+  background: #ffffff;
+  backdrop-filter: blur(20rpx);
+  -webkit-backdrop-filter: blur(20rpx);
+  border: 1rpx solid rgba(0, 0, 0,0.08);
+  border-radius: 20rpx;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.form-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1rpx;
+  background: linear-gradient(90deg, transparent, rgba(255, 105, 180, 0.2), transparent);
+  opacity: 0.5;
 }
 
 .section-title {
-  font-size: 32rpx;
+  font-size: 24rpx;
   font-weight: 600;
-  color: #333;
+  color: rgba(26, 24, 22, 0.93);
   margin-bottom: 24rpx;
   display: flex;
   align-items: center;
+  gap: 6rpx;
+  letter-spacing: 1rpx;
+  text-transform: uppercase;
 }
 
-.required {
-  color: #ff4d4f;
-  margin-right: 4rpx;
+.required-star {
+  color: #ff6b6b;
+  font-size: 20rpx;
 }
 
-.optional {
-  font-size: 24rpx;
-  font-weight: normal;
-  color: #999;
-  margin-left: 8rpx;
-}
-
-.section-hint {
-  margin-top: 12rpx;
-  font-size: 24rpx;
-  color: #999;
+.optional-tag {
+  font-size: 20rpx;
+  font-weight: 400;
+  color: rgba(26, 24, 22, 0.72);
+  margin-left: 4rpx;
 }
 
 /* ==================== 步进器 ==================== */
@@ -118,148 +225,217 @@ page {
   align-items: center;
   justify-content: center;
   gap: 32rpx;
+  padding: 8rpx 0;
 }
 
 .stepper-btn {
-  width: 80rpx;
-  height: 80rpx;
+  width: 76rpx;
+  height: 76rpx;
   border-radius: 50%;
-  background: linear-gradient(135deg, #07c160 0%, #05a550 100%);
+  background: #ffffff;
+  border: 1rpx solid rgba(0, 0, 0,0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4rpx 12rpx rgba(7, 193, 96, 0.3);
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .stepper-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.92);
+  background: rgba(255, 105, 180, 0.15);
+  border-color: rgba(255, 105, 180, 0.3);
 }
 
 .stepper-btn.disabled {
-  background: #e0e0e0;
-  box-shadow: none;
-  opacity: 0.6;
+  opacity: 0.25;
+  background: #ffffff;
+  border-color: rgba(0, 0, 0,0.04);
+}
+
+.stepper-btn.disabled:active {
+  transform: none;
+  background: #ffffff;
+  border-color: rgba(0, 0, 0,0.04);
 }
 
 .stepper-icon {
-  font-size: 48rpx;
-  font-weight: 600;
-  color: white;
+  font-size: 40rpx;
+  font-weight: 300;
+  color: #1a1816;
   line-height: 1;
 }
 
 .stepper-value {
   font-size: 48rpx;
-  font-weight: 600;
-  color: #333;
+  font-weight: 700;
+  color: #ff69b4;
   min-width: 80rpx;
   text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.stepper-unit {
+  font-size: 24rpx;
+  color: rgba(26, 24, 22, 0.93);
+  font-weight: 500;
+  margin-left: 8rpx;
+}
+
+.section-hint {
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  color: rgba(26, 24, 22, 0.78);
+  text-align: center;
+  letter-spacing: 0.5rpx;
 }
 
 /* ==================== 输入框 ==================== */
 .input-wrapper {
-  border: 2rpx solid #e0e0e0;
-  border-radius: 12rpx;
-  background: #fafafa;
+  border: 1rpx solid rgba(0, 0, 0,0.1);
+  border-radius: 14rpx;
+  background: #ffffff;
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.input-wrapper:focus-within {
+  border-color: rgba(255, 105, 180, 0.4);
+  background: rgba(255, 105, 180, 0.04);
+  box-shadow: 0 0 24rpx rgba(255, 105, 180, 0.06);
 }
 
 .input-wrapper.error {
-  border-color: #ff4d4f;
-  background: #fff5f5;
+  border-color: rgba(255, 107, 107, 0.3);
+  background: rgba(255, 107, 107, 0.04);
 }
 
 .form-input {
   height: 88rpx;
   padding: 0 24rpx;
-  font-size: 28rpx;
-  color: #333;
+  font-size: 30rpx;
+  color: #1a1816;
+  font-weight: 500;
+  caret-color: #ff69b4;
+}
+
+.form-input::placeholder {
+  color: rgba(26, 24, 22, 0.72);
+  font-weight: 400;
 }
 
 .textarea-wrapper {
-  border: 2rpx solid #e0e0e0;
-  border-radius: 12rpx;
-  background: #fafafa;
-  padding: 24rpx;
+  border: 1rpx solid rgba(0, 0, 0,0.1);
+  border-radius: 14rpx;
+  background: #ffffff;
+  padding: 20rpx 24rpx;
   position: relative;
+  transition: all 0.3s ease;
+}
+
+.textarea-wrapper:focus-within {
+  border-color: rgba(255, 105, 180, 0.4);
+  background: rgba(255, 105, 180, 0.04);
+  box-shadow: 0 0 24rpx rgba(255, 105, 180, 0.06);
 }
 
 .form-textarea {
   width: 100%;
-  min-height: 160rpx;
+  min-height: 140rpx;
   font-size: 28rpx;
-  color: #333;
-  line-height: 1.6;
+  color: #1a1816;
+  line-height: 1.7;
+  caret-color: #ff69b4;
+}
+
+.form-textarea::placeholder {
+  color: rgba(26, 24, 22, 0.72);
 }
 
 .textarea-count {
   text-align: right;
-  font-size: 24rpx;
-  color: #999;
+  font-size: 22rpx;
+  color: rgba(26, 24, 22, 0.72);
   margin-top: 8rpx;
 }
 
 .error-message {
   display: flex;
   align-items: center;
-  margin-top: 12rpx;
-  font-size: 24rpx;
-  color: #ff4d4f;
-}
-
-.error-icon {
-  margin-right: 4rpx;
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  color: rgba(255, 107, 107, 0.7);
+  gap: 6rpx;
 }
 
 /* ==================== 温馨提示 ==================== */
 .tips-section {
-  margin-bottom: 32rpx;
-  padding: 32rpx;
-  background: rgba(255, 255, 255, 0.95);
+  margin: 0 28rpx 24rpx;
+  padding: 28rpx 28rpx;
+  background: #ffffff;
+  border: 1rpx solid rgba(0, 0, 0,0.05);
   border-radius: 16rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 }
 
 .tips-title {
   display: flex;
   align-items: center;
+  gap: 8rpx;
   margin-bottom: 20rpx;
-  font-size: 30rpx;
+  font-size: 24rpx;
   font-weight: 600;
-  color: #333;
+  color: rgba(26, 24, 22, 0.9);
+  letter-spacing: 1rpx;
+  text-transform: uppercase;
 }
 
 .tips-icon {
-  margin-right: 8rpx;
-  font-size: 32rpx;
+  font-size: 28rpx;
+  opacity: 0.5;
 }
 
 .tips-content {
-  font-size: 26rpx;
-  color: #666;
-  line-height: 1.8;
+  font-size: 24rpx;
+  color: rgba(26, 24, 22, 0.93);
+  line-height: 2;
 }
 
 .tip-item {
-  margin-bottom: 12rpx;
+  margin-bottom: 8rpx;
+  padding-left: 20rpx;
+  position: relative;
 }
 
-.tip-item:last-child {
-  margin-bottom: 0;
+.tip-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14rpx;
+  width: 6rpx;
+  height: 6rpx;
+  border-radius: 50%;
+  background: rgba(26, 24, 22, 0.5);
 }
 
-/* ==================== 底部提交按钮 ==================== */
+/* ==================== 底部操作栏 ==================== */
 .footer {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background: white;
-  padding: 24rpx 32rpx;
+  padding: 24rpx 28rpx;
   padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
-  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
   z-index: 100;
+  background: rgba(255, 245, 247, 0.95);
+  backdrop-filter: blur(30rpx);
+  -webkit-backdrop-filter: blur(30rpx);
+  border-top: 1rpx solid rgba(0, 0, 0,0.06);
+}
+
+.footer-inner {
   display: flex;
   align-items: center;
   gap: 24rpx;
@@ -267,37 +443,43 @@ page {
 
 .price-info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2rpx;
 }
 
 .price-label {
-  font-size: 24rpx;
-  color: #999;
-  margin-bottom: 4rpx;
+  font-size: 22rpx;
+  color: rgba(26, 24, 22, 0.86);
+  font-weight: 500;
+  letter-spacing: 0.5rpx;
 }
 
 .price-value {
-  font-size: 40rpx;
-  font-weight: 600;
-  color: #ff6b6b;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #ff69b4;
 }
 
 .submit-btn {
   flex: 1;
-  height: 88rpx;
-  background: linear-gradient(135deg, #07c160 0%, #05a550 100%);
-  color: white;
+  height: 96rpx;
+  background: linear-gradient(135deg, #ff69b4, #ff85c8);
+  color: #ffffff;
   font-size: 32rpx;
-  font-weight: 600;
-  border-radius: 44rpx;
+  font-weight: 700;
+  border-radius: 48rpx;
   border: none;
+  box-shadow: 0 8rpx 32rpx rgba(255, 105, 180, 0.35);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  letter-spacing: 2rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 24rpx rgba(7, 193, 96, 0.3);
-  transition: all 0.3s ease;
+  gap: 8rpx;
 }
 
 .submit-btn:active {
-  transform: scale(0.98);
-  box-shadow: 0 4rpx 12rpx rgba(7, 193, 96, 0.2);
+  transform: translateY(1rpx) scale(0.98);
+  box-shadow: 0 4rpx 16rpx rgba(255, 105, 180, 0.3);
 }

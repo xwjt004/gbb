@@ -1,10 +1,12 @@
-import { IsOptional, IsString, IsInt, Min, IsEnum } from 'class-validator';
+import { IsOptional, IsString, IsInt, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export enum ProductCategory {
   PHOTO = 'PHOTO',
   ALBUM = 'ALBUM',
   FRAME = 'FRAME',
+  DESK_STAND = 'DESK_STAND',
+  ID_PHOTO = 'ID_PHOTO',
   VIDEO = 'VIDEO',
   DESIGN = 'DESIGN',
   OTHER = 'OTHER',
@@ -12,8 +14,8 @@ export enum ProductCategory {
 
 export class QueryProductsDto {
   @IsOptional()
-  @IsEnum(ProductCategory)
-  category?: ProductCategory;
+  @IsString()
+  category?: string;
 
   @IsOptional()
   @IsString()

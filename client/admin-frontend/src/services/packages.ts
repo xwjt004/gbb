@@ -48,6 +48,7 @@ export interface PackageSearchApiParams {
   maxPrice?: number;
   sort?: string;
   category?: string;
+  categoryId?: number;
 }
 
 // 将后端返回结构映射到前端 Package 类型
@@ -69,6 +70,7 @@ function mapApiPackage(p: BackendPackageListItem): Package {
     category: p.category || '',
     categoryId: (p as any).categoryId,
     packageCategory: (p as any).packageCategory,
+    packageProducts: (p as any).packageProducts || [],
     maxBookings: 0,
     createdAt: p.created_at,
     updatedAt: p.created_at,
@@ -120,6 +122,7 @@ export const packageService = {
       category: data.category || '',
       categoryId: data.categoryId,
       packageCategory: data.packageCategory,
+      packageProducts: data.packageProducts || [],
       maxBookings: data.max_bookings ?? data.maxBookings ?? 0,
       createdAt: data.created_at ?? data.createdAt ?? '',
       updatedAt: data.updated_at ?? data.updatedAt ?? data.createdAt ?? '',

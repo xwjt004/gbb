@@ -97,7 +97,7 @@ const PackageList: React.FC = () => {
         maxPrice: priceRange.max,
         sort,
         status: searchParams.status,
-        category: searchParams.category,
+        categoryId: searchParams.categoryId,
         isPopular: isPopularParam,
       });
       const enriched: Package[] = list.map((p: Package) => ({

@@ -116,9 +116,28 @@ export async function wxLogin(): Promise<{
     // 1. 获取微信登录 code
     console.log('[wxLogin] 开始调用 wx.login()');
     const loginRes = await new Promise<WechatMiniprogram.LoginSuccessCallbackResult>((resolve, reject) => {
+      let settled = false;
+      const timer = setTimeout(() => {
+        if (!settled) {
+          settled = true;
+          reject(new Error('wx.login 超时，请检查网络连接'));
+        }
+      }, 10000);
       wx.login({
-        success: resolve,
-        fail: reject,
+        success: (res) => {
+          if (!settled) {
+            settled = true;
+            clearTimeout(timer);
+            resolve(res);
+          }
+        },
+        fail: (err) => {
+          if (!settled) {
+            settled = true;
+            clearTimeout(timer);
+            reject(err);
+          }
+        },
       });
     });
     console.log('[wxLogin] wx.login() 成功，code:', loginRes.code);
@@ -135,6 +154,7 @@ export async function wxLogin(): Promise<{
         data: {
           code: loginRes.code,
         },
+        timeout: 15000,
         success: resolve,
         fail: reject,
       });
@@ -178,6 +198,52 @@ export async function wxLogin(): Promise<{
     }
 
     throw new Error(errorMessage);
+  }
+}
+
+/**
+ * 发送带Token的请求
+ * @param options 请求配置
+ */
+/**
+ * 手机号登录
+ */
+export async function phoneLogin(phone: string, code: string): Promise<{
+  accessToken: string;
+  refreshToken: string;
+  userInfo: UserInfo;
+}> {
+  const res: any = await new Promise((resolve, reject) => {
+    wx.request({
+      url: `${config.BASE_URL}/auth/phone/login`,
+      method: 'POST',
+      header: { 'Content-Type': 'application/json' },
+      data: { phone, code },
+      timeout: 15000,
+      success: resolve,
+      fail: reject,
+    });
+  });
+
+  if (res.statusCode === 200 || res.statusCode === 201) {
+    // auth/phone/login returns access_token (snake_case), normalize it
+    const data = res.data;
+    const accessToken = data.accessToken || data.access_token;
+    const refreshToken = data.refreshToken || data.refresh_token || '';
+
+    const user: UserInfo = {
+      id: data.user?.id || data.userId || '',
+      openid: data.user?.openid || '',
+      nickname: data.user?.nickname || data.nickname || '',
+      avatar: data.user?.avatar || data.avatar || '',
+      phone: data.user?.phone || phone,
+      memberLevel: data.user?.memberLevel || data.memberLevel || '',
+    };
+
+    saveAuthData(accessToken, refreshToken, user);
+    return { accessToken, refreshToken, userInfo: user };
+  } else {
+    throw new Error(res.data?.message || `HTTP ${res.statusCode}: 登录失败`);
   }
 }
 

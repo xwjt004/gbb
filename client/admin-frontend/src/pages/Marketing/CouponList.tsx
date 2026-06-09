@@ -81,6 +81,23 @@ const CouponList: React.FC = () => {
       render: (_: any, r: any) => (
         <Space>
           <Button size="small" onClick={() => navigate(`/marketing/coupons/edit/${r.id}`)}>编辑</Button>
+          <Popconfirm
+            title={r.status === 'ACTIVE' ? '确定禁用该优惠券？禁用后用户无法领取和使用' : '确定启用该优惠券？'}
+            onConfirm={async () => {
+              try {
+                const nextStatus = r.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+                await couponService.toggleStatus(r.id, nextStatus);
+                message.success(nextStatus === 'ACTIVE' ? '已启用' : '已禁用');
+                fetchData(pagination.current);
+              } catch {
+                message.error('操作失败');
+              }
+            }}
+          >
+            <Button size="small" style={{ color: r.status === 'ACTIVE' ? '#ff4d4f' : '#52c41a' }}>
+              {r.status === 'ACTIVE' ? '禁用' : '启用'}
+            </Button>
+          </Popconfirm>
           <Popconfirm title="确定删除？" onConfirm={() => handleDelete(r.id)}>
             <Button size="small" danger>删除</Button>
           </Popconfirm>

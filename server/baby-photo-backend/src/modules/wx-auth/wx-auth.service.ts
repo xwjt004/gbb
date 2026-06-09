@@ -57,6 +57,15 @@ export class WxAuthService {
         }
       }
 
+      // 查找是否有同 openid 的后台用户（自动关联）
+      let linkedUserId: number | undefined;
+      const existingUser = await this.prisma.user.findUnique({
+        where: { openid: wxData.openid },
+      });
+      if (existingUser) {
+        linkedUserId = existingUser.id;
+      }
+
       // 创建新用户
       wxUser = await this.prisma.wxUser.create({
         data: {
@@ -67,17 +76,31 @@ export class WxAuthService {
           avatar: userInfo?.avatarUrl,
           gender: userInfo?.gender,
           status: 'ACTIVE',
+          linkedUserId,
         },
       });
-      this.logger.log(`创建新用户: ${wxUser.id}`);
+      this.logger.log(`创建新微信用户: ${wxUser.id}, linkedUserId: ${linkedUserId}`);
     } else {
-      // 更新 session_key 和最后登录时间
+      // 更新 session_key 和最后登录时间，并尝试关联后台用户
+      let updateData: any = {
+        sessionKey: this.encryptSessionKey(wxData.session_key),
+        lastLoginAt: new Date(),
+      };
+
+      // 如果尚未关联，尝试通过 openid 自动关联
+      if (!wxUser.linkedUserId) {
+        const existingUser = await this.prisma.user.findUnique({
+          where: { openid: wxData.openid },
+        });
+        if (existingUser) {
+          updateData.linkedUserId = existingUser.id;
+          this.logger.log(`自动关联微信用户 ${wxUser.id} → 后台用户 ${existingUser.id}`);
+        }
+      }
+
       await this.prisma.wxUser.update({
         where: { id: wxUser.id },
-        data: {
-          sessionKey: this.encryptSessionKey(wxData.session_key),
-          lastLoginAt: new Date(),
-        },
+        data: updateData,
       });
       this.logger.log(`用户登录: ${wxUser.id}`);
     }
@@ -117,12 +140,25 @@ export class WxAuthService {
     const encryptedPhone = this.encryptPhone(phoneData.purePhoneNumber);
 
     // 更新用户手机号
+    const updateData: any = {
+      phone: phoneData.purePhoneNumber,
+      phoneEncrypted: encryptedPhone,
+    };
+
+    // 如果尚未关联后台用户，尝试通过手机号自动关联
+    if (!wxUser.linkedUserId) {
+      const userByPhone = await this.prisma.user.findFirst({
+        where: { phone: phoneData.purePhoneNumber },
+      });
+      if (userByPhone) {
+        updateData.linkedUserId = userByPhone.id;
+        this.logger.log(`手机号绑定自动关联: 微信用户 ${userId} → 后台用户 ${userByPhone.id}`);
+      }
+    }
+
     await this.prisma.wxUser.update({
       where: { id: userId },
-      data: {
-        phone: phoneData.purePhoneNumber,
-        phoneEncrypted: encryptedPhone,
-      },
+      data: updateData,
     });
 
     this.logger.log(`用户 ${userId} 绑定手机号`);

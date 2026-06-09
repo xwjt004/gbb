@@ -1,0 +1,61 @@
+<view class="favorite-page">
+  <!-- 加载状态 -->
+  <view wx:if="{{loading && list.length === 0}}" class="loading-container">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:elif="{{empty}}" class="empty-container">
+    <text class="empty-icon">🤍</text>
+    <text class="empty-text">还没有收藏的套系</text>
+    <text class="empty-hint">去逛逛看看吧</text>
+    <view class="go-btn" bindtap="goToPackages">去逛逛</view>
+  </view>
+
+  <!-- 收藏列表 -->
+  <scroll-view
+    wx:else
+    scroll-y
+    class="list-scroll"
+    bindscrolltolower="onReachBottom"
+  >
+    <view class="favorite-list">
+      <view
+        wx:for="{{list}}"
+        wx:key="id"
+        class="favorite-item"
+        bindtap="goToDetail"
+        data-item="{{item}}"
+      >
+        <view class="item-image-wrapper">
+          <image
+            src="{{item.image}}"
+            mode="aspectFill"
+            class="item-image"
+          />
+          <view wx:if="{{!item.isAvailable}}" class="item-overlay">
+            <text class="overlay-text">已下架</text>
+          </view>
+        </view>
+        <view class="item-info">
+          <view class="item-name">{{item.name}}</view>
+          <view class="item-price">
+            <text class="price-value">¥{{item.price}}</text>
+            <text wx:if="{{item.deposit}}" class="price-deposit">定金 ¥{{item.deposit}}</text>
+          </view>
+          <view class="item-type">{{item.itemType === 'PACKAGE' ? '套系' : '商品'}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view wx:if="{{loading && list.length > 0}}" class="load-more">
+      <text class="load-more-text">加载更多...</text>
+    </view>
+    <view wx:elif="{{!hasMore && list.length > 0}}" class="load-more">
+      <text class="load-more-text">— 没有更多了 —</text>
+    </view>
+
+    <view class="bottom-placeholder"></view>
+  </scroll-view>
+</view>

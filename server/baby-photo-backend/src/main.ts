@@ -35,6 +35,15 @@ async function bootstrap() {
       );
     }
 
+    // 支持微信小程序的 PATCH 兼容模式（POST + X-HTTP-Method-Override: PATCH）
+    app.use((req, res, next) => {
+      const method = req.headers['x-http-method-override'];
+      if (method && typeof method === 'string') {
+        req.method = method.toUpperCase();
+      }
+      next();
+    });
+
     // CORS 配置 — 从环境变量读取（逗号分隔），支持部署时动态配置
     const corsOrigin = process.env.CORS_ORIGIN
       ? process.env.CORS_ORIGIN.split(',').map((s) => s.trim())

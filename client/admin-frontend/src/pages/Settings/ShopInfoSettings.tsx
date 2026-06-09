@@ -3,6 +3,7 @@ import {
   Card,
   Form,
   Input,
+  InputNumber,
   Button,
   Upload,
   Space,
@@ -21,10 +22,12 @@ import {
   WechatOutlined,
   CameraOutlined,
   PictureOutlined,
+  PlusOutlined,
   SaveOutlined,
 } from '@ant-design/icons';
 import type { UploadProps, UploadFile } from 'antd';
 import { getShopInfo, updateShopInfo, uploadShopImage } from '@/services/shopInfoService';
+import type { BannerItem } from '@/services/shopInfoService';
 
 const { TextArea } = Input;
 
@@ -33,9 +36,9 @@ const { TextArea } = Input;
 // 为避免硬编码 localhost:3000，这里复用与服务端通信同一基址（VITE_API_URL 或默认 http://localhost:3000/api/v1 去掉末尾 /api/v1）。
 const resolveBackendOrigin = () => {
   const raw = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || '/api/v1';
-  // 若 raw 是 '/api/v1' 相对路径 => 使用默认 http://localhost:3000
+  // 若 raw 是 '/api/v1' 相对路径 => 使用当前页面 origin（nginx 反向代理）
   if (!raw.startsWith('http')) {
-    return 'http://localhost:3000';
+    return window.location.origin;
   }
   // 若已是绝对地址 如 'http://localhost:3000/api/v1' 去掉末尾 '/api/v1'
   return raw.replace(/\/api\/v1$/,'');
@@ -61,6 +64,8 @@ const ShopInfoSettings: React.FC = () => {
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewImage, setPreviewImage] = useState<string>('');
   const [previewTitle, setPreviewTitle] = useState<string>('');
+  const [banners, setBanners] = useState<BannerItem[]>([]);
+  const [bannerInterval, setBannerInterval] = useState<number>(4000);
 
   // 加载店铺信息
   useEffect(() => {
@@ -74,6 +79,8 @@ const ShopInfoSettings: React.FC = () => {
       form.setFieldsValue(data);
       setShopPhoto(data.shopPhoto);
       setLocationMap(data.locationMap);
+      setBanners(data.banners || []);
+      setBannerInterval(data.bannerInterval ?? 4000);
     } catch (error: any) {
       message.error(error.message || '加载店铺信息失败');
     } finally {
@@ -85,7 +92,11 @@ const ShopInfoSettings: React.FC = () => {
   const handleSubmit = async (values: any) => {
     try {
       setSubmitting(true);
-      await updateShopInfo(values);
+      await updateShopInfo({
+        ...values,
+        banners,
+        bannerInterval,
+      });
       message.success('保存成功');
       loadShopInfo(); // 重新加载数据
     } catch (error: any) {
@@ -155,6 +166,33 @@ const ShopInfoSettings: React.FC = () => {
       return true;
     },
   });
+
+  // ===== 轮播图管理 =====
+
+  const handleBannerUpload: UploadProps['customRequest'] = async ({ file, onSuccess, onError }) => {
+    try {
+      const result = await uploadShopImage('banner', file as File);
+      setBanners(prev => [...prev, { image: result.url, title: '', link: '' }]);
+      message.success('上传成功');
+      onSuccess?.(result, file as any);
+    } catch (error: any) {
+      message.error(error.message || '上传失败');
+      onError?.(error as any);
+    }
+  };
+
+  const updateBannerField = (index: number, field: 'title' | 'link', value: string) => {
+    setBanners(prev => prev.map((b, i) => (i === index ? { ...b, [field]: value } : b)));
+  };
+
+  const removeBanner = (index: number) => {
+    setBanners(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleReset = () => {
+    form.resetFields();
+    loadShopInfo();
+  };
 
   if (loading) {
     return (
@@ -252,6 +290,52 @@ const ShopInfoSettings: React.FC = () => {
             />
           </Form.Item>
 
+          {/* 店铺坐标 */}
+          <Row gutter={24}>
+            <Col span={12}>
+              <Form.Item
+                label="纬度"
+                name="latitude"
+                rules={[
+                  {
+                    type: 'number',
+                    min: -90,
+                    max: 90,
+                    message: '纬度范围为 -90 到 90',
+                  },
+                ]}
+              >
+                <InputNumber
+                  placeholder="如: 41.6888"
+                  style={{ width: '100%' }}
+                  step={0.0001}
+                  precision={7}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label="经度"
+                name="longitude"
+                rules={[
+                  {
+                    type: 'number',
+                    min: -180,
+                    max: 180,
+                    message: '经度范围为 -180 到 180',
+                  },
+                ]}
+              >
+                <InputNumber
+                  placeholder="如: 122.1123"
+                  style={{ width: '100%' }}
+                  step={0.0001}
+                  precision={7}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
           <Form.Item label="经营项目" name="businessScope">
             <TextArea
               placeholder="如: 儿童摄影、亲子照、全家福、百天照、周岁照"
@@ -335,6 +419,94 @@ const ShopInfoSettings: React.FC = () => {
             </Col>
           </Row>
 
+          {/* 轮播图设置 */}
+          <Divider orientation="left">轮播图设置</Divider>
+
+          <Form.Item label="轮播播放间隔">
+            <InputNumber
+              min={1000}
+              max={15000}
+              step={500}
+              value={bannerInterval}
+              onChange={(val) => setBannerInterval(val ?? 4000)}
+              addonAfter="毫秒"
+              style={{ width: 200 }}
+            />
+            <span style={{ marginLeft: 12, color: '#999', fontSize: 12 }}>建议 3000-5000 毫秒</span>
+          </Form.Item>
+
+          <Form.Item label="轮播图片（最多5张）">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {banners.map((banner, index) => (
+                <div
+                  key={index}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: 12,
+                    border: '1px solid #d9d9d9',
+                    borderRadius: 6,
+                    background: '#fafafa',
+                  }}
+                >
+                  <Image
+                    src={getImageUrl(banner.image)}
+                    width={100}
+                    height={70}
+                    style={{ objectFit: 'cover', borderRadius: 4, flexShrink: 0 }}
+                    fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+                  />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <Input
+                      placeholder="标题（可选，显示在轮播图上）"
+                      value={banner.title}
+                      onChange={(e) => updateBannerField(index, 'title', e.target.value)}
+                    />
+                    <Input
+                      placeholder="跳转链接（可选，如 /packages）"
+                      value={banner.link}
+                      onChange={(e) => updateBannerField(index, 'link', e.target.value)}
+                    />
+                  </div>
+                  <Button danger onClick={() => removeBanner(index)} style={{ flexShrink: 0 }}>
+                    删除
+                  </Button>
+                </div>
+              ))}
+              {banners.length < 5 && (
+                <Upload
+                  name="file"
+                  listType="picture-card"
+                  showUploadList={false}
+                  accept="image/jpeg,image/png,image/gif"
+                  beforeUpload={(file) => {
+                    const isImage = file.type.startsWith('image/');
+                    if (!isImage) {
+                      message.error('只能上传图片文件!');
+                      return Upload.LIST_IGNORE;
+                    }
+                    const isLt5M = file.size / 1024 / 1024 < 5;
+                    if (!isLt5M) {
+                      message.error('图片大小不能超过 5MB!');
+                      return Upload.LIST_IGNORE;
+                    }
+                    return true;
+                  }}
+                  customRequest={handleBannerUpload}
+                >
+                  <div>
+                    <PlusOutlined />
+                    <div style={{ marginTop: 8 }}>上传轮播图</div>
+                  </div>
+                </Upload>
+              )}
+            </div>
+            <div style={{ color: '#999', fontSize: 12, marginTop: 8 }}>
+              建议分辨率 1920×600 px（宽屏适配最佳），72 DPI 网页标准分辨率。文件大小 100KB ~ 5MB，支持 JPG/PNG/GIF。第一张图为首页默认展示
+            </div>
+          </Form.Item>
+
           {/* 提交按钮 */}
           <Form.Item style={{ marginTop: 32 }}>
             <Space>
@@ -347,7 +519,7 @@ const ShopInfoSettings: React.FC = () => {
               >
                 保存设置
               </Button>
-              <Button onClick={() => form.resetFields()} size="large">
+              <Button onClick={handleReset} size="large">
                 重置
               </Button>
             </Space>

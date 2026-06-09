@@ -21,16 +21,7 @@ App<IAppOption>({
     logs.unshift(Date.now())
     wx.setStorageSync('logs', logs)
 
-    // 登录
-    wx.login({
-      success: res => {
-        console.log('[App] wx.login() 成功, code:', res.code)
-        // 发送 res.code 到后台换取 openId, sessionKey, unionId
-      },
-      fail: err => {
-        console.error('[App] wx.login() 失败:', err);
-      }
-    })
+    // 登录在 login 页面处理，此处不提前调用
   },
   
   onError(error: string) {

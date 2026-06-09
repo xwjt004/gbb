@@ -8,7 +8,7 @@ import {
 import { createHash } from 'crypto';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { CacheService } from '../../shared/cache/cache.service';
-import { WxPayService } from './services/wx-pay.service';
+import { WechatPayService } from './wechat-pay.service';
 import { PaymentNotificationService } from './services/payment-notification.service';
 import { CreatePaymentDto, PaymentChannel } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
@@ -39,7 +39,7 @@ export class PaymentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cacheService: CacheService,
-    private readonly wxPayService: WxPayService,
+    private readonly wechatPayService: WechatPayService,
     private readonly notificationService: PaymentNotificationService,
     private readonly autoStatusTransitionService: AutoStatusTransitionService,
   ) {}
@@ -131,7 +131,7 @@ export class PaymentsService {
         'WECHAT': 'WECHAT_PAY',
         'ALIPAY': 'ALIPAY',
         'CASH': 'CASH',
-        'BANK_TRANSFER': 'BANK_TRANSFER'
+        'BANK_TRANSFER': 'BANK_CARD'
       };
 
       const payment = await this.prisma.payment.create({
@@ -148,14 +148,15 @@ export class PaymentsService {
         },
       });
 
-      // 4. 调用微信支付API
+      // 4. 调用微信支付API (APIv3)
       let paymentResult;
       if (createPaymentDto.paymentType === 'WECHAT') {
-        paymentResult = await this.wxPayService.createPayment({
-          outTradeNo: payment.id,
+        paymentResult = await this.wechatPayService.createJsapiOrder({
+          orderId: payment.id,
+          orderNo: createPaymentDto.orderNo,
           description:
             createPaymentDto.description || `${order.package?.name || '套系'} - 支付`,
-          amount: Number(createPaymentDto.amount) * 100, // 转为分
+          amount: Number(createPaymentDto.amount), // V3 使用元为单位
           openid: order.user.openid,
         });
 
@@ -177,11 +178,12 @@ export class PaymentsService {
         idempotency_key: finalIdemKey,
         payment_info: paymentResult
           ? {
-              prepay_id: paymentResult.prepay_id,
-              pay_sign: paymentResult.paySign,
-              timestamp: paymentResult.timeStamp,
-              nonce_str: paymentResult.nonceStr,
-              sign_type: paymentResult.signType,
+              prepayId: paymentResult.prepayId,
+              timeStamp: paymentResult.timeStamp,
+              nonceStr: paymentResult.nonceStr,
+              package: paymentResult.package,
+              signType: paymentResult.signType,
+              paySign: paymentResult.paySign,
             }
           : null,
       };
@@ -238,21 +240,72 @@ export class PaymentsService {
   }
 
   /**
+   * 根据订单号查找待支付的支付记录
+   */
+  async findPendingPaymentByOrderNo(orderNo: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { orderNo },
+    });
+    if (!order) return null;
+
+    return this.prisma.payment.findFirst({
+      where: {
+        orderId: order.id,
+        status: PaymentStatus.PENDING_PAYMENT,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * 创建支付记录（供 wx-order-pay 发起支付时调用）
+   */
+  async createPaymentRecord(params: {
+    orderId: string;
+    orderNo: string;
+    amount: number;
+    paymentMethod: string;
+  }) {
+    return this.prisma.payment.create({
+      data: {
+        orderId: params.orderId,
+        amount: params.amount,
+        paymentType: 'FULL',
+        paymentMethod: params.paymentMethod as any,
+        status: PaymentStatus.PENDING_PAYMENT,
+      },
+    });
+  }
+
+  /**
    * 处理微信支付回调
    */
-  async handleWxPayNotify(body: Buffer, headers: Record<string, string>) {
+  async handleWxPayNotify(body: any, headers: Record<string, string>) {
     try {
-      // 验证签名
-      const isValid = await this.wxPayService.verifySignature(body, headers);
+      // 使用 V3 验证签名
+      const timestamp = headers['wechatpay-timestamp'] as string;
+      const nonce = headers['wechatpay-nonce'] as string;
+      const signature = headers['wechatpay-signature'] as string;
+      const serialNo = headers['wechatpay-serial'] as string;
+
+      const isValid = this.wechatPayService.verifyNotifySignature(
+        timestamp, nonce, JSON.stringify(body), signature, serialNo,
+      );
       if (!isValid) {
         throw new BadRequestException('签名验证失败');
       }
 
-      // 解析回调数据
-      const notifyData = await this.wxPayService.parseNotifyData(body);
-
-      // 处理支付结果
-      await this.handlePaymentResult(notifyData);
+      // V3: 回调数据在 resource 字段中，需要解密
+      if (body.resource) {
+        const notifyData = this.wechatPayService.decryptNotifyData(
+          body.resource.ciphertext,
+          body.resource.associated_data,
+          body.resource.nonce,
+        );
+        await this.handlePaymentResult(notifyData);
+      } else {
+        this.logger.warn('微信回调缺少 resource 字段', JSON.stringify(body));
+      }
 
       return { code: 'SUCCESS', message: '成功' };
     } catch (error) {
@@ -316,14 +369,38 @@ export class PaymentsService {
         paymentWhere.transactionId = { contains: transactionId, mode: 'insensitive' };
       }
 
-      // 状态查询
+      // 状态查询（映射到 Prisma PaymentStatus 枚举）
+      const validPaymentStatuses = ['PENDING_PAYMENT', 'PARTIAL_PAID', 'FULLY_PAID', 'REFUNDING', 'PARTIAL_REFUNDED', 'REFUNDED', 'CANCELLED'];
+      const statusToPrisma: Record<string, string> = {
+        'PENDING_PAYMENT': 'PENDING_PAYMENT',
+        'PARTIAL_PAID': 'PARTIAL_PAID',
+        'FULLY_PAID': 'FULLY_PAID',
+        'PAID': 'FULLY_PAID',
+        'CANCELLED': 'CANCELLED',
+        'REFUNDING': 'REFUNDING',
+        'REFUNDED': 'REFUNDED',
+        'PROCESSING': 'PENDING_PAYMENT',
+        'FAILED': 'PENDING_PAYMENT',
+      };
       if (status) {
-        paymentWhere.status = status;
+        const prismaStatus = statusToPrisma[status];
+        if (prismaStatus && validPaymentStatuses.includes(prismaStatus)) {
+          paymentWhere.status = prismaStatus;
+        }
       }
 
-      // 支付方式查询
+      // 支付方式查询（映射前端值到 Prisma PaymentMethod 枚举）
+      const methodToPrisma: Record<string, string> = {
+        'WECHAT': 'WECHAT_PAY',
+        'ALIPAY': 'ALIPAY_TRANSFER',
+        'CASH': 'CASH',
+        'BANK_TRANSFER': 'BANK_CARD',
+      };
       if (paymentType) {
-        paymentWhere.paymentType = paymentType;
+        const prismaMethod = methodToPrisma[paymentType];
+        if (prismaMethod) {
+          paymentWhere.paymentMethod = prismaMethod;
+        }
       }
 
       // 金额范围查询
@@ -378,6 +455,7 @@ export class PaymentsService {
         order_no: payment.order.orderNo,
         amount: Number(payment.amount),
         payment_type: payment.paymentType,
+        payment_method: payment.paymentMethod,
         status: payment.status,
         transaction_id: payment.transactionId,
         paid_at: payment.paidAt,
@@ -457,7 +535,8 @@ export class PaymentsService {
           payment_id: `PENDING_${order.orderNo}`,
           order_no: order.orderNo,
           amount: Number(order.depositAmount || order.totalAmount), // 使用定金或总金额
-          payment_type: 'CASH', // 默认现金支付
+          payment_type: null,
+          payment_method: null, // 无支付记录，无支付方式
           status: PaymentStatus.PENDING_PAYMENT,
           transaction_id: null,
           paid_at: null,
@@ -1118,16 +1197,62 @@ export class PaymentsService {
   /**
    * 处理支付结果
    */
-  private async handlePaymentResult(notifyData: any) {
+  async handlePaymentResult(notifyData: any) {
     const { out_trade_no, transaction_id, trade_state, amount } = notifyData;
 
-    const payment = await this.prisma.payment.findUnique({
-      where: { id: out_trade_no },
-      include: { order: true },
+    // 先通过订单号查找订单
+    const order = await this.prisma.order.findUnique({
+      where: { orderNo: out_trade_no },
+      include: {
+        payments: {
+          where: { status: { in: [PaymentStatus.PENDING_PAYMENT, PaymentStatus.PARTIAL_PAID, PaymentStatus.FULLY_PAID] } },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+      },
     });
+    if (!order) {
+      throw new NotFoundException(`订单不存在: ${out_trade_no}`);
+    }
 
+    // 查找已有支付记录（pending状态的可复用，已支付的防止重复）
+    let payment = order.payments?.[0] || null;
+
+    // 如果已有已支付的记录，直接返回（幂等）
+    if (payment && payment.status === PaymentStatus.FULLY_PAID) {
+      this.logger.warn(`幂等处理: 支付已处理 order=${out_trade_no} payment=${payment.id}`);
+      return {
+        success: true,
+        message: '支付已处理',
+        payment,
+        order,
+      };
+    }
+
+    // 计算支付金额（兼容 WeChat APIv3 对象格式和数字格式）
+    let paidAmount: number;
+    if (typeof amount === 'object' && amount !== null) {
+      paidAmount = Number(amount.total) / 100; // APIv3 金额单位是分
+    } else {
+      paidAmount = Number(amount) || 0;
+    }
+
+    // 确定支付类型
+    const paymentType = this.determinePaymentTypeFromOrder(order);
+
+    // 如果没有支付记录，创建新的
     if (!payment) {
-      throw new NotFoundException('支付记录不存在');
+      payment = await this.prisma.payment.create({
+        data: {
+          orderId: order.id,
+          amount: paidAmount,
+          paymentType: paymentType as any,
+          status: PaymentStatus.PENDING_PAYMENT,
+          paymentMethod: 'WECHAT_PAY',
+        },
+        include: { order: true },
+      });
+      this.logger.log(`微信支付回调自动创建支付记录: ${payment.id}`);
     }
 
     // 更新支付状态
@@ -1140,7 +1265,8 @@ export class PaymentsService {
         paidAt = new Date();
         break;
       case 'USERPAYING':
-        status = PaymentStatus.FULLY_PAID;
+        status = PaymentStatus.PENDING_PAYMENT;
+        this.logger.log(`支付处理中: ${out_trade_no}，等待微信最终结果`);
         break;
       case 'CLOSED':
       case 'REVOKED':
@@ -1150,48 +1276,48 @@ export class PaymentsService {
         status = PaymentStatus.CANCELLED;
     }
 
-    // 验证状态组合
-    const orderStatus = payment.order.orderStatus as OrderStatus;
-    const newPaymentStatus = status as PaymentStatus;
-    
-    OrderStatusValidator.validateAndThrow(orderStatus, newPaymentStatus, payment.order.id);
-
     // 更新支付记录
     await this.prisma.payment.update({
-      where: { id: out_trade_no },
+      where: { id: payment.id },
       data: {
         status: status as any,
-        transactionId: transaction_id,
-        paidAt,
+        transactionId: transaction_id || payment.transactionId,
+        paidAt: status === PaymentStatus.FULLY_PAID ? (paidAt || new Date()) : payment.paidAt,
       },
     });
 
     // 如果支付成功，更新订单状态
-  if (status === PaymentStatus.FULLY_PAID) {
+    if (status === PaymentStatus.FULLY_PAID) {
       await this.updateOrderAfterPayment(
-        payment.order.orderNo,
-        Number(amount.total) / 100,
+        order.orderNo,
+        paidAmount,
       );
 
       // 触发自动状态转换
       await this.autoStatusTransitionService.onPaymentSuccess(
-        payment.order.id,
+        order.id,
         transaction_id
       );
 
       // 发送支付成功通知
       await this.notificationService.sendPaymentSuccessNotification(
-        payment.order.orderNo,
-      );
-    } else if (status === 'FAILED') {
-      // 触发支付失败处理
-      await this.autoStatusTransitionService.onPaymentFailed(
-        payment.order.id,
-        `微信支付失败: ${trade_state}`
+        order.orderNo,
       );
     }
 
     this.logger.log(`支付状态更新: ${out_trade_no} -> ${status}`);
+  }
+
+  /**
+   * 根据订单支付模式确定支付类型
+   */
+  private determinePaymentTypeFromOrder(order: any): string {
+    const paymentMode = order.paymentMode || 'FULL';
+    if (paymentMode.includes('DEPOSIT')) {
+      const paidAmount = Number(order.paidAmount || 0);
+      return paidAmount === 0 ? 'DEPOSIT' : 'FINAL';
+    }
+    return 'FULL';
   }
 
   /**
@@ -1204,16 +1330,23 @@ export class PaymentsService {
 
     if (!order) return;
 
-    const newPaidAmount = Number(order.paidAmount) + paidAmount;
+    // 从支付记录重新计算已付总额，而非简单累加，防止重复调用导致数据膨胀
+    const payments = await this.prisma.payment.findMany({
+      where: {
+        orderId: order.id,
+        status: { in: ['FULLY_PAID', 'PARTIAL_PAID'] },
+      },
+    });
+    const newPaidAmount = payments.reduce((sum, p) => sum + Number(p.amount), 0);
     const totalAmount = Number(order.totalAmount);
 
     let paymentStatus: string;
     if (newPaidAmount >= totalAmount) {
-      paymentStatus = 'PAID';
+      paymentStatus = 'FULLY_PAID';
     } else if (newPaidAmount > 0) {
-      paymentStatus = 'PARTIAL';
+      paymentStatus = 'PARTIAL_PAID';
     } else {
-      paymentStatus = 'PENDING';
+      paymentStatus = 'PENDING_PAYMENT';
     }
 
     await this.prisma.order.update({
@@ -1818,6 +1951,7 @@ export class PaymentsService {
           sequence: index + 1,
           amount: Number(payment.amount),
           paymentType: payment.paymentType,
+          paymentMethod: payment.paymentMethod,
           status: payment.status,
           transactionId: payment.transactionId,
           paidAt: payment.paidAt,
@@ -1879,11 +2013,11 @@ export class PaymentsService {
       // 4. 更新订单支付状态
       let paymentStatus: string;
       if (newPaidAmount >= totalAmount) {
-        paymentStatus = 'PAID';
+        paymentStatus = 'FULLY_PAID';
       } else if (newPaidAmount > 0) {
-        paymentStatus = 'PARTIAL';
+        paymentStatus = 'PARTIAL_PAID';
       } else {
-        paymentStatus = 'PENDING';
+        paymentStatus = 'PENDING_PAYMENT';
       }
 
       const updatedOrder = await tx.order.update({

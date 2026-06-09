@@ -583,6 +583,28 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         >
           {children}
         </Content>
+
+        {/* 工信部备案号展示 */}
+        <div
+          style={{
+            textAlign: 'center',
+            padding: '8px 16px',
+            fontSize: 12,
+            color: '#999',
+            borderTop: '1px solid #f0f0f0',
+            background: theme.contentBg,
+            flexShrink: 0,
+          }}
+        >
+          <a
+            href="https://beian.miit.gov.cn/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#999', textDecoration: 'none' }}
+          >
+            辽ICP备2026010503号-1
+          </a>
+        </div>
       </AntLayout>
 
       {/* 浮动计算器 */}

@@ -662,7 +662,7 @@
 
 **手册结束**  
 *《服务器配置调试手册 deepseek版一》*  
-*版本：1.0 | 更新日期：2026-05-15*
+*版本：1.1 | 更新日期：2026-05-27*
 
 ---
 
@@ -674,7 +674,7 @@
 #  补充命令
 
 ####  1 命令用于通过 sshpass 自动登录远程服务器，并检查其中名为 postgres 或 backend 的 Docker 容器状态。
-sshpass -p 'Ly-760606@' ssh -o StrictHostKeyChecking=no ubuntu@81.68.236.12 "echo connected && sudo su -c 'docker ps --format \"{{.Names}} {{.Status}}\" | grep -E \"postgres|backend\"'"
+sshpass -p '<your-password>' ssh -o StrictHostKeyChecking=no ubuntu@81.68.236.12 "echo connected && sudo su -c 'docker ps --format \"{{.Names}} {{.Status}}\" | grep -E \"postgres|backend\"'"
 
 
 您提供的命令用于通过 `sshpass` 自动登录远程服务器，并检查其中名为 `postgres` 或 `backend` 的 Docker 容器状态。
@@ -682,7 +682,7 @@ sshpass -p 'Ly-760606@' ssh -o StrictHostKeyChecking=no ubuntu@81.68.236.12 "ech
 ## 命令详解
 
 ```bash
-sshpass -p 'Ly-760606@' ssh -o StrictHostKeyChecking=no ubuntu@81.68.236.12 "echo connected && sudo su -c 'docker ps --format \"{{.Names}} {{.Status}}\" | grep -E \"postgres|backend\"'"
+sshpass -p '<your-password>' ssh -o StrictHostKeyChecking=no ubuntu@81.68.236.12 "echo connected && sudo su -c 'docker ps --format \"{{.Names}} {{.Status}}\" | grep -E \"postgres|backend\"'"
 ```
 
 | 组成部分 | 作用 | 风险/说明 |
@@ -711,7 +711,7 @@ ssh ubuntu@81.68.236.12 "sudo docker ps --format '{{.Names}} {{.Status}}' | grep
 ### 2. 如果必须用密码（极其不推荐），改用 `sshpass -f` 从文件读取
 
 ```bash
-echo 'Ly-760606@' > /tmp/pass.txt
+echo '<your-password>' > /tmp/pass.txt
 chmod 600 /tmp/pass.txt
 sshpass -f /tmp/pass.txt ssh -o StrictHostKeyChecking=no ubuntu@81.68.236.12 "..."
 ```

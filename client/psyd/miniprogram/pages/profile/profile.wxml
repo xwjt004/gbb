@@ -1,157 +1,132 @@
-<!-- 我的页面 -->
-<view class="profile-page">
-  <scroll-view scroll-y class="scroll-container">
-    <!-- 用户信息卡片 -->
-    <view class="user-card">
-      <view class="user-header" bindtap="onUserCardTap">
-        <view class="avatar {{!userInfo.avatar ? 'avatar-default' : ''}}">
-          <image wx:if="{{userInfo.avatar}}" src="{{userInfo.avatar}}" class="avatar-img" mode="aspectFill" />
-          <text wx:else class="avatar-emoji">👤</text>
-        </view>
-        <view class="user-info">
-          <view class="user-name-row">
-            <text class="user-name">{{userInfo.nickname || '微信用户'}}</text>
-            <view class="vip-badge" wx:if="{{userInfo.isVip}}">
-              <text class="vip-icon">✨</text>
-              <text class="vip-text">VIP</text>
-            </view>
+<view class="page">
+  <scroll-view scroll-y class="scroll-view" enhanced show-scrollbar="{{false}}">
+
+    <!-- ===== 用户信息头部 ===== -->
+    <view class="header" bindtap="onUserCardTap">
+      <view class="header-bg"></view>
+      <view class="header-content">
+        <view class="avatar-wrapper">
+          <image wx:if="{{userInfo.avatar}}" src="{{userInfo.avatar}}" class="avatar" mode="aspectFill" />
+          <view wx:else class="avatar avatar-placeholder">
+            <text class="avatar-emoji">👶</text>
           </view>
-          <text class="user-phone">{{userInfo.phone || '未绑定手机号'}}</text>
+          <view wx:if="{{userInfo.isVip}}" class="vip-badge">VIP</view>
         </view>
+        <view class="user-meta">
+          <text class="nickname">{{userInfo.nickname || '点击登录'}}</text>
+          <text class="phone">{{userInfo.phone || '未绑定手机号'}}</text>
+        </view>
+        <text class="arrow-icon">›</text>
       </view>
     </view>
 
-    <!-- 我的订单 -->
-    <view class="section order-section">
-      <view class="section-header" bindtap="goToOrderList">
-        <text class="section-title">我的订单</text>
-        <view class="section-more">
+    <!-- ===== 快捷入口网格 ===== -->
+    <view class="grid-card">
+      <view class="grid-row">
+        <view class="grid-item" bindtap="goToFavorite">
+          <view class="grid-icon icon-fav">❤️</view>
+          <text class="grid-label">我的收藏</text>
+        </view>
+        <view class="grid-item" bindtap="goToAddress">
+          <view class="grid-icon icon-addr">📍</view>
+          <text class="grid-label">地址管理</text>
+        </view>
+        <!-- 第二阶段开放：优惠券 -->
+        <!-- <view class="grid-item" bindtap="goToCoupon">
+          <view class="grid-icon icon-cpn">🎫</view>
+          <text class="grid-label">优惠券</text>
+          <text wx:if="{{assetCount.coupon > 0}}" class="grid-value">{{assetCount.coupon}}张</text>
+        </view> -->
+        <!-- 第二阶段开放：积分 -->
+        <!-- <view class="grid-item" bindtap="goToPoints">
+          <view class="grid-icon icon-pts">⭐</view>
+          <text class="grid-label">积分</text>
+          <text class="grid-value">{{assetCount.points || 0}}</text>
+        </view> -->
+      </view>
+    </view>
+
+    <!-- ===== 订单中心 ===== -->
+    <view class="card">
+      <view class="card-header" bindtap="goToOrderList">
+        <text class="card-title">订单中心</text>
+        <view class="card-more">
           <text>全部订单</text>
-          <text class="arrow">→</text>
+          <text class="arrow">›</text>
         </view>
       </view>
-      
-      <view class="order-status-grid">
-        <view class="order-status-item" bindtap="goToOrderList" data-status="PENDING_PAYMENT">
-          <view class="status-icon-wrapper">
-            <image src="/images/order-unpaid.png" class="status-icon" mode="aspectFit" />
-            <view class="status-badge" wx:if="{{orderCount.unpaid > 0}}">{{orderCount.unpaid}}</view>
+      <view class="order-grid">
+        <view class="order-item" bindtap="goToOrderList" data-status="PENDING_PAYMENT">
+          <view class="order-icon-wrap">
+            <text class="order-icon">📋</text>
+            <view wx:if="{{orderCount.unpaid > 0}}" class="order-badge">{{orderCount.unpaid > 99 ? '99+' : orderCount.unpaid}}</view>
           </view>
-          <text class="status-label">待支付</text>
+          <text class="order-label">待支付</text>
         </view>
-        
-        <view class="order-status-item" bindtap="goToOrderList" data-status="PENDING_SHOOTING">
-          <view class="status-icon-wrapper">
-            <image src="/images/order-shooting.png" class="status-icon" mode="aspectFit" />
-            <view class="status-badge" wx:if="{{orderCount.shooting > 0}}">{{orderCount.shooting}}</view>
+        <view class="order-item" bindtap="goToOrderList" data-status="PENDING_SHOOTING">
+          <view class="order-icon-wrap">
+            <text class="order-icon">📸</text>
+            <view wx:if="{{orderCount.shooting > 0}}" class="order-badge">{{orderCount.shooting}}</view>
           </view>
-          <text class="status-label">待拍摄</text>
+          <text class="order-label">待拍摄</text>
         </view>
-        
-        <view class="order-status-item" bindtap="goToOrderList" data-status="PENDING_PICKUP">
-          <view class="status-icon-wrapper">
-            <image src="/images/order-pickup.png" class="status-icon" mode="aspectFit" />
-            <view class="status-badge" wx:if="{{orderCount.pickup > 0}}">{{orderCount.pickup}}</view>
+        <view class="order-item" bindtap="goToOrderList" data-status="PENDING_PICKUP">
+          <view class="order-icon-wrap">
+            <text class="order-icon">🖼️</text>
+            <view wx:if="{{orderCount.pickup > 0}}" class="order-badge">{{orderCount.pickup}}</view>
           </view>
-          <text class="status-label">待取件</text>
+          <text class="order-label">待取件</text>
         </view>
-        
-        <view class="order-status-item" bindtap="goToOrderList" data-status="REFUNDING">
-          <view class="status-icon-wrapper">
-            <image src="/images/order-refund.png" class="status-icon" mode="aspectFit" />
-            <view class="status-badge" wx:if="{{orderCount.refund > 0}}">{{orderCount.refund}}</view>
+        <view class="order-item" bindtap="goToOrderList" data-status="REFUNDING">
+          <view class="order-icon-wrap">
+            <text class="order-icon">🔄</text>
+            <view wx:if="{{orderCount.refund > 0}}" class="order-badge">{{orderCount.refund}}</view>
           </view>
-          <text class="status-label">售后/退款</text>
+          <text class="order-label">售后</text>
         </view>
       </view>
     </view>
 
-    <!-- 我的资产 -->
-    <view class="section assets-section">
-      <view class="section-header">
-        <text class="section-title">💰 我的资产</text>
+    <!-- ===== 常用工具 ===== -->
+    <view class="card">
+      <view class="card-header">
+        <text class="card-title">常用工具</text>
       </view>
-      
-      <view class="assets-grid">
-        <view class="asset-item" bindtap="goToCoupon">
-          <view class="asset-icon-wrapper">
-            <image src="/images/icon-coupon.png" class="asset-icon" mode="aspectFit" />
-            <view class="asset-badge" wx:if="{{assetCount.coupon > 0}}">{{assetCount.coupon}}</view>
+      <view class="tools-grid">
+        <view class="tool-item" bindtap="goToAppointment">
+          <view class="tool-icon" style="background:#FFF0F0;">
+            <text>📅</text>
           </view>
-          <text class="asset-label">优惠券</text>
-          <text class="asset-value" wx:if="{{assetCount.coupon > 0}}">{{assetCount.coupon}}张</text>
-          <text class="asset-value no-data" wx:else>暂无</text>
+          <text class="tool-label">预约记录</text>
         </view>
-        
-        <view class="asset-item" bindtap="goToVip">
-          <view class="asset-icon-wrapper">
-            <image src="/images/icon-vip.png" class="asset-icon" mode="aspectFit" />
+        <!-- 第二阶段开放：会员中心 -->
+        <!-- <view class="tool-item" bindtap="goToVip">
+          <view class="tool-icon" style="background:#FFF8E1;">
+            <text>👑</text>
           </view>
-          <text class="asset-label">会员中心</text>
-          <text class="asset-value vip" wx:if="{{userInfo.isVip}}">VIP</text>
-          <text class="asset-value no-data" wx:else>开通会员</text>
+          <text class="tool-label">会员中心</text>
+        </view> -->
+        <view class="tool-item" bindtap="contactService">
+          <view class="tool-icon" style="background:#E8F5E9;">
+            <text>💬</text>
+          </view>
+          <text class="tool-label">联系客服</text>
         </view>
-        
-        <view class="asset-item" bindtap="goToPoints">
-          <view class="asset-icon-wrapper">
-            <image src="/images/icon-points.png" class="asset-icon" mode="aspectFit" />
+        <view class="tool-item" bindtap="goToSettings">
+          <view class="tool-icon" style="background:#E3F2FD;">
+            <text>⚙️</text>
           </view>
-          <text class="asset-label">积分</text>
-          <text class="asset-value">{{assetCount.points || 0}}</text>
+          <text class="tool-label">设置</text>
         </view>
-      </view>
-    </view>
-
-    <!-- 常用功能 -->
-    <view class="section function-section">
-      <view class="section-header">
-        <text class="section-title">📋 常用功能</text>
-      </view>
-      
-      <view class="function-list">
-        <view class="function-item" bindtap="goToAddress">
-          <view class="function-left">
-            <text class="function-icon">📍</text>
-            <text class="function-label">地址管理</text>
+        <view class="tool-item" bindtap="goToAbout">
+          <view class="tool-icon" style="background:#F3E5F5;">
+            <text>📖</text>
           </view>
-          <text class="arrow">→</text>
-        </view>
-        
-        <view class="function-item" bindtap="goToAppointment">
-          <view class="function-left">
-            <text class="function-icon">📅</text>
-            <text class="function-label">预约记录</text>
-          </view>
-          <text class="arrow">→</text>
-        </view>
-        
-        <view class="function-item" bindtap="contactService">
-          <view class="function-left">
-            <text class="function-icon">💬</text>
-            <text class="function-label">在线客服</text>
-          </view>
-          <text class="arrow">→</text>
-        </view>
-        
-        <view class="function-item" bindtap="goToSettings">
-          <view class="function-left">
-            <text class="function-icon">⚙️</text>
-            <text class="function-label">设置</text>
-          </view>
-          <text class="arrow">→</text>
-        </view>
-        
-        <view class="function-item" bindtap="goToAbout">
-          <view class="function-left">
-            <text class="function-icon">📖</text>
-            <text class="function-label">关于我们</text>
-          </view>
-          <text class="arrow">→</text>
+          <text class="tool-label">关于我们</text>
         </view>
       </view>
     </view>
 
-    <!-- 底部占位 -->
-    <view class="bottom-placeholder"></view>
+    <view class="footer-placeholder"></view>
   </scroll-view>
 </view>

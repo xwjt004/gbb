@@ -6,7 +6,7 @@ import {
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { CreateWxOrderDto, QueryMyOrdersDto } from './dto/create-wx-order.dto';
 import { Prisma } from '@prisma/client';
-import { PaymentStatus } from '../../shared/enums/status.enum';
+import { OrderStatus, PaymentStatus } from '../../shared/enums/status.enum';
 
 @Injectable()
 export class WxOrderService {
@@ -119,6 +119,7 @@ export class WxOrderService {
           paymentStatus: 'PENDING_PAYMENT' as any,
           orderStatus: 'PENDING',
           customerName: dto.customerName || wxUser.nickname || '未设置',
+          customerPhone: dto.customerPhone,
           notes: dto.notes,
           childrenCount: dto.childrenCount || 1,
           shippingAddressId: dto.shippingAddressId,
@@ -193,9 +194,25 @@ export class WxOrderService {
   async getMyOrders(wxUserId: string, dto: QueryMyOrdersDto) {
     const { orderStatus, paymentStatus, page = 1, limit = 10 } = dto;
 
+    // 获取 WxUser 的 linkedUserId，预约创建的订单只有 userId 没有 wxUserId
+    const wxUser = await this.prisma.wxUser.findUnique({
+      where: { id: wxUserId },
+      select: { linkedUserId: true },
+    });
+
     const where: Prisma.OrderWhereInput = {
-      wxUserId,
+      deletedAt: null,
     };
+
+    // 同时查小程序创建的订单(wxUserId)和预约创建的订单(linkedUserId)
+    if (wxUser?.linkedUserId) {
+      where.OR = [
+        { wxUserId },
+        { userId: wxUser.linkedUserId },
+      ];
+    } else {
+      where.wxUserId = wxUserId;
+    }
 
     if (orderStatus) {
       where.orderStatus = orderStatus as any;
@@ -252,10 +269,19 @@ export class WxOrderService {
    * @param orderId 订单ID
    */
   async getOrderDetail(wxUserId: string, orderId: string) {
+    const wxUser = await this.prisma.wxUser.findUnique({
+      where: { id: wxUserId },
+      select: { linkedUserId: true },
+    });
+
     const order = await this.prisma.order.findFirst({
       where: {
         id: orderId,
-        wxUserId,
+        deletedAt: null,
+        OR: [
+          { wxUserId },
+          ...(wxUser?.linkedUserId ? [{ userId: wxUser.linkedUserId }] : []),
+        ],
       },
       include: {
         items: {
@@ -379,6 +405,7 @@ export class WxOrderService {
       paymentStatus: order.paymentStatus,
       orderStatus: order.orderStatus,
       appointmentDate: order.appointmentDate,
+      childrenCount: order.childrenCount,
       itemCount: order.items?.length || 0,
       items: order.items?.slice(0, 3).map((item: any) => ({
         id: item.id,
@@ -656,14 +683,88 @@ export class WxOrderService {
       // timeValue 可能是Date对象或字符串
       const date = timeValue instanceof Date ? timeValue : new Date(timeValue);
 
-      // 提取小时和分钟(使用UTC时间,因为PostgreSQL Time类型没有时区)
-      const hours = date.getUTCHours().toString().padStart(2, '0');
-      const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+      // PostgreSQL TIME 存储为 UTC 时间，转为北京时间（UTC+8）
+      const cstMinutes = date.getUTCMinutes();
+      let cstHours = date.getUTCHours() + 8;
+
+      // 如果跨天，回绕到 0-23
+      if (cstHours >= 24) cstHours -= 24;
+
+      const hours = cstHours.toString().padStart(2, '0');
+      const minutes = cstMinutes.toString().padStart(2, '0');
 
       return `${hours}:${minutes}`;
     } catch (e) {
       console.error('时间格式化失败:', e, timeValue);
       return String(timeValue);
     }
+  }
+
+  /**
+   * 取消订单（微信用户端）
+   */
+  async cancelOrder(wxUserId: string, orderId: string) {
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, wxUserId },
+      include: { timeSlot: true },
+    });
+
+    if (!order) {
+      throw new NotFoundException('订单不存在');
+    }
+
+    if (order.orderStatus === 'CANCELLED') {
+      throw new BadRequestException('订单已取消');
+    }
+    if (order.orderStatus === 'COMPLETED') {
+      throw new BadRequestException('已完成的订单不能取消');
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      // 释放时间槽
+      if (order.timeSlotId) {
+        const current = await tx.timeSlot.findUnique({ where: { id: order.timeSlotId } });
+        if (current) {
+          const newBooked = Math.max(0, current.bookedCount - 1);
+          await tx.timeSlot.update({
+            where: { id: order.timeSlotId },
+            data: {
+              bookedCount: newBooked,
+              isBooked: newBooked > 0,
+            },
+          });
+        }
+      }
+
+      await tx.order.update({
+        where: { id: orderId },
+        data: {
+          orderStatus: OrderStatus.CANCELLED,
+          paymentStatus: PaymentStatus.CANCELLED,
+        },
+      });
+    });
+
+    return { code: 200, message: '订单已取消' };
+  }
+
+  /**
+   * 删除订单（软删除）
+   */
+  async deleteOrder(wxUserId: string, orderId: string) {
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, wxUserId },
+    });
+
+    if (!order) {
+      throw new NotFoundException('订单不存在');
+    }
+
+    await this.prisma.order.update({
+      where: { id: orderId },
+      data: { deletedAt: new Date() },
+    });
+
+    return { code: 200, message: '订单已删除' };
   }
 }

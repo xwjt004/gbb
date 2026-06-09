@@ -16,6 +16,7 @@ import { BulkUpdateStatusDto } from './dto/bulk-update-status.dto';
 import { CreatePackageDto } from './dto/create-package.dto';
 import { UpdatePackageDto } from './dto/update-package.dto';
 import { PackageSearchDto } from './dto/package-search.dto';
+import { NullToUndefinedPipe } from '../../shared/pipes/null-to-undefined.pipe';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @ApiTags('packages')
@@ -143,7 +144,7 @@ export class PackagesController {
   @ApiResponse({ status: 200, description: '更新成功' })
   async update(
     @Param('id') id: string,
-    @Body() updatePackageDto: UpdatePackageDto,
+    @Body(NullToUndefinedPipe) updatePackageDto: UpdatePackageDto,
   ) {
     this.logger.log(
       `更新套餐: ${id}, 数据: ${JSON.stringify(updatePackageDto)}`,

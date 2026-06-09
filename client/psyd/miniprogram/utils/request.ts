@@ -71,6 +71,7 @@ export async function request<T = any>(config: RequestConfig, retryCount = 0): P
           'Content-Type': 'application/json',
           ...header
         },
+        timeout: 15000,
         success: resolve,
         fail: reject
       });

@@ -1,0 +1,7 @@
+export const STUDIO_NAME = '乖宝宝儿童影楼'
+export const STUDIO_SLOGAN = '记录每一个美好瞬间'
+export const PHONE = '13841640830'
+export const PHONE2 = '0416-5577456'
+export const ADDRESS = '辽宁省锦州市黑山县大红家园院内东门（原黑山酒厂）'
+export const BUSINESS_HOURS = '08:00 - 16:00'
+export const ICP_BEIAN = '辽ICP备2026010503号-1'

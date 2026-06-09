@@ -92,6 +92,11 @@ const Login: React.FC = () => {
         <div className="login-footer">
           &copy; {new Date().getFullYear()} 乖宝宝儿童影楼
         </div>
+        <div style={{ textAlign: 'center', padding: '4px 0 16px', fontSize: 12, color: '#999' }}>
+          <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" style={{ color: '#999', textDecoration: 'none' }}>
+            辽ICP备2026010503号-1
+          </a>
+        </div>
       </div>
     </div>
   );

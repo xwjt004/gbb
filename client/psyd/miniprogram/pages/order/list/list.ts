@@ -1,25 +1,34 @@
 import { request } from '../../../utils/request';
 import { getImageUrl } from '../../../utils/image';
+import { toBeijingDate } from '../../../utils/format';
 
 /**
  * 订单列表页
  * 功能：展示用户的所有订单，支持按状态筛选、下拉刷新、上拉加载
  */
 
+// 个人中心跳转状态 → API过滤参数映射
+const PROFILE_STATUS_MAP: Record<string, { label: string; filters: Record<string, string> }> = {
+  'PENDING_PAYMENT': { label: '待支付', filters: { paymentStatus: 'PENDING' } },
+  'PENDING_SHOOTING': { label: '待拍摄', filters: { orderStatus: 'CONFIRMED' } },
+  'PENDING_PICKUP': { label: '待取件', filters: { orderStatus: 'COMPLETED' } },
+  'REFUNDING': { label: '售后', filters: { paymentStatus: 'REFUNDING' } },
+};
+
 // 订单状态标签配置
 const STATUS_TABS = [
   { key: 'ALL', label: '全部' },
   { key: 'PENDING', label: '待付款' },
-  { key: 'CONFIRMED', label: '待服务' },
-  { key: 'IN_PROGRESS', label: '服务中' },
+  { key: 'CONFIRMED', label: '商家已接单' },
+  { key: 'IN_PROGRESS', label: '拍摄中' },
   { key: 'COMPLETED', label: '已完成' },
 ];
 
-// 订单状态文本映射
+// 订单状态文本映射（客户友好版）
 const ORDER_STATUS_TEXT: Record<string, string> = {
-  'PENDING': '待确认',
-  'CONFIRMED': '已确认',
-  'IN_PROGRESS': '进行中',
+  'PENDING': '待支付',
+  'CONFIRMED': '商家已接单',
+  'IN_PROGRESS': '拍摄中',
   'COMPLETED': '已完成',
   'CANCELLED': '已取消',
   'REFUNDED': '已退款',
@@ -28,9 +37,12 @@ const ORDER_STATUS_TEXT: Record<string, string> = {
 // 支付状态文本映射
 const PAYMENT_STATUS_TEXT: Record<string, string> = {
   'PENDING': '待支付',
+  'PENDING_PAYMENT': '待支付',
   'PROCESSING': '处理中',
   'PARTIAL': '部分支付',
-  'PAID': '已支付',
+  'PARTIAL_PAID': '已付定金',
+  'FULLY_PAID': '已付款',
+  'PAID': '已付款',
   'OVERPAID': '多收款',
   'FREE': '免费订单',
   'FAILED': '支付失败',
@@ -39,15 +51,53 @@ const PAYMENT_STATUS_TEXT: Record<string, string> = {
   'REFUNDED': '已退款',
 };
 
-// 订单状态颜色映射
-const STATUS_COLORS: Record<string, string> = {
-  'PENDING': '#ff9800',
-  'CONFIRMED': '#2196f3',
-  'IN_PROGRESS': '#4caf50',
-  'COMPLETED': '#9e9e9e',
-  'CANCELLED': '#f44336',
-  'REFUNDED': '#f44336',
-};
+// 客户友好状态文本（同时考虑订单状态和支付状态）
+function getOrderDisplayStatus(order: { orderStatus: string; paymentStatus: string }): { text: string; color: string } {
+  const os = order.orderStatus;
+  const ps = order.paymentStatus;
+
+  // 未支付
+  if (ps === 'PENDING_PAYMENT' || ps === 'PENDING') {
+    return { text: '待支付', color: '#ff9800' };
+  }
+
+  // 已支付但商家未确认
+  if ((ps === 'FULLY_PAID' || ps === 'PAID') && (os === 'PENDING')) {
+    return { text: '待确认', color: '#ff9800' };
+  }
+
+  // 已确认/待拍摄
+  if (os === 'CONFIRMED') {
+    return { text: '待拍摄', color: '#2196f3' };
+  }
+
+  // 拍摄中
+  if (os === 'IN_PROGRESS') {
+    return { text: '拍摄中', color: '#4caf50' };
+  }
+
+  // 已完成
+  if (os === 'COMPLETED') {
+    return { text: '已完成', color: '#9e9e9e' };
+  }
+
+  // 已取消
+  if (os === 'CANCELLED') {
+    return { text: '已取消', color: '#f44336' };
+  }
+
+  // 退款中
+  if (ps === 'REFUNDING') {
+    return { text: '退款中', color: '#f44336' };
+  }
+
+  if (ps === 'REFUNDED') {
+    return { text: '已退款', color: '#f44336' };
+  }
+
+  // 兜底
+  return { text: os || ps, color: '#9e9e9e' };
+}
 
 interface OrderItem {
   id: string;
@@ -95,14 +145,24 @@ Page({
     
     // 标记是否已初始化
     initialized: false,
+
+    // 来自个人中心的状态筛选
+    profileFilter: null as { label: string; filters: Record<string, string> } | null,
   },
 
   /**
    * 页面加载
    */
-  onLoad() {
-    console.log('订单列表页加载');
-    // 不在这里加载数据，等待 onShow
+  onLoad(options: any) {
+    console.log('订单列表页加载，参数:', options);
+
+    // 从个人中心跳转时带 status 参数
+    const status = options.status as string;
+    if (status && PROFILE_STATUS_MAP[status]) {
+      const filter = PROFILE_STATUS_MAP[status];
+      this.setData({ profileFilter: filter });
+      wx.setNavigationBarTitle({ title: filter.label });
+    }
   },
 
   /**
@@ -241,12 +301,19 @@ Page({
         page: this.data.page,
         limit: this.data.limit,
       };
-      
-      // 根据Tab筛选状态
-      if (this.data.activeTab !== 'ALL') {
-        params.orderStatus = this.data.activeTab;
+
+      // 来自个人中心的状态筛选（优先级高于Tab）
+      if (this.data.profileFilter) {
+        Object.assign(params, this.data.profileFilter.filters);
+      } else if (this.data.activeTab !== 'ALL') {
+        // 'PENDING' 标签按支付状态过滤（只显示真正未支付的订单）
+        if (this.data.activeTab === 'PENDING') {
+          params.paymentStatus = 'PENDING_PAYMENT';
+        } else {
+          params.orderStatus = this.data.activeTab;
+        }
       }
-      
+
       // 调用API
       const data = await request({
         url: '/wx-order/my',
@@ -256,18 +323,25 @@ Page({
       });
       
       // 处理订单数据
-      const newOrders = data.items.map((order: any) => ({
-        ...order,
-        orderStatusText: ORDER_STATUS_TEXT[order.orderStatus] || order.orderStatus,
-        paymentStatusText: PAYMENT_STATUS_TEXT[order.paymentStatus] || order.paymentStatus,
-        statusColor: STATUS_COLORS[order.orderStatus] || '#9e9e9e',
-        // 转换订单项中的图片 URL
-        items: order.items?.map((item: any) => ({
-          ...item,
-          itemImage: getImageUrl(item.itemImage) || '/images/placeholder.png',
-        })) || [],
-      }));
-      
+      const newOrders = data.items.map((order: any) => {
+        const displayStatus = getOrderDisplayStatus(order);
+        return {
+          ...order,
+          orderStatusText: displayStatus.text,
+          paymentStatusText: PAYMENT_STATUS_TEXT[order.paymentStatus] || order.paymentStatus,
+          statusColor: displayStatus.color,
+          // 北京时间格式化显示
+          appointmentDateDisplay: order.appointmentDate
+            ? toBeijingDate(order.appointmentDate, 'MM月DD日')
+            : '',
+          // 转换订单项中的图片 URL
+          items: order.items?.map((item: any) => ({
+            ...item,
+            itemImage: getImageUrl(item.itemImage) || '/images/placeholder.png',
+          })) || [],
+        };
+      });
+
       // 合并订单列表
       const orders = this.data.page === 1 ? newOrders : [...this.data.orders, ...newOrders];
       
@@ -416,7 +490,7 @@ Page({
   onContactService() {
     wx.showModal({
       title: '联系客服',
-      content: '客服电话：400-123-4567\n工作时间：9:00-18:00',
+      content: '客服电话：0416-5577456\n营业时间：8:30-16:00',
       showCancel: false,
     });
   },

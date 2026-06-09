@@ -69,42 +69,44 @@ export class StatisticsAnalysisService {
         const dayEnd = new Date(currentDate);
         dayEnd.setHours(23, 59, 59, 999);
 
-        // 查询当天的订单数据
-        const dayOrders = await this.prisma.order.aggregate({
-          where: {
-            createdAt: {
-              gte: dayStart,
-              lte: dayEnd,
+        // 并行查询
+        const [dayOrders, dayRevenue, dayPaid, dayRefunds] = await Promise.all([
+          // 所有订单（orderCount）
+          this.prisma.order.aggregate({
+            where: { createdAt: { gte: dayStart, lte: dayEnd } },
+            _count: { id: true },
+          }),
+          // 收入 = 非取消订单的 totalAmount（与 orders/stats totalRevenue 口径一致）
+          this.prisma.order.aggregate({
+            where: {
+              createdAt: { gte: dayStart, lte: dayEnd },
+              orderStatus: { not: 'CANCELLED' },
             },
-          },
-          _count: {
-            id: true,
-          },
-          _sum: {
-            totalAmount: true,
-            paidAmount: true,
-          },
-        });
-
-        // 查询当天的退款数据
-        const dayRefunds = await this.prisma.refundRequest.aggregate({
-          where: {
-            createdAt: {
-              gte: dayStart,
-              lte: dayEnd,
+            _sum: { totalAmount: true },
+          }),
+          // 实收 = 已支付订单的 paidAmount（与 orders/stats paidAmount 口径一致）
+          this.prisma.order.aggregate({
+            where: {
+              createdAt: { gte: dayStart, lte: dayEnd },
+              paymentStatus: 'FULLY_PAID',
             },
-            status: { in: ['APPROVED', 'COMPLETED'] },
-          },
-          _sum: {
-            refundAmount: true,
-          },
-        });
+            _sum: { paidAmount: true },
+          }),
+          // 当天的退款数据
+          this.prisma.refundRequest.aggregate({
+            where: {
+              createdAt: { gte: dayStart, lte: dayEnd },
+              status: { in: ['APPROVED', 'COMPLETED'] },
+            },
+            _sum: { refundAmount: true },
+          }),
+        ]);
 
         trendData.push({
           date: formatLocalDate(currentDate),
           orderCount: dayOrders._count?.id,
-          revenue: Number(dayOrders._sum?.totalAmount || 0),
-          paidAmount: Number(dayOrders._sum?.paidAmount || 0),
+          revenue: Number(dayRevenue._sum?.totalAmount || 0),
+          paidAmount: Number(dayPaid._sum?.paidAmount || 0),
           refundAmount: Number(dayRefunds._sum?.refundAmount || 0),
         });
 
@@ -1001,15 +1003,31 @@ export class StatisticsAnalysisService {
         const dayEnd = new Date(current);
         dayEnd.setHours(23, 59, 59, 999);
 
-        const dayOrders = await this.prisma.order.aggregate({
-          where: { createdAt: { gte: dayStart, lte: dayEnd } },
-          _count: { id: true },
-          _sum: { totalAmount: true, paidAmount: true },
-        });
+        // 并行查询：收入 = 非取消订单 totalAmount，实收 = FULLY_PAID 订单 paidAmount
+        const [dayOrders, dayRevenue, dayPaidAmount] = await Promise.all([
+          this.prisma.order.aggregate({
+            where: { createdAt: { gte: dayStart, lte: dayEnd } },
+            _count: { id: true },
+          }),
+          this.prisma.order.aggregate({
+            where: {
+              createdAt: { gte: dayStart, lte: dayEnd },
+              orderStatus: { not: 'CANCELLED' },
+            },
+            _sum: { totalAmount: true },
+          }),
+          this.prisma.order.aggregate({
+            where: {
+              createdAt: { gte: dayStart, lte: dayEnd },
+              paymentStatus: 'FULLY_PAID',
+            },
+            _sum: { paidAmount: true },
+          }),
+        ]);
 
         const orderCount = dayOrders._count.id;
-        const revenue = Number(dayOrders._sum.totalAmount || 0);
-        const paidAmount = Number(dayOrders._sum.paidAmount || 0);
+        const revenue = Number(dayRevenue._sum?.totalAmount || 0);
+        const paidAmount = Number(dayPaidAmount._sum?.paidAmount || 0);
         // 已付订单数（用于转化率计算）
         const paidOrders = await this.prisma.order.count({
           where: {

@@ -60,6 +60,11 @@ const OrderForm: React.FC<OrderFormProps> = ({
     // 在 modal 模式依赖 visible；在 page 模式始终加载
     if (visible || mode === 'page') {
       loadInitialData().then(() => {
+        // 加载已有订单对应日期的时间槽，确保 Select 能正确显示时间标签而非原始ID
+        if (order?.timeSlot?.date) {
+          loadTimeSlots(order.timeSlot.date);
+        }
+
         // 数据加载完成后再设置表单值
         if (order) {
           const packageItem = packages.find(p => p.id.toString() === order.package?.id?.toString());
@@ -109,14 +114,20 @@ const OrderForm: React.FC<OrderFormProps> = ({
     try {
       setLoadingTimeSlots(true);
       console.log('开始加载时间槽，日期:', date);
-      
-      // 获取指定日期的可用时间槽
-      const availableSlots = await timeSlotService.getAvailableSlots({ date });
-      console.log('获取到的可用时间槽:', availableSlots);
-      
-      setTimeSlots(availableSlots || []);
-      
-      if (!availableSlots || availableSlots.length === 0) {
+
+      // 获取指定日期的所有时间槽（编辑已有订单时，槽位可能已过期/已预约）
+      const response = await timeSlotService.getTimeSlots({
+        startDate: date,
+        endDate: date,
+        page: 1,
+        pageSize: 100,
+      });
+      const slots = response.data?.list || [];
+      console.log('获取到的时间槽:', slots);
+
+      setTimeSlots(slots);
+
+      if (slots.length === 0) {
         message.info(`${date} 当天暂无可用时间槽`);
       }
     } catch (error) {
@@ -283,26 +294,38 @@ const OrderForm: React.FC<OrderFormProps> = ({
             <Select placeholder="请选择时间槽" loading={loadingTimeSlots}>
               {timeSlots
                 .filter(ts => {
+                  // 编辑订单时，始终显示当前已选的时间槽（可能为过去日期或已约满）
+                  const currentTimeSlotId = form.getFieldValue('timeSlotId');
+                  if (currentTimeSlotId && ts.id?.toString() === currentTimeSlotId) {
+                    return true;
+                  }
+
+                  // 过滤已约满的时间槽
+                  const availableCount = ts.availableCount ?? (ts.capacity - ts.bookedCount);
+                  if (availableCount <= 0) {
+                    return false;
+                  }
+
                   // 只显示当前时间之后的时间槽
                   const now = dayjs();
                   const today = now.format('YYYY-MM-DD');
                   const slotDate = dayjs(ts.date).format('YYYY-MM-DD');
-                  
-                  // 如果选择的是未来日期，显示所有时间槽
+
+                  // 如果选择的是未来日期，显示所有有容量的时间槽
                   if (slotDate > today) {
                     return true;
                   }
-                  
+
                   // 如果选择的是今天，只显示当前时间之后的时间槽
                   if (slotDate === today) {
                     try {
                       // 解析时间槽的开始时间
                       const startTimeStr = dayjs.utc(ts.startTime).local().format('HH:mm');
                       const [hours, minutes] = startTimeStr.split(':').map(Number);
-                      
+
                       // 构建今天的时间槽开始时间
                       const slotStart = now.clone().hour(hours).minute(minutes).second(0);
-                      
+
                       // 只显示开始时间晚于当前时间的时间槽
                       return slotStart.isAfter(now);
                     } catch (error) {
@@ -310,7 +333,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                       return false;
                     }
                   }
-                  
+
                   // 过去的日期不显示
                   return false;
                 })

@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsInt, Min, IsEnum } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsBoolean, Min, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export enum PackageCategory {
@@ -42,4 +42,9 @@ export class QueryPackagesDto {
   @IsOptional()
   @IsString()
   status?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  isPopular?: boolean;
 }

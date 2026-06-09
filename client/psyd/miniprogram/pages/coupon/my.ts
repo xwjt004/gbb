@@ -46,7 +46,8 @@ Page({
       AVAILABLE: 0,
       USED: 0,
       EXPIRED: 0
-    }
+    },
+    emptyText: '暂无可用优惠券'
   },
 
   /**
@@ -152,7 +153,11 @@ Page({
 
       if (res.statusCode === 200) {
         const data: MyCouponResponse = res.data;
-        const newCoupons = refresh ? data.items : [...this.data.coupons, ...data.items];
+        const newCoupons = (refresh ? data.items : [...this.data.coupons, ...data.items]).map(item => ({
+          ...item,
+          name: item.name || item.coupon?.couponName || '',
+          description: item.description || item.coupon?.description || '',
+        }));
         
         this.setData({
           coupons: newCoupons,
@@ -238,10 +243,17 @@ Page({
     const activeTab = e.currentTarget.dataset.tab;
     if (activeTab === this.data.activeTab) return;
 
+    const emptyTextMap: Record<string, string> = {
+      AVAILABLE: '暂无可用优惠券',
+      USED: '暂无已使用优惠券',
+      EXPIRED: '暂无已过期优惠券'
+    };
+
     this.setData({
       activeTab,
       page: 1,
-      hasMore: true
+      hasMore: true,
+      emptyText: emptyTextMap[activeTab] || '暂无优惠券'
     });
     this.loadCoupons(true);
   },
@@ -283,6 +295,15 @@ Page({
   goToList() {
     wx.navigateTo({
       url: '/pages/coupon/list'
+    });
+  },
+
+  /**
+   * 跳转到商品列表
+   */
+  goToProducts() {
+    wx.switchTab({
+      url: '/pages/product/list'
     });
   },
 

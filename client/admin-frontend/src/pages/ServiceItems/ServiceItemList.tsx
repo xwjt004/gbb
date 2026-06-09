@@ -139,8 +139,10 @@ const ServiceItemList: React.FC = () => {
       const values = await form.validateFields();
       
       // 将 category 数组转换回字符串
+      const { unit, maxCapacity, requiresBooking, ...rest } = values;
       const submitData = {
-        ...values,
+        ...rest,
+        priceUnit: unit,
         category: Array.isArray(values.category) ? values.category[0] : values.category,
       };
       

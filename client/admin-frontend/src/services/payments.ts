@@ -21,7 +21,9 @@ export const paymentService = {
         // 将前端状态映射到后端状态
         let backendStatus: string = params.status;
         if (params.status === 'PAID') {
-          backendStatus = 'SUCCESS'; // 前端的PAID对应后端的SUCCESS
+          backendStatus = 'FULLY_PAID';
+        } else if (params.status === 'PENDING') {
+          backendStatus = 'PENDING_PAYMENT';
         }
         queryParams.status = backendStatus;
       }
@@ -51,7 +53,7 @@ export const paymentService = {
         },
         amount: Number(payment.amount || 0),
         actualAmount: Number(payment.amount || 0),
-        method: paymentService.mapPaymentMethod(payment.payment_type),
+        method: paymentService.mapPaymentMethod(payment.payment_method),
         status: paymentService.mapPaymentStatus(payment.status),
         thirdPartyId: payment.transaction_id || '',
         refundAmount: Number(payment.refund_amount || payment.refundAmount || 0),
@@ -76,15 +78,16 @@ export const paymentService = {
     }
   },
 
-  // 支付方式映射
+  // 支付方式映射（后端 Prisma PaymentMethod → 前端 PaymentMethod）
   mapPaymentMethod: (backendMethod: string) => {
     const methodMap: { [key: string]: string } = {
-      'WECHAT': 'WECHAT',
-      'ALIPAY': 'ALIPAY', 
+      'WECHAT_PAY': 'WECHAT',
+      'WECHAT_TRANSFER': 'WECHAT',
+      'ALIPAY_TRANSFER': 'ALIPAY',
       'CASH': 'CASH',
-      'BANK_TRANSFER': 'BANK_TRANSFER',
+      'BANK_CARD': 'BANK_TRANSFER',
     };
-    return methodMap[backendMethod] || 'CASH';
+    return methodMap[backendMethod] || '';
   },
 
   // 支付状态映射
@@ -188,7 +191,7 @@ export const paymentService = {
         orderNo: payment.order_no || payment.orderNo,
         amount: Number(payment.amount || 0),
         refundAmount: Number(payment.refund_amount || payment.refundAmount || 0),
-        method: paymentService.mapPaymentMethod(payment.payment_type || payment.method),
+        method: paymentService.mapPaymentMethod(payment.payment_method || payment.paymentMethod),
         status: paymentService.mapPaymentStatus(payment.status),
         thirdPartyId: payment.transaction_id || payment.thirdPartyId || payment.transactionId,
         description: payment.description || payment.notes,

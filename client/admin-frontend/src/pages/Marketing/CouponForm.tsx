@@ -44,10 +44,20 @@ const CouponForm: React.FC = () => {
     const values = await form.validateFields();
     const [startTime, endTime] = values.dateRange;
     const payload = {
-      ...values,
+      couponCode: values.couponCode,
+      couponName: values.couponName,
+      couponType: values.couponType,
+      discountType: values.discountType,
+      discountValue: Number(values.discountValue),
+      minAmount: values.minAmount != null ? Number(values.minAmount) : undefined,
+      maxDiscount: values.maxDiscount != null ? Number(values.maxDiscount) : undefined,
+      totalCount: Number(values.totalCount),
+      perUserLimit: values.perUserLimit != null ? Number(values.perUserLimit) : undefined,
+      applicableType: values.applicableType,
+      applicableIds: values.applicableIds,
       startTime: startTime.toISOString(),
       endTime: endTime.toISOString(),
-      dateRange: undefined,
+      description: values.description,
     };
 
     try {

@@ -10,6 +10,7 @@
     "pages/coupon/list",
     "pages/coupon/my",
     "pages/coupon/detail",
+    "pages/coupon/select/select",
     "pages/index/index",
     "pages/product/detail",
     "pages/packages/detail/detail",
@@ -21,11 +22,21 @@
     "pages/order/list/list",
     "pages/order/detail/detail",
     "pages/payment/payment",
+    "pages/payment/agreement/agreement",
     "pages/payment/result/result",
+    "pages/agreement/user/user",
+    "pages/agreement/privacy/privacy",
     "pages/address/list/list",
     "pages/address/edit/edit",
     "pages/appointment/appointment",
-    "pages/logs/logs"
+    "pages/logs/logs",
+    "pages/favorite/list/list",
+    "pages/member/member",
+    "pages/settings/settings",
+    "pages/about/about",
+    "pages/profile/edit/edit",
+    "pages/member/benefits/benefits",
+    "pages/member/points/points"
   ],
   "window": {
     "navigationBarTextStyle": "black",
@@ -39,16 +50,16 @@
     "borderStyle": "white",
     "list": [
       {
+        "pagePath": "pages/packages/list/list",
+        "text": "预约"
+      },
+      {
         "pagePath": "pages/product/list",
         "text": "商品"
       },
       {
         "pagePath": "pages/cart/cart",
         "text": "购物车"
-      },
-      {
-        "pagePath": "pages/packages/list/list",
-        "text": "预约"
       },
       {
         "pagePath": "pages/profile/profile",

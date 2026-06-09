@@ -4,8 +4,14 @@ import axios from 'axios';
 // 兼容旧的 VITE_API_BASE_URL，以防尚未清理
 const rawApi = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
 const API_BASE_URL = rawApi
-  ? (rawApi.startsWith('http') ? rawApi : `http://localhost:3000${rawApi}`)
-  : 'http://localhost:3000/api/v1';
+  ? (rawApi.startsWith('http') ? rawApi : `${window.location.origin}${rawApi}`)
+  : `${window.location.origin}/api/v1`;
+
+export interface BannerItem {
+  image: string;
+  title?: string;
+  link?: string;
+}
 
 export interface ShopInfo {
   id: number;
@@ -15,6 +21,8 @@ export interface ShopInfo {
   telephone?: string;
   shopPhoto?: string;
   locationMap?: string;
+  latitude?: number;
+  longitude?: number;
   businessScope?: string;
   wechatId?: string;
   douyinId?: string;
@@ -22,6 +30,8 @@ export interface ShopInfo {
   xiaohongshuId?: string;
   businessHours?: string;
   description?: string;
+  banners?: BannerItem[];
+  bannerInterval?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -31,6 +41,8 @@ export interface UpdateShopInfoDto {
   address: string;
   phone: string;
   telephone?: string;
+  latitude?: number;
+  longitude?: number;
   businessScope?: string;
   wechatId?: string;
   douyinId?: string;
@@ -38,6 +50,8 @@ export interface UpdateShopInfoDto {
   xiaohongshuId?: string;
   businessHours?: string;
   description?: string;
+  banners?: BannerItem[];
+  bannerInterval?: number;
 }
 
 /**
@@ -58,11 +72,11 @@ export const updateShopInfo = async (data: UpdateShopInfoDto): Promise<ShopInfo>
 
 /**
  * 上传店铺图片
- * @param fieldName - 'shopPhoto' 或 'locationMap'
+ * @param fieldName - 'shopPhoto' 或 'locationMap' 或 'banner'
  * @param file - 图片文件
  */
 export const uploadShopImage = async (
-  fieldName: 'shopPhoto' | 'locationMap',
+  fieldName: 'shopPhoto' | 'locationMap' | 'banner',
   file: File
 ): Promise<{ url: string }> => {
   const formData = new FormData();
@@ -79,8 +93,6 @@ export const uploadShopImage = async (
   );
 
   const data = response.data.data || {};
-  // 后端当前返回 { shopPhoto: '/uploads/...' } 或 { locationMap: '/uploads/...' }
-  // 统一转换为 { url }
   const url = data.url || data.shopPhoto || data.locationMap;
   return { url };
 };

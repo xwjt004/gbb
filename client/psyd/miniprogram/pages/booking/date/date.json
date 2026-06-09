@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "选择日期",
-  "enablePullDownRefresh": false,
+  "navigationStyle": "custom",
+  "backgroundColor": "#fafafa",
   "backgroundTextStyle": "dark"
 }

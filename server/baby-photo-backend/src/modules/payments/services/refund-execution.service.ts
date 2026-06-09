@@ -9,7 +9,7 @@
 
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
-import { WxPayService } from './wx-pay.service';
+import { WechatPayService } from '../wechat-pay.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PaymentStatus } from '../../../shared/enums/status.enum';
 import { PaymentType, PaymentMethod } from '@prisma/client';
@@ -34,7 +34,7 @@ export class RefundExecutionService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly wxPayService: WxPayService,
+    private readonly wechatPayService: WechatPayService,
   ) {}
 
   /**
@@ -275,7 +275,7 @@ export class RefundExecutionService {
         `amount=${refund.refundAmount.toString()}`,
     );
 
-    const result = await this.wxPayService.refund({
+    const result = await this.wechatPayService.refund({
       outRefundNo: refund.id,
       outTradeNo: refund.order.orderNo,
       totalFee: refund.originalPayment.amount.toNumber() * 100,

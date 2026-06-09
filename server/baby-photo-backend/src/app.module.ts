@@ -58,6 +58,7 @@ import { CouponsModule } from './modules/coupons/coupons.module';
 import { AutomationRulesModule } from './modules/automation-rules/automation-rules.module';
 import { SmartMarketingModule } from './modules/smart-marketing/smart-marketing.module';
 import { WxUserModule } from './modules/wx-user/wx-user.module';
+import { WxFavoriteModule } from './modules/wx-favorite/wx-favorite.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { OperationLogInterceptor } from './shared/interceptors/operation-log.interceptor';
 
@@ -156,6 +157,7 @@ import { OperationLogInterceptor } from './shared/interceptors/operation-log.int
     AutomationRulesModule,
     SmartMarketingModule,
     WxUserModule,
+    WxFavoriteModule,
   ],
   controllers: [AppController],
   providers: [

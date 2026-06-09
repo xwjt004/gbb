@@ -1,0 +1,80 @@
+<view class="page">
+  <view class="page-header">
+    <text class="page-title">选择优惠券</text>
+    <text class="page-subtitle">共 {{coupons.length}} 张可用优惠券</text>
+  </view>
+
+  <!-- 不使用优惠券选项 -->
+  <view
+    class="coupon-card no-coupon {{selectedId === -1 ? 'active' : ''}}"
+    data-id="-1"
+    bindtap="onSelect"
+  >
+    <view class="coupon-left no-coupon-left">
+      <text class="no-coupon-icon">😊</text>
+    </view>
+    <view class="coupon-divider">
+      <view class="dot dot-top"></view>
+      <view class="dash"></view>
+      <view class="dot dot-bottom"></view>
+    </view>
+    <view class="coupon-right">
+      <text class="coupon-name">不使用优惠券</text>
+      <text class="coupon-desc">直接结算，不享受优惠</text>
+    </view>
+    <view class="check-mark" wx:if="{{selectedId === -1}}">✓</view>
+  </view>
+
+  <!-- 优惠券列表 -->
+  <view
+    wx:for="{{coupons}}"
+    wx:key="id"
+    class="coupon-card {{selectedId === item.id ? 'active' : ''}}"
+    data-id="{{item.id}}"
+    data-amount="{{item.discountValue}}"
+    data-name="{{item.name}}"
+    data-type="{{item.discountType}}"
+    data-min="{{item.minAmount}}"
+    bindtap="onSelect"
+  >
+    <view class="coupon-left">
+      <view class="coupon-amount">
+        <text class="amount-symbol" wx:if="{{item.discountType === 'FIXED'}}">¥</text>
+        <text class="amount-value">{{item.discountType === 'FIXED' ? item.discountValue : item.discountValue + '折'}}</text>
+      </view>
+      <text class="coupon-condition">
+        <text wx:if="{{item.minAmount}}">满{{item.minAmount}}可用</text>
+        <text wx:else>无门槛</text>
+      </text>
+    </view>
+    <view class="coupon-divider">
+      <view class="dot dot-top"></view>
+      <view class="dash"></view>
+      <view class="dot dot-bottom"></view>
+    </view>
+    <view class="coupon-right">
+      <text class="coupon-name">{{item.couponName || item.name}}</text>
+      <text class="coupon-desc">{{item.description}}</text>
+      <text class="coupon-time">有效期至 {{item.endTime || item.expiredAt}}</text>
+    </view>
+    <view class="check-mark" wx:if="{{selectedId === item.id}}">✓</view>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:if="{{!loading && coupons.length === 0}}" class="empty-state">
+    <text class="empty-icon">🎫</text>
+    <text class="empty-text">暂无可用优惠券</text>
+  </view>
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading-state">
+    <text>加载中...</text>
+  </view>
+
+  <!-- 底部确认按钮 -->
+  <view class="footer-bar">
+    <button class="confirm-btn" bindtap="onConfirm" disabled="{{!confirmed && selectedId === undefined}}">
+      确 定
+    </button>
+  </view>
+</view>

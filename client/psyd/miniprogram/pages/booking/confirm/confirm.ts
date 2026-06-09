@@ -8,7 +8,7 @@ interface BookingData {
     name: string;
     price: number;
     deposit: number;
-    duration: number;
+    duration_minutes: number;
     image: string;
   };
   date: string;
@@ -37,7 +37,7 @@ interface PageData {
 Page({
   data: {
     bookingData: null,
-    paymentType: 'deposit', // 默认选择定金支付
+    paymentType: 'full', // 默认全款支付
     totalPrice: 0,
     payAmount: 0,
     submitting: false
@@ -60,7 +60,7 @@ Page({
         this.setData({
           bookingData,
           totalPrice,
-          payAmount: depositAmount // 默认支付定金
+          payAmount: totalPrice // 默认全款支付
         });
       } catch (error) {
         console.error('解析预约数据失败：', error);
@@ -110,19 +110,6 @@ Page({
 
     const { bookingData, paymentType, payAmount } = this.data;
     if (!bookingData) return;
-
-    // 确认提示
-    const confirmResult = await new Promise<boolean>((resolve) => {
-      wx.showModal({
-        title: '确认预约',
-        content: `您将支付${paymentType === 'deposit' ? '定金' : '全款'} ¥${payAmount}，确认提交订单吗？`,
-        success: (res) => {
-          resolve(res.confirm);
-        }
-      });
-    });
-
-    if (!confirmResult) return;
 
     this.setData({ submitting: true });
 
@@ -218,7 +205,7 @@ Page({
    */
   contactService() {
     wx.makePhoneCall({
-      phoneNumber: '400-123-4567', // 替换为实际客服电话
+      phoneNumber: '0416-5577456', // 客服电话
       fail: () => {
         wx.showToast({
           title: '拨打失败',

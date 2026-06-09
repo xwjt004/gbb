@@ -173,7 +173,7 @@ Page({
   onContactService() {
     wx.showModal({
       title: '联系客服',
-      content: '客服电话：400-123-4567\n工作时间：9:00-18:00',
+      content: '客服电话：0416-5577456\n营业时间：8:30-16:00',
       showCancel: true,
       confirmText: '拨打电话',
       cancelText: '取消',

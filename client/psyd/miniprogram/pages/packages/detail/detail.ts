@@ -20,13 +20,28 @@ interface PackageCategory {
   color?: string;
 }
 
+interface PackageProductItem {
+  id: number;
+  quantity: number;
+  isOptional: boolean;
+  product: {
+    id: number;
+    name: string;
+    description?: string;
+    salePrice: number;
+    images?: any;
+    specification?: string;
+    unit: string;
+  };
+}
+
 interface PackageDetail {
   id: number;
   name: string;
   description: string;
   price: string;
   deposit: string;
-  durationMinutes: number;
+  duration_minutes: number;
   images: string[];
   status: string;
   isPopular?: boolean;
@@ -36,6 +51,7 @@ interface PackageDetail {
   packageCategory?: PackageCategory;
   tags: string[];
   includes: string[];
+  packageProducts?: PackageProductItem[];
 }
 
 Page({
@@ -43,12 +59,15 @@ Page({
     packageId: 0,
     package: null as PackageDetail | null,
     loading: true,
-    
+
     // 轮播图
     currentImageIndex: 0,
-    
+
     // 服务内容展开状态
     servicesExpanded: false,
+
+    // 收藏状态
+    isFavorited: false,
   },
 
   onLoad(options: any) {
@@ -93,6 +112,17 @@ Page({
       this.setData({ 
         package: packageData
       });
+
+      // 检查收藏状态
+      try {
+        const favRes = await request<{ favorited: boolean }>({
+          url: `/wx-favorite/check?packageId=${this.data.packageId}`,
+          method: 'GET'
+        });
+        this.setData({ isFavorited: favRes.favorited });
+      } catch (err) {
+        console.warn('获取收藏状态失败:', err);
+      }
 
       // 设置页面标题
       if (packageData.name) {
@@ -175,6 +205,7 @@ Page({
       name: pkg.name,
       price: pkg.price,
       depositAmount: pkg.deposit,
+      duration_minutes: pkg.duration_minutes,
       coverImage: pkg.images?.[0] || '',
       description: pkg.description
     };
@@ -227,7 +258,7 @@ Page({
   contactService() {
     wx.showModal({
       title: '联系客服',
-      content: '客服电话：400-123-4567\n营业时间：9:00-18:00',
+      content: '客服电话：0416-5577456\n营业时间：8:30-16:00',
       showCancel: true,
       cancelText: '取消',
       confirmText: '拨打',
@@ -244,11 +275,30 @@ Page({
   /**
    * 收藏/取消收藏
    */
-  toggleFavorite() {
-    // TODO: 实现收藏功能
-    wx.showToast({
-      title: '功能开发中',
-      icon: 'none'
-    });
+  async toggleFavorite() {
+    try {
+      const res = await request<{ favorited: boolean; message: string }>({
+        url: '/wx-favorite/toggle',
+        method: 'POST',
+        data: {
+          itemType: 'PACKAGE',
+          packageId: this.data.packageId
+        }
+      });
+
+      this.setData({ isFavorited: res.favorited });
+
+      wx.showToast({
+        title: res.favorited ? '已收藏' : '已取消收藏',
+        icon: 'success',
+        duration: 1500
+      });
+    } catch (error) {
+      console.error('收藏操作失败:', error);
+      wx.showToast({
+        title: '操作失败',
+        icon: 'none'
+      });
+    }
   }
 });

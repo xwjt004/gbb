@@ -20,6 +20,9 @@ import { Package } from '@/types/package';
 import { Status } from '@/types/common';
 import { packageService } from '@/services/packages';
 import packageCategoryService, { type PackageCategory } from '@/services/packageCategoryService';
+import serviceItemService from '@/services/serviceItems';
+import productService from '@/services/products';
+import type { ServiceItem, Product } from '@/types/product';
 import api from '@/services/api';
 
 const { TextArea } = Input;
@@ -44,10 +47,22 @@ const PackageForm: React.FC<PackageFormProps> = ({
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [categories, setCategories] = useState<PackageCategory[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
+  const [serviceItems, setServiceItems] = useState<ServiceItem[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
 
   // 加载分类列表
   useEffect(() => {
     loadCategories();
+  }, []);
+
+  // 加载服务项目
+  useEffect(() => {
+    loadServiceItems();
+  }, []);
+
+  // 加载商品列表
+  useEffect(() => {
+    loadProducts();
   }, []);
 
   const loadCategories = async () => {
@@ -59,6 +74,24 @@ const PackageForm: React.FC<PackageFormProps> = ({
       console.error('加载分类失败:', error);
     } finally {
       setLoadingCategories(false);
+    }
+  };
+
+  const loadServiceItems = async () => {
+    try {
+      const data = await serviceItemService.getServiceItems({ isActive: true, pageSize: 200 });
+      setServiceItems(data.list);
+    } catch (error: any) {
+      console.error('加载服务项目失败:', error);
+    }
+  };
+
+  const loadProducts = async () => {
+    try {
+      const data = await productService.getProducts({ pageSize: 500 });
+      setProducts(data.list || []);
+    } catch (error: any) {
+      console.error('加载商品列表失败:', error);
     }
   };
 
@@ -82,6 +115,7 @@ const PackageForm: React.FC<PackageFormProps> = ({
           promotionEnd: (pkg as any).promotionEnd ? dayjs((pkg as any).promotionEnd) : undefined,
           groupMinCount: (pkg as any).groupMinCount,
           groupPrice: (pkg as any).groupPrice,
+          productIds: pkg.packageProducts?.map(pp => pp.productId) || [],
         });
 
         if (pkg.images) {
@@ -120,7 +154,13 @@ const PackageForm: React.FC<PackageFormProps> = ({
         promotionEnd: values.promotionEnd ? values.promotionEnd.toISOString() : null,
         groupMinCount: values.groupMinCount || 0,
         groupPrice: values.groupPrice || null,
+        productIds: values.productIds || [],
       };
+
+      // 清理 null 值（后端 DTO 的 @IsOptional 只跳过 undefined，不跳过 null）
+      Object.keys(payload).forEach(key => {
+        if (payload[key] === null || payload[key] === undefined) delete payload[key];
+      });
 
       if (pkg) {
         await packageService.updatePackage(pkg.id, payload);
@@ -155,6 +195,7 @@ const PackageForm: React.FC<PackageFormProps> = ({
         maxBookings: 1,
         services: [],
         tags: [],
+        productIds: [],
       }}
     >
       <Form.Item
@@ -218,37 +259,46 @@ const PackageForm: React.FC<PackageFormProps> = ({
         </Select>
       </Form.Item>
 
-      <Form.Item 
-        name="services" 
+      <Form.Item
+        name="services"
         label="服务内容"
-        tooltip="可以从下拉选择常用服务,也可以直接输入自定义服务项"
+        tooltip="可从服务项目中选择，也可直接输入自定义服务项。前往「服务项目」页面可管理所有服务"
       >
-        <Select 
-          mode="tags" 
-          placeholder="请选择或输入服务内容(可多选)" 
+        <Select
+          mode="tags"
+          placeholder="请选择或输入服务内容(可多选)"
           style={{ width: '100%' }}
           maxTagCount="responsive"
         >
-          <Option value="化妆">化妆</Option>
-          <Option value="造型设计">造型设计</Option>
-          <Option value="拍摄">拍摄</Option>
-          <Option value="精修">精修</Option>
-          <Option value="修图">修图</Option>
-          <Option value="底片全送">底片全送</Option>
-          <Option value="选片">选片</Option>
-          <Option value="相册制作">相册制作</Option>
-          <Option value="相框">相框</Option>
-          <Option value="摆台">摆台</Option>
-          <Option value="放大照片">放大照片</Option>
-          <Option value="海报">海报</Option>
-          <Option value="服装提供">服装提供</Option>
-          <Option value="道具提供">道具提供</Option>
-          <Option value="场景布置">场景布置</Option>
-          <Option value="外景拍摄">外景拍摄</Option>
-          <Option value="棚内拍摄">棚内拍摄</Option>
-          <Option value="一对一拍摄">一对一拍摄</Option>
-          <Option value="视频拍摄">视频拍摄</Option>
-          <Option value="视频剪辑">视频剪辑</Option>
+          {serviceItems.map(item => (
+            <Option key={item.name} value={item.name}>
+              {item.name}
+              {item.category && <span style={{ color: '#999', marginLeft: 8 }}>({item.category})</span>}
+            </Option>
+          ))}
+        </Select>
+      </Form.Item>
+
+      <Form.Item
+        name="productIds"
+        label="商品内容"
+        tooltip="从商品列表中选择本套餐包含的商品，可在「商品管理-商品列表」中管理"
+      >
+        <Select
+          mode="multiple"
+          placeholder="请选择关联商品(可多选)"
+          style={{ width: '100%' }}
+          maxTagCount="responsive"
+          filterOption={(input, option) =>
+            String(option?.children ?? '').toLowerCase().includes(input.toLowerCase()) ||
+            String(option?.['data-spec'] ?? '').toLowerCase().includes(input.toLowerCase())
+          }
+        >
+          {products.map(p => (
+            <Option key={p.id} value={p.id} data-spec={p.specification || ''}>
+              {p.name}{p.specification ? ` (${p.specification})` : ''} - ¥{p.salePrice}/{p.unit}
+            </Option>
+          ))}
         </Select>
       </Form.Item>
 
@@ -346,6 +396,9 @@ const PackageForm: React.FC<PackageFormProps> = ({
         >
           {fileList.length >= 8 ? null : uploadButton}
         </Upload>
+        <div style={{ color: '#999', fontSize: 12, marginTop: 4 }}>
+          建议分辨率 800×600 px 以上，72 DPI 网页分辨率，文件大小 100KB ~ 5MB，支持 JPG/PNG。第一张图将作为封面展示
+        </div>
       </Form.Item>
     </Form>
   );

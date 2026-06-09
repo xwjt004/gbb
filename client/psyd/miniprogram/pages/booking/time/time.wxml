@@ -1,104 +1,140 @@
-<!--pages/booking/time/time.wxml-->
+<!-- 流光金属 · 时间段选择页 -->
 <view class="container">
-  <!-- 顶部导航栏 -->
-  <view class="navbar">
-    <view class="navbar-back" bindtap="goBack">
-      <text class="iconfont icon-back">‹</text>
+  <!-- 进度指示器 -->
+  <view class="stepper">
+    <view class="step-item">
+      <view class="step-indicator">
+        <view class="step-circle done">✓</view>
+        <text class="step-label done">选日期</text>
+      </view>
     </view>
-    <view class="navbar-title">选择时间段</view>
-    <view class="navbar-placeholder"></view>
-  </view>
-
-  <!-- 套系信息卡片 -->
-  <view class="package-card" wx:if="{{packageInfo}}">
-    <image class="package-image" src="{{packageInfo.image}}" mode="aspectFill" />
-    <view class="package-info">
-      <view class="package-name">{{packageInfo.name}}</view>
-      <view class="package-meta">
-        <text class="package-price">¥{{packageInfo.price}}</text>
-        <text class="package-duration">约{{packageInfo.duration}}分钟</text>
+    <view class="step-line">
+      <view class="step-line-fill" style="width: 100%;"></view>
+    </view>
+    <view class="step-item">
+      <view class="step-indicator">
+        <view class="step-circle active">2</view>
+        <text class="step-label active">选时间</text>
+      </view>
+    </view>
+    <view class="step-line">
+      <view class="step-line-fill" style="width: 0%;"></view>
+    </view>
+    <view class="step-item">
+      <view class="step-indicator">
+        <view class="step-circle">3</view>
+        <text class="step-label">填信息</text>
+      </view>
+    </view>
+    <view class="step-line">
+      <view class="step-line-fill" style="width: 0%;"></view>
+    </view>
+    <view class="step-item">
+      <view class="step-indicator">
+        <view class="step-circle">4</view>
+        <text class="step-label">确认</text>
       </view>
     </view>
   </view>
 
-  <!-- 选中日期显示 -->
-  <view class="date-info">
-    <view class="date-icon">📅</view>
-    <view class="date-text">
-      <text class="date-display">{{dateDisplay}}</text>
-      <text class="date-week">{{weekDay}}</text>
+  <!-- 套系信息卡片 -->
+  <view class="package-card" wx:if="{{packageInfo}}">
+    <view class="package-info">
+      <view class="package-top">
+        <text class="package-name">{{packageInfo.name}}</text>
+        <text class="package-price">¥{{packageInfo.price}}</text>
+      </view>
+      <text class="package-hint">宝贝儿，请选择拍摄时间段</text>
+    </view>
+  </view>
+
+  <!-- 日期横幅 -->
+  <view class="date-banner">
+    <text class="date-banner-icon">📅</text>
+    <view class="date-banner-text">
+      <text class="date-banner-day">{{dateDisplay}}</text>
+      <text class="date-banner-week">{{weekDay}}</text>
     </view>
   </view>
 
   <!-- 时间段列表 -->
   <view class="time-slots" wx:if="{{!loading && hasSlots}}">
-    <!-- 上午时段 -->
+    <!-- 上午 -->
     <view class="time-period" wx:if="{{morningSlots.length > 0}}">
       <view class="period-header">
-        <view class="period-icon">🌅</view>
-        <view class="period-title">上午</view>
+        <view class="period-dot"></view>
+        <text class="period-title">上午</text>
+        <view class="period-line"></view>
       </view>
       <view class="slot-list">
-        <view 
+        <view
           class="slot-item {{item.isAvailable ? '' : 'disabled'}} {{selectedSlotId === item.id ? 'selected' : ''}}"
           wx:for="{{morningSlots}}"
           wx:key="id"
           data-id="{{item.id}}"
           bindtap="selectTimeSlot"
         >
-          <view class="slot-time">{{item.startTime}} - {{item.endTime}}</view>
+          <view class="slot-time">
+            <text class="slot-time-main">{{item.startTime}} — {{item.endTime}}</text>
+          </view>
           <view class="slot-status">
-            <text wx:if="{{item.isExpired}}" class="status-tag expired">已过期</text>
-            <text wx:elif="{{!item.isAvailable}}" class="status-tag full">已满</text>
-            <text wx:else class="slot-count">剩余 {{item.maxBookings - item.currentBookings}} 个名额</text>
+            <text wx:if="{{item.isAvailable}}" class="status-tag available">可预约</text>
+            <text wx:elif="{{item.isExpired}}" class="status-tag expired">已过期</text>
+            <text wx:else class="status-tag full">已满</text>
           </view>
         </view>
       </view>
     </view>
 
-    <!-- 下午时段 -->
+    <!-- 下午 -->
     <view class="time-period" wx:if="{{afternoonSlots.length > 0}}">
       <view class="period-header">
-        <view class="period-icon">☀️</view>
-        <view class="period-title">下午</view>
+        <view class="period-dot"></view>
+        <text class="period-title">下午</text>
+        <view class="period-line"></view>
       </view>
       <view class="slot-list">
-        <view 
+        <view
           class="slot-item {{item.isAvailable ? '' : 'disabled'}} {{selectedSlotId === item.id ? 'selected' : ''}}"
           wx:for="{{afternoonSlots}}"
           wx:key="id"
           data-id="{{item.id}}"
           bindtap="selectTimeSlot"
         >
-          <view class="slot-time">{{item.startTime}} - {{item.endTime}}</view>
+          <view class="slot-time">
+            <text class="slot-time-main">{{item.startTime}} — {{item.endTime}}</text>
+          </view>
           <view class="slot-status">
-            <text wx:if="{{item.isExpired}}" class="status-tag expired">已过期</text>
-            <text wx:elif="{{!item.isAvailable}}" class="status-tag full">已满</text>
-            <text wx:else class="slot-count">剩余 {{item.maxBookings - item.currentBookings}} 个名额</text>
+            <text wx:if="{{item.isAvailable}}" class="status-tag available">可预约</text>
+            <text wx:elif="{{item.isExpired}}" class="status-tag expired">已过期</text>
+            <text wx:else class="status-tag full">已满</text>
           </view>
         </view>
       </view>
     </view>
 
-    <!-- 晚上时段 -->
+    <!-- 晚上 -->
     <view class="time-period" wx:if="{{eveningSlots.length > 0}}">
       <view class="period-header">
-        <view class="period-icon">🌙</view>
-        <view class="period-title">晚上</view>
+        <view class="period-dot"></view>
+        <text class="period-title">晚上</text>
+        <view class="period-line"></view>
       </view>
       <view class="slot-list">
-        <view 
+        <view
           class="slot-item {{item.isAvailable ? '' : 'disabled'}} {{selectedSlotId === item.id ? 'selected' : ''}}"
           wx:for="{{eveningSlots}}"
           wx:key="id"
           data-id="{{item.id}}"
           bindtap="selectTimeSlot"
         >
-          <view class="slot-time">{{item.startTime}} - {{item.endTime}}</view>
+          <view class="slot-time">
+            <text class="slot-time-main">{{item.startTime}} — {{item.endTime}}</text>
+          </view>
           <view class="slot-status">
-            <text wx:if="{{item.isExpired}}" class="status-tag expired">已过期</text>
-            <text wx:elif="{{!item.isAvailable}}" class="status-tag full">已满</text>
-            <text wx:else class="slot-count">剩余 {{item.maxBookings - item.currentBookings}} 个名额</text>
+            <text wx:if="{{item.isAvailable}}" class="status-tag available">可预约</text>
+            <text wx:elif="{{item.isExpired}}" class="status-tag expired">已过期</text>
+            <text wx:else class="status-tag full">已满</text>
           </view>
         </view>
       </view>
@@ -107,32 +143,33 @@
 
   <!-- 加载状态 -->
   <view class="loading-container" wx:if="{{loading}}">
-    <view class="loading-spinner"></view>
-    <view class="loading-text">加载中...</view>
+    <view class="loading-ring"></view>
+    <view class="loading-text">加载时间段...</view>
   </view>
 
   <!-- 空状态 -->
   <view class="empty-state" wx:if="{{!loading && !hasSlots}}">
-    <view class="empty-icon">📭</view>
-    <view class="empty-text">当前日期暂无可用时间段</view>
+    <view class="empty-icon">⏰</view>
+    <view class="empty-text">暂无可用时间段</view>
     <view class="empty-hint">请返回选择其他日期</view>
   </view>
 
   <!-- 底部确认按钮 -->
   <view class="footer" wx:if="{{hasSlots}}">
-    <view class="footer-info">
-      <text class="info-label">已选择：</text>
-      <text class="info-value" wx:if="{{selectedSlotId}}">
-        {{selectedSlotTime}}
-      </text>
-      <text class="info-placeholder" wx:else>请选择时间段</text>
+    <view class="footer-inner">
+      <view class="footer-info">
+        <text class="info-label">已选择</text>
+        <text class="info-value" wx:if="{{selectedSlotId}}">{{selectedSlotTime}}</text>
+        <text class="info-placeholder" wx:else>请选择时间段</text>
+      </view>
+      <button
+        class="confirm-btn {{selectedSlotId ? 'active' : ''}}"
+        bindtap="confirmSelection"
+        disabled="{{!selectedSlotId}}"
+      >
+        <text>继续</text>
+        <text wx:if="{{selectedSlotId}}" class="btn-arrow">→</text>
+      </button>
     </view>
-    <button 
-      class="confirm-btn {{selectedSlotId ? 'active' : ''}}" 
-      bindtap="confirmSelection"
-      disabled="{{!selectedSlotId}}"
-    >
-      下一步
-    </button>
   </view>
 </view>

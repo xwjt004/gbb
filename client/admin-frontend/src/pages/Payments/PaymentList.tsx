@@ -117,11 +117,11 @@ const PaymentList: React.FC = () => {
     [PaymentStatus.REFUNDED]: { color: 'purple', text: '已退款', icon: <UndoOutlined /> },
   };
 
-  const methodConfig: Record<PaymentMethod, { color: string; text: string }> = {
+  const methodConfig: Record<string, { color: string; text: string }> = {
     [PaymentMethod.WECHAT]: { color: 'green', text: '微信支付' },
     [PaymentMethod.ALIPAY]: { color: 'blue', text: '支付宝' },
-    [PaymentMethod.CASH]: { color: 'orange', text: '现金支付' },
-    [PaymentMethod.BANK_TRANSFER]: { color: 'purple', text: '银行卡支付' },
+    [PaymentMethod.CASH]: { color: 'orange', text: '现金' },
+    [PaymentMethod.BANK_TRANSFER]: { color: 'purple', text: '银行卡' },
   };
 
   // 表格列定义
@@ -197,8 +197,9 @@ const PaymentList: React.FC = () => {
     {
       title: '支付方式',
       dataIndex: 'method',
-      width: 100,
+      width: 110,
       render: (method: PaymentMethod) => {
+        if (!method) return <Tag color="default">未支付</Tag>;
         const config = methodConfig[method];
         return <Tag color={config?.color}>{config?.text}</Tag>;
       },
@@ -308,8 +309,11 @@ const PaymentList: React.FC = () => {
       // 支付单号搜索
       searchPattern.paymentNo = keyword;
     } else if (/^1[3-9]\d{9}$/.test(keyword)) {
-      // 手机号搜索  
+      // 手机号搜索
       searchPattern.phone = keyword;
+    } else if (keyword.startsWith('ORD')) {
+      // 订单号搜索（优先于第三方交易号，避免 ORD 开头订单号被误判）
+      searchPattern.orderId = keyword;
     } else if (keyword.startsWith('wx') || keyword.startsWith('ali') || keyword.startsWith('4') || /^[a-zA-Z0-9_-]{10,}$/.test(keyword)) {
       // 第三方交易号搜索（微信、支付宝等）
       searchPattern.thirdPartyId = keyword;
@@ -529,9 +533,13 @@ const PaymentList: React.FC = () => {
                     </span>
                   </Descriptions.Item>
                   <Descriptions.Item label="支付方式">
-                    <Tag color={methodConfig[payment.method as PaymentMethod]?.color}>
-                      {methodConfig[payment.method as PaymentMethod]?.text}
-                    </Tag>
+                    {payment.method ? (
+                      <Tag color={methodConfig[payment.method as PaymentMethod]?.color}>
+                        {methodConfig[payment.method as PaymentMethod]?.text}
+                      </Tag>
+                    ) : (
+                      <Tag color="default">未支付</Tag>
+                    )}
                   </Descriptions.Item>
                   <Descriptions.Item label="支付状态">
                     <Tag color={statusConfig[payment.status as PaymentStatus]?.color} icon={statusConfig[payment.status as PaymentStatus]?.icon}>
@@ -641,9 +649,13 @@ const PaymentList: React.FC = () => {
                           <Tag color={statusConfig[p.status as PaymentStatus]?.color}>
                             {statusConfig[p.status as PaymentStatus]?.text}
                           </Tag>
-                          <Tag color={methodConfig[p.method as PaymentMethod]?.color}>
-                            {methodConfig[p.method as PaymentMethod]?.text}
-                          </Tag>
+                          {p.method ? (
+                            <Tag color={methodConfig[p.method as PaymentMethod]?.color}>
+                              {methodConfig[p.method as PaymentMethod]?.text}
+                            </Tag>
+                          ) : (
+                            <Tag color="default">未支付</Tag>
+                          )}
                           {p.id === payment.id && (
                             <Tag color="purple">当前记录</Tag>
                           )}
@@ -765,7 +777,9 @@ const PaymentList: React.FC = () => {
               style={{ width: '100%' }}
               onChange={(value) => handleSearch({ status: value })}
             >
-              {Object.entries(statusConfig).map(([key, config]) => (
+              {Object.entries(statusConfig)
+                .filter(([key]) => key !== PaymentStatus.PENDING)
+                .map(([key, config]) => (
                 <Option key={key} value={key}>
                   {config.text}
                 </Option>

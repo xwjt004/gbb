@@ -10,6 +10,20 @@ export interface PackageCategory {
   status: string;
 }
 
+export interface PackageProductItem {
+  id: number;
+  productId: number;
+  quantity: number;
+  product: {
+    id: number;
+    name: string;
+    specification?: string;
+    unit: string;
+    salePrice: number;
+    images?: any;
+  };
+}
+
 export interface Package extends BaseEntity {
   name: string;
   description: string;
@@ -28,6 +42,7 @@ export interface Package extends BaseEntity {
   categoryId?: number; // 分类ID（关联到分类表）
   packageCategory?: PackageCategory; // 分类详情（从后端返回）
   maxBookings: number; // 最大预订数量
+  packageProducts?: PackageProductItem[];
 }
 
 export interface PackageSearchParams {

@@ -36,6 +36,14 @@ export class UpdateShopInfoDto {
   @IsString()
   locationMap?: string;
 
+  @ApiPropertyOptional({ description: '纬度', example: 41.1300 })
+  @IsOptional()
+  latitude?: number;
+
+  @ApiPropertyOptional({ description: '经度', example: 121.1400 })
+  @IsOptional()
+  longitude?: number;
+
   @ApiPropertyOptional({ description: '店铺经营项目' })
   @IsOptional()
   @IsString()
@@ -81,4 +89,12 @@ export class UpdateShopInfoDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @ApiPropertyOptional({ description: '轮播图列表（最多5张）', type: 'array', example: [{ image: '/uploads/banner1.jpg', title: '标题', link: '/pages/packages/list' }] })
+  @IsOptional()
+  banners?: any;
+
+  @ApiPropertyOptional({ description: '轮播播放间隔（毫秒）', example: 4000 })
+  @IsOptional()
+  bannerInterval?: number;
 }

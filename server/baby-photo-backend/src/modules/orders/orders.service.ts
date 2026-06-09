@@ -288,14 +288,23 @@ export class OrdersService {
     // 构建查询条件
     const where: any = {};
     
-    // 如果有搜索参数，添加相应的过滤条件
-    if (searchParams.orderStatus) {
+    // 有效的枚举值列表
+    const validOrderStatuses = ['PENDING', 'CONFIRMED', 'REJECTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
+    const validPaymentStatuses = ['PENDING_PAYMENT', 'PARTIAL_PAID', 'FULLY_PAID', 'REFUNDING', 'PARTIAL_REFUNDED', 'REFUNDED', 'CANCELLED'];
+
+    // 如果有搜索参数，添加相应的过滤条件（仅当值是有效的枚举值时）
+    if (searchParams.orderStatus && validOrderStatuses.includes(searchParams.orderStatus)) {
       where.orderStatus = searchParams.orderStatus;
     }
     if (searchParams.status) {
-      where.orderStatus = searchParams.status;
+      if (validOrderStatuses.includes(searchParams.status)) {
+        where.orderStatus = searchParams.status;
+      } else if (searchParams.status === 'REFUNDED') {
+        // REFUNDED 是支付状态，非订单状态
+        where.paymentStatus = 'REFUNDED';
+      }
     }
-    if (searchParams.paymentStatus) {
+    if (searchParams.paymentStatus && validPaymentStatuses.includes(searchParams.paymentStatus)) {
       where.paymentStatus = searchParams.paymentStatus;
     }
     if (searchParams.userId) {
@@ -305,11 +314,23 @@ export class OrdersService {
       where.packageId = Number(searchParams.packageId);
     }
     
-    // 关键字搜索：支持订单号和用户手机号
+    // 关键字搜索：支持订单号、客户手机、客户姓名和用户信息
     if (searchParams.keyword) {
       where.OR = [
         {
           orderNo: {
+            contains: searchParams.keyword,
+            mode: 'insensitive',
+          },
+        },
+        {
+          customerPhone: {
+            contains: searchParams.keyword,
+            mode: 'insensitive',
+          },
+        },
+        {
+          customerName: {
             contains: searchParams.keyword,
             mode: 'insensitive',
           },
@@ -332,7 +353,7 @@ export class OrdersService {
         },
       ];
     }
-    
+
     // 单独的订单号搜索
     if (searchParams.orderNo && !searchParams.keyword) {
       where.orderNo = {
@@ -340,15 +361,13 @@ export class OrdersService {
         mode: 'insensitive',
       };
     }
-    
+
     // 单独的手机号搜索
     if (searchParams.phone && !searchParams.keyword) {
-      where.user = {
-        phone: {
-          contains: searchParams.phone,
-          mode: 'insensitive',
-        },
-      };
+      where.OR = [
+        { customerPhone: { contains: searchParams.phone, mode: 'insensitive' } },
+        { user: { phone: { contains: searchParams.phone, mode: 'insensitive' } } },
+      ];
     }
     
     // 日期范围搜索
@@ -1170,6 +1189,9 @@ export class OrdersService {
       data: {
         orderStatus: OrderStatus.COMPLETED,
         completedAt: new Date(),
+        // 订单完成视为客户已到场，自动标记签到
+        checkinStatus: 'CHECKED_IN',
+        checkinTime: new Date(),
       },
       include: {
         user: true,
@@ -1270,6 +1292,11 @@ export class OrdersService {
 
       // 删除相关的支付记录
       await prisma.payment.deleteMany({
+        where: { orderId: id },
+      });
+
+      // 删除状态变更日志
+      await prisma.statusChangeLog.deleteMany({
         where: { orderId: id },
       });
 

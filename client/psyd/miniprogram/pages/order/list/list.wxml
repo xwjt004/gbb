@@ -1,10 +1,10 @@
 <!-- 订单列表页 -->
 <view class="order-list-container">
-  <!-- 状态标签 -->
-  <view class="status-tabs">
-    <view 
-      wx:for="{{statusTabs}}" 
-      wx:key="key" 
+  <!-- 状态标签（个人中心筛选时不显示） -->
+  <view wx:if="{{!profileFilter}}" class="status-tabs">
+    <view
+      wx:for="{{statusTabs}}"
+      wx:key="key"
       class="tab-item {{activeTab === item.key ? 'active' : ''}}"
       bindtap="onTabChange"
       data-key="{{item.key}}"
@@ -12,6 +12,10 @@
       <text class="tab-label">{{item.label}}</text>
       <view wx:if="{{activeTab === item.key}}" class="tab-indicator"></view>
     </view>
+  </view>
+  <!-- 个人中心筛选标题 -->
+  <view wx:else class="profile-filter-header">
+    <text class="filter-label">{{profileFilter.label}}</text>
   </view>
 
   <!-- 订单列表 -->
@@ -70,7 +74,7 @@
         <view wx:if="{{item.appointmentDate}}" class="appointment-info">
           <text class="appointment-label">预约时间：</text>
           <text class="appointment-value">
-            {{item.appointmentDate}} 
+            {{item.appointmentDateDisplay}}
             <text wx:if="{{item.timeSlot}}">{{item.timeSlot.startTime}}-{{item.timeSlot.endTime}}</text>
           </text>
         </view>
@@ -84,9 +88,9 @@
           
           <view class="order-actions">
             <!-- 待付款订单：取消、支付 -->
-            <block wx:if="{{item.orderStatus === 'PENDING' && item.paymentStatus === 'PENDING'}}">
-              <button 
-                class="action-btn cancel-btn" 
+            <block wx:if="{{item.orderStatus === 'PENDING' && item.paymentStatus === 'PENDING_PAYMENT'}}">
+              <button
+                class="action-btn cancel-btn"
                 size="mini"
                 catchtap="onCancelOrder"
                 data-id="{{item.id}}"
@@ -94,8 +98,8 @@
               >
                 取消订单
               </button>
-              <button 
-                class="action-btn primary-btn" 
+              <button
+                class="action-btn primary-btn"
                 size="mini"
                 catchtap="onPayOrder"
                 data-id="{{item.id}}"
@@ -103,7 +107,20 @@
                 去支付
               </button>
             </block>
-            
+
+            <!-- 已支付待确认：可取消 -->
+            <block wx:elif="{{item.orderStatus === 'PENDING' && (item.paymentStatus === 'FULLY_PAID' || item.paymentStatus === 'PAID')}}">
+              <button
+                class="action-btn cancel-btn"
+                size="mini"
+                catchtap="onCancelOrder"
+                data-id="{{item.id}}"
+                data-orderno="{{item.orderNo}}"
+              >
+                取消订单
+              </button>
+            </block>
+
             <!-- 已确认订单：查看详情 -->
             <block wx:elif="{{item.orderStatus === 'CONFIRMED'}}">
               <button class="action-btn" size="mini">

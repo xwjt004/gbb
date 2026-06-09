@@ -1,4 +1,5 @@
 import { Controller, Post, UploadedFile, UseInterceptors, HttpException, Get, Param, Res, BadRequestException } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { FilesService } from './files.service';
@@ -50,6 +51,7 @@ export class FilesController {
     return { success: true, message: '上传成功', data: { filename: file.filename, url: publicUrl } };
   }
 
+  @SkipThrottle()
   @Get(':filename')
   async serveFile(@Param('filename') filename: string, @Res() res: Response) {
     const path = this.filesService.getFilePath(filename);

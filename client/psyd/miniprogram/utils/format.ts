@@ -65,6 +65,32 @@ export function formatRelativeTime(date: Date | string): string {
 }
 
 /**
+ * 将 UTC 日期字符串转为北京时间（UTC+8）显示
+ * @param dateStr ISO 日期字符串或 Date
+ * @param format 格式，默认 YYYY-MM-DD
+ */
+export function toBeijingDate(dateStr: string | Date, format: string = 'YYYY-MM-DD'): string {
+  const d = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
+  // 转换为北京时间 (UTC+8)
+  const beijingOffset = 8 * 60; // 480 minutes
+  const localOffset = d.getTimezoneOffset(); // 本地偏移（分钟）
+  const beijingTime = new Date(d.getTime() + (localOffset + beijingOffset) * 60 * 1000);
+
+  const year = beijingTime.getFullYear();
+  const month = String(beijingTime.getMonth() + 1).padStart(2, '0');
+  const day = String(beijingTime.getDate()).padStart(2, '0');
+  const hour = String(beijingTime.getHours()).padStart(2, '0');
+  const minute = String(beijingTime.getMinutes()).padStart(2, '0');
+
+  return format
+    .replace('YYYY', String(year))
+    .replace('MM', month)
+    .replace('DD', day)
+    .replace('HH', hour)
+    .replace('mm', minute);
+}
+
+/**
  * 格式化手机号（脱敏）
  * @param phone 手机号
  */

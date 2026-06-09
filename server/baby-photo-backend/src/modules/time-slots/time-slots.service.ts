@@ -767,7 +767,7 @@ export class TimeSlotsService {
   }
 
   // 获取可用时间槽（用于前端预约）
-  async getAvailableSlots(date?: string, limit?: number): Promise<TimeSlot[]> {
+  async getAvailableSlots(date?: string, limit?: number, startDate?: string, endDate?: string): Promise<TimeSlot[]> {
     try {
       const where: any = {
         status: PrismaTimeSlotStatus.AVAILABLE,
@@ -775,6 +775,11 @@ export class TimeSlotsService {
 
       if (date) {
         where.date = new Date(date);
+      } else if (startDate && endDate) {
+        where.date = {
+          gte: new Date(startDate),
+          lte: new Date(endDate),
+        };
       } else {
         // 默认只获取未来的时间槽
         where.date = { gte: new Date() };

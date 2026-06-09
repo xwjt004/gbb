@@ -1,0 +1,90 @@
+<view class="page">
+  <scroll-view scroll-y class="scroll-view" enhanced show-scrollbar="{{false}}">
+
+    <!-- ===== 顶部装饰 ===== -->
+    <view class="top-deco"></view>
+
+    <!-- ===== 会员卡片 ===== -->
+    <view class="member-card" style="background: linear-gradient(135deg, {{member.levelColors[0]}}, {{member.levelColors[1]}});">
+      <view class="card-shine"></view>
+      <view class="card-pattern"></view>
+
+      <view class="card-top">
+        <view class="level-badge">
+          <text class="level-icon">{{levelData.icon}}</text>
+          <text class="level-name">{{member.levelName}}</text>
+        </view>
+        <view class="member-avatar">
+          <image wx:if="{{member.avatar}}" src="{{member.avatar}}" />
+          <text wx:else>👶</text>
+        </view>
+      </view>
+
+      <view class="card-data">
+        <view class="data-item" bindtap="goToPoints">
+          <text class="data-value">{{member.points}}</text>
+          <text class="data-label">积分</text>
+        </view>
+        <view class="data-divider"></view>
+        <view class="data-item">
+          <text class="data-value">{{member.growthValue}}</text>
+          <text class="data-label">成长值</text>
+        </view>
+        <view class="data-divider"></view>
+        <view class="data-item">
+          <text class="data-value">{{member.joinDays}}天</text>
+          <text class="data-label">加入天数</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- ===== 升级进度 ===== -->
+    <view wx:if="{{member.nextLevelName}}" class="upgrade-card">
+      <view class="upgrade-header">
+        <text class="upgrade-title">距离 {{member.nextLevelName}}</text>
+        <text class="upgrade-need">还差 {{member.growthToNext - member.growthValue}} 成长值</text>
+      </view>
+      <view class="upgrade-bar">
+        <view class="upgrade-bar-inner" style="width: {{(member.growthValue / member.growthToNext) * 100}}%;"></view>
+        <view class="upgrade-dot" style="left: {{(member.growthValue / member.growthToNext) * 100}}%;"></view>
+      </view>
+      <text class="upgrade-tip">消费1元=1成长值，升级享更多权益</text>
+    </view>
+
+    <!-- ===== 等级阶梯 ===== -->
+    <view class="section" bindtap="goToLevels">
+      <view class="section-header">
+        <text class="section-title">会员等级</text>
+        <text class="section-more">查看详情 ›</text>
+      </view>
+      <view class="level-steps">
+        <view wx:for="{{levels}}" wx:key="key" class="step-item">
+          <view class="step-icon-wrap {{item.unlocked ? 'step-unlocked' : ''}}">
+            <text class="step-icon">{{item.icon}}</text>
+          </view>
+          <text class="step-name {{item.unlocked ? 'step-name-active' : ''}}">{{item.name}}</text>
+          <view wx:if="{{!item.unlocked && !index}}" class="step-next">当前</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- ===== 会员权益 ===== -->
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">尊享权益</text>
+        <text class="section-more" bindtap="goToBenefits">查看全部 ›</text>
+      </view>
+      <view class="benefits-grid">
+        <view wx:for="{{allBenefits}}" wx:key="label" class="benefit-item">
+          <view class="b-icon-wrap">
+            <text class="b-icon">{{item.icon}}</text>
+          </view>
+          <text class="b-label">{{item.label}}</text>
+          <text class="b-desc">{{item.desc}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="footer-gap"></view>
+  </scroll-view>
+</view>

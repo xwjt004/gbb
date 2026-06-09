@@ -44,11 +44,11 @@ const PaymentDetail: React.FC<PaymentDetailProps> = ({
     [PaymentStatus.REFUNDED]: { color: 'purple', text: '已退款', icon: <UndoOutlined /> },
   };
 
-  const methodConfig: Record<PaymentMethod, string> = {
+  const methodConfig: Record<string, string> = {
     [PaymentMethod.WECHAT]: '微信支付',
     [PaymentMethod.ALIPAY]: '支付宝',
-    [PaymentMethod.CASH]: '现金支付',
-    [PaymentMethod.BANK_TRANSFER]: '银行转账',
+    [PaymentMethod.CASH]: '现金',
+    [PaymentMethod.BANK_TRANSFER]: '银行卡',
   };
 
   const handlePrint = () => {
@@ -189,7 +189,7 @@ const PaymentDetail: React.FC<PaymentDetailProps> = ({
             </div>
             <div class="info-row">
               <span class="label">支付方式:</span>
-              <span class="value">${methodConfig[payment.method]}</span>
+              <span class="value">${payment.method ? methodConfig[payment.method] : '未支付'}</span>
             </div>
             <div class="info-row">
               <span class="label">创建时间:</span>
@@ -388,7 +388,7 @@ const PaymentDetail: React.FC<PaymentDetailProps> = ({
             </Tag>
           </Descriptions.Item>
           <Descriptions.Item label="支付方式">
-            {methodConfig[payment.method]}
+            {payment.method ? methodConfig[payment.method] : '未支付'}
           </Descriptions.Item>
           <Descriptions.Item label="支付金额">
             <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#f50' }}>

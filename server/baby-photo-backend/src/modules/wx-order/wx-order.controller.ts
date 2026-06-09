@@ -2,6 +2,9 @@ import {
   Controller,
   Post,
   Get,
+  Put,
+  Patch,
+  Delete,
   Body,
   Param,
   Query,
@@ -50,5 +53,27 @@ export class WxOrderController {
   async getOrderDetail(@Req() req: any, @Param('id') orderId: string) {
     const wxUserId = req.user.id;
     return this.wxOrderService.getOrderDetail(wxUserId, orderId);
+  }
+
+  @Put(':id/cancel')
+  @ApiOperation({ summary: '取消订单' })
+  @ApiResponse({ status: 200, description: '取消成功' })
+  @ApiResponse({ status: 400, description: '订单不可取消' })
+  async cancelOrder(@Req() req: any, @Param('id') orderId: string) {
+    return this.wxOrderService.cancelOrder(req.user.id, orderId);
+  }
+
+  @Patch(':id/cancel')
+  @ApiOperation({ summary: '取消订单（PATCH）' })
+  @ApiResponse({ status: 200, description: '取消成功' })
+  async cancelOrderViaPatch(@Req() req: any, @Param('id') orderId: string) {
+    return this.wxOrderService.cancelOrder(req.user.id, orderId);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: '删除订单（软删除）' })
+  @ApiResponse({ status: 200, description: '删除成功' })
+  async deleteOrder(@Req() req: any, @Param('id') orderId: string) {
+    return this.wxOrderService.deleteOrder(req.user.id, orderId);
   }
 }

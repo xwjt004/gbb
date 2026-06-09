@@ -112,8 +112,8 @@ api.interceptors.response.use(
     if (status === 401) {
       console.error('登录已过期，请重新登录');
       localStorage.removeItem('admin_token');
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+      if (window.location.pathname !== '/admin/login') {
+        window.location.href = '/admin/login';
       }
     } else if (status === 403) {
       console.error('权限不足');

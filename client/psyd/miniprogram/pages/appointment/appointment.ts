@@ -11,9 +11,11 @@ interface Appointment {
   id: string;
   orderNo: string;
   type: string;
+  packageName: string;
   appointmentDate: string;
   timeSlot: string;
   customerName?: string;
+  childrenCount: number;
   status: string;
   statusText: string;
   canCancel: boolean;
@@ -140,26 +142,59 @@ Page({
           let canReschedule = false;
           let canPay = false;
 
-          if (order.paymentStatus === 'PENDING') {
+          const os = order.orderStatus;
+          const ps = order.paymentStatus;
+
+          if (ps === 'PENDING_PAYMENT' || ps === 'PENDING') {
             statusText = '待支付';
             canCancel = true;
             canPay = true;
-          } else if (order.orderStatus === 'CONFIRMED' || order.orderStatus === 'PENDING') {
+          } else if ((ps === 'FULLY_PAID' || ps === 'PAID') && os === 'PENDING') {
+            statusText = '待确认';
+            canCancel = true;
+          } else if (os === 'CONFIRMED') {
             statusText = '待拍摄';
             canReschedule = true;
-          } else if (order.orderStatus === 'COMPLETED') {
+          } else if (os === 'IN_PROGRESS') {
+            statusText = '拍摄中';
+          } else if (os === 'COMPLETED') {
             statusText = '已完成';
-          } else if (order.orderStatus === 'CANCELLED') {
+          } else if (os === 'CANCELLED') {
             statusText = '已取消';
+          } else if (ps === 'REFUNDING') {
+            statusText = '退款中';
+          } else if (ps === 'REFUNDED') {
+            statusText = '已退款';
           }
+
+          // 格式化预约日期（显示为 YYYY-MM-DD）
+          let appointmentDate = '';
+          if (order.appointmentDate) {
+            try {
+              const d = new Date(order.appointmentDate);
+              const y = d.getFullYear();
+              const m = String(d.getMonth() + 1).padStart(2, '0');
+              const day = String(d.getDate()).padStart(2, '0');
+              appointmentDate = `${y}-${m}-${day}`;
+            } catch (e) {
+              appointmentDate = String(order.appointmentDate);
+            }
+          }
+
+          // 从订单项获取套系名称（取第一个项的 itemName）
+          const packageName = order.items && order.items.length > 0
+            ? order.items[0].itemName
+            : this.getOrderTypeName(order.items);
 
           return {
             id: order.id,
             orderNo: order.orderNo,
             type: this.getOrderTypeName(order.items),
-            appointmentDate: order.appointmentDate || '',
+            packageName,
+            appointmentDate,
             timeSlot: order.timeSlot ? `${order.timeSlot.startTime} - ${order.timeSlot.endTime}` : '',
             customerName: order.customerName,
+            childrenCount: order.childrenCount || 1,
             status: order.paymentStatus === 'PENDING' ? 'PENDING_PAYMENT' : order.orderStatus,
             statusText,
             canCancel,
@@ -326,12 +361,12 @@ Page({
   contactService() {
     wx.showModal({
       title: '联系客服',
-      content: '客服电话：400-123-4567\n工作时间：9:00-18:00',
+      content: '客服电话：0416-5577456\n营业时间：8:30-16:00',
       showCancel: true,
       confirmText: '拨打',
       success: (res) => {
         if (res.confirm) {
-          wx.makePhoneCall({ phoneNumber: '400-123-4567' });
+          wx.makePhoneCall({ phoneNumber: '0416-5577456' });
         }
       }
     });

@@ -1,6 +1,7 @@
 import {
   IsArray,
   IsBoolean,
+  IsDate,
   IsInt,
   IsNotEmpty,
   IsNumber,
@@ -91,4 +92,44 @@ export class CreatePackageDto {
   @IsOptional()
   @IsString()
   status?: string;
+
+  @ApiProperty({ description: '促销价格', required: false })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
+  promotionPrice?: number;
+
+  @ApiProperty({ description: '促销开始时间', required: false })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  promotionStart?: Date;
+
+  @ApiProperty({ description: '促销结束时间', required: false })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  promotionEnd?: Date;
+
+  @ApiProperty({ description: '团购最少人数', required: false })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Type(() => Number)
+  groupMinCount?: number;
+
+  @ApiProperty({ description: '团购价格', required: false })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
+  groupPrice?: number;
+
+  @ApiProperty({ description: '关联商品ID列表', type: [Number], required: false })
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  @Type(() => Number)
+  productIds?: number[];
 }

@@ -1,101 +1,144 @@
-/* 套系列表页样式 - 优化版 */
+/* 套系列表页样式 — 3D立体卡片风格 */
 
 /* 容器 */
 .container {
   min-height: 100vh;
-  background: linear-gradient(180deg, #f0f2f5 0%, #e8eaed 100%);
-  padding-bottom: 20rpx;
+  background: linear-gradient(180deg, #F8F6F7 0%, #F0ECEE 100%);
 }
 
-/* 分类导航 */
+/* ===== 分类导航 ===== */
 .category-nav {
   background: #fff;
-  padding: 20rpx 0;
   display: flex;
   align-items: center;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  padding: 0;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   position: sticky;
   top: 0;
   z-index: 100;
+  height: 88rpx;
 }
 
 .category-scroll {
   flex: 1;
   white-space: nowrap;
+  height: 88rpx;
+  line-height: 88rpx;
 }
 
 .category-list {
   display: inline-flex;
-  padding: 0 24rpx;
+  padding: 0 20rpx;
+  height: 88rpx;
+  align-items: center;
 }
 
 .category-item {
   display: inline-flex;
   align-items: center;
-  padding: 12rpx 28rpx;
+  justify-content: center;
+  padding: 0 28rpx;
+  height: 60rpx;
   margin-right: 16rpx;
-  border-radius: 32rpx;
-  background: #f7f8fa;
-  font-size: 28rpx;
-  color: #323233;
+  border-radius: 30rpx;
+  background: #F5F0F2;
+  font-size: 26rpx;
+  color: #666;
   transition: all 0.3s;
+  font-weight: 500;
 }
 
 .category-item.active {
-  background: #07c160;
+  background: linear-gradient(135deg, #FF9A9E, #FBC2EB);
   color: #fff;
+  font-weight: 600;
+  box-shadow: 0 4rpx 12rpx rgba(255,154,158,0.3);
 }
 
 .filter-btn {
   padding: 0 24rpx;
-  border-left: 1rpx solid #eee;
+  border-left: 2rpx solid #F0E8EB;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
 }
 
 .filter-btn text {
-  font-size: 28rpx;
-  color: #969799;
-}
-
-.filter-btn text.active {
-  color: #07c160;
+  font-size: 26rpx;
+  color: #999;
   font-weight: 500;
 }
 
-/* 套系列表 */
-.package-list {
-  padding: 24rpx;
-  background: #f0f2f5;
+.filter-btn text.active {
+  color: #FF9A9E;
+  font-weight: 600;
 }
 
+/* ===== 套系列表 ===== */
+.package-list {
+  padding: 16rpx 20rpx 20rpx;
+}
+
+/* ===== 套系卡片 — 3D凸起效果 ===== */
 .package-card {
+  position: relative;
   background: #fff;
-  border-radius: 20rpx;
-  margin-bottom: 32rpx;
+  border-radius: 24rpx;
+  margin-bottom: 28rpx;
   overflow: hidden;
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.08);
-  border: 2rpx solid #e8e8e8;
+  /* 3D凸起效果：多层阴影模拟立体感 */
+  box-shadow:
+    0 2rpx 4rpx rgba(0,0,0,0.02),
+    0 8rpx 24rpx rgba(0,0,0,0.06),
+    0 20rpx 48rpx -12rpx rgba(0,0,0,0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* 顶部高光线 — 模拟光照 */
+  border-top: 2rpx solid rgba(255,255,255,0.8);
+}
+
+/* 卡片底部深阴影 — 让卡片"浮"起来 */
+.package-card::after {
+  content: '';
+  position: absolute;
+  bottom: -6rpx;
+  left: 20rpx;
+  right: 20rpx;
+  height: 20rpx;
+  background: rgba(0,0,0,0.03);
+  border-radius: 50%;
+  filter: blur(8rpx);
+  z-index: -1;
   transition: all 0.3s ease;
 }
 
 .package-card:active {
-  transform: scale(0.98);
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
+  transform: translateY(-4rpx) scale(1.01);
+  box-shadow:
+    0 4rpx 8rpx rgba(0,0,0,0.03),
+    0 12rpx 32rpx rgba(0,0,0,0.08),
+    0 30rpx 60rpx -16rpx rgba(0,0,0,0.12);
+}
+
+.package-card:active::after {
+  bottom: -10rpx;
+  filter: blur(12rpx);
+  opacity: 0.6;
 }
 
 .package-card:last-child {
   margin-bottom: 0;
 }
 
+/* ===== 图片区域 ===== */
 .package-image {
   width: 100%;
-  height: 400rpx;
+  height: 380rpx;
   position: relative;
-  background: #f5f5f5;
+  background: #F5F0F2;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-bottom: 4rpx solid #f0f2f5;
 }
 
 .package-image image {
@@ -103,20 +146,36 @@
   height: 100%;
 }
 
+/* 图片底部渐变过渡 */
+.package-image::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60rpx;
+  background: linear-gradient(transparent, rgba(255,255,255,0.9));
+  pointer-events: none;
+}
+
 .popular-tag {
   position: absolute;
   top: 16rpx;
   right: 16rpx;
-  background: rgba(255, 151, 106, 0.95);
+  background: linear-gradient(135deg, #FF6B6B, #FF9A9E);
   color: #fff;
-  padding: 8rpx 16rpx;
+  padding: 8rpx 20rpx;
   border-radius: 20rpx;
-  font-size: 24rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  box-shadow: 0 4rpx 12rpx rgba(255,107,107,0.3);
 }
 
+/* ===== 信息区域 ===== */
 .package-info {
-  padding: 32rpx;
+  padding: 28rpx 28rpx 24rpx;
   background: #fff;
+  position: relative;
 }
 
 /* 套系头部 */
@@ -124,33 +183,32 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20rpx;
-  padding-bottom: 20rpx;
-  border-bottom: 2rpx dashed #e8e8e8;
+  margin-bottom: 16rpx;
 }
 
 .package-name {
-  font-size: 34rpx;
-  font-weight: 600;
-  color: #1a1a1a;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #3D2C33;
   flex: 1;
   margin-right: 16rpx;
+  letter-spacing: 1rpx;
 }
 
 .category-badge {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF9A9E, #FBC2EB);
   color: #fff;
-  padding: 6rpx 20rpx;
-  border-radius: 24rpx;
-  font-size: 22rpx;
+  padding: 4rpx 20rpx;
+  border-radius: 20rpx;
+  font-size: 20rpx;
   font-weight: 500;
   white-space: nowrap;
-  box-shadow: 0 2rpx 8rpx rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2rpx 8rpx rgba(255,154,158,0.25);
 }
 
 .package-desc {
-  font-size: 26rpx;
-  color: #666;
+  font-size: 24rpx;
+  color: #A88C96;
   margin-bottom: 20rpx;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -160,16 +218,15 @@
   line-height: 1.5;
 }
 
-/* 价格卡片 */
+/* ===== 价格卡片 ===== */
 .price-card {
-  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  background: linear-gradient(135deg, #FFF5F7, #FFE4EC);
   border-radius: 16rpx;
-  padding: 24rpx;
+  padding: 20rpx 24rpx;
   display: flex;
   align-items: center;
-  margin-bottom: 20rpx;
-  box-shadow: 0 6rpx 16rpx rgba(252, 182, 159, 0.35);
-  border: 2rpx solid rgba(255, 255, 255, 0.8);
+  margin-bottom: 16rpx;
+  border: 2rpx solid rgba(255,154,158,0.1);
 }
 
 .price-section {
@@ -177,9 +234,9 @@
 }
 
 .price-label {
-  font-size: 22rpx;
-  color: #8b4513;
-  margin-bottom: 8rpx;
+  font-size: 20rpx;
+  color: #B8ADB2;
+  margin-bottom: 6rpx;
   display: block;
   font-weight: 500;
 }
@@ -190,22 +247,23 @@
 }
 
 .price-symbol {
-  font-size: 28rpx;
-  color: #d32f2f;
+  font-size: 24rpx;
+  color: #FF6B9D;
   font-weight: 600;
-  margin-right: 4rpx;
+  margin-right: 2rpx;
 }
 
 .price-number {
   font-size: 40rpx;
-  font-weight: 700;
-  color: #d32f2f;
+  font-weight: 800;
+  color: #FF6B9D;
+  letter-spacing: -1rpx;
 }
 
 .divider {
   width: 2rpx;
-  height: 60rpx;
-  background: rgba(139, 69, 19, 0.2);
+  height: 52rpx;
+  background: rgba(255,107,157,0.12);
   margin: 0 20rpx;
 }
 
@@ -214,50 +272,50 @@
 }
 
 .deposit-label {
-  font-size: 22rpx;
-  color: #8b4513;
-  margin-bottom: 8rpx;
+  font-size: 20rpx;
+  color: #B8ADB2;
+  margin-bottom: 6rpx;
   display: block;
   font-weight: 500;
 }
 
 .deposit-amount {
   font-size: 28rpx;
-  font-weight: 600;
-  color: #ff6b6b;
+  font-weight: 700;
+  color: #FF6B6B;
 }
 
-/* 底部信息栏 */
+/* ===== 底部信息栏 ===== */
 .package-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 20rpx;
-  border-top: 2rpx dashed #e8e8e8;
+  padding-top: 16rpx;
+  border-top: 2rpx solid #F5F0F2;
 }
 
 .footer-info {
   display: flex;
   align-items: center;
-  font-size: 24rpx;
-  color: #999;
+  font-size: 22rpx;
+  color: #B8ADB2;
 }
 
 .info-icon {
   margin-right: 6rpx;
-  font-size: 28rpx;
+  font-size: 24rpx;
 }
 
 .info-text {
-  color: #999;
+  color: #B8ADB2;
 }
 
 .book-hint {
   display: flex;
   align-items: center;
-  color: #07c160;
+  color: #FF9A9E;
   font-size: 26rpx;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .book-hint .arrow {
@@ -270,23 +328,23 @@
   transform: translateX(6rpx);
 }
 
-/* 加载状态 */
+/* ===== 加载/空状态 ===== */
 .loading,
 .empty,
 .no-more {
   text-align: center;
-  padding: 80rpx 0;
-  color: #969799;
-  font-size: 28rpx;
+  padding: 60rpx 0;
+  color: #B8ADB2;
+  font-size: 26rpx;
   background: #fff;
   border-radius: 20rpx;
-  margin: 24rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.06);
+  margin: 16rpx 0;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
 }
 
 .empty image {
-  width: 300rpx;
-  height: 300rpx;
-  margin-bottom: 24rpx;
-  opacity: 0.6;
+  width: 200rpx;
+  height: 200rpx;
+  margin-bottom: 20rpx;
+  opacity: 0.4;
 }

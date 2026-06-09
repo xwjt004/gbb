@@ -1,0 +1,103 @@
+<view class="agreement-page">
+  <view class="agreement-header">支付协议</view>
+
+  <view class="agreement-content">
+    <view class="section">
+      <view class="section-title">一、支付方式</view>
+      <view class="section-body">
+        1. 本店支持微信支付在线付款，包括全额支付和定金支付两种方式。
+      </view>
+      <view class="section-body">
+        2. 全额支付：一次性支付套餐总价款。
+      </view>
+      <view class="section-body">
+        3. 定金支付：仅支付约定定金，剩余款项到店拍摄前补齐。
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-title">二、定金规则</view>
+      <view class="section-body">
+        1. 定金支付后，该档期即为您保留，我们将不再接受其他用户预约。
+      </view>
+      <view class="section-body">
+        2. 定金一经支付，如因个人原因取消订单，定金不予退还。
+      </view>
+      <view class="section-body">
+        3. 定金的最终解释权归本店所有。
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-title">三、全额退款规则</view>
+      <view class="section-body">
+        1. 全额支付后，如需退款，请提前24小时联系客服申请。
+      </view>
+      <view class="section-body">
+        2. 拍摄前24小时以上申请退款，可退全款的90%（扣除10%手续费）。
+      </view>
+      <view class="section-body">
+        3. 拍摄前24小时内申请退款，退全款的50%。
+      </view>
+      <view class="section-body">
+        4. 拍摄完成后，已消费订单不予退款。
+      </view>
+      <view class="section-body">
+        5. 如因本店原因无法提供服务，可全额退款。
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-title">四、改期规则</view>
+      <view class="section-body">
+        1. 如需改期，请提前24小时联系客服。
+      </view>
+      <view class="section-body">
+        2. 每个订单可免费改期1次，超过1次需支付改期费50元。
+      </view>
+      <view class="section-body">
+        3. 拍摄当天不接受改期申请。
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-title">五、用户权利与义务</view>
+      <view class="section-body">
+        1. 用户应提供真实、准确的预约信息（姓名、联系方式等）。
+      </view>
+      <view class="section-body">
+        2. 用户应按照约定时间到店拍摄，如迟到超过30分钟，本店有权缩减服务时长或改期。
+      </view>
+      <view class="section-body">
+        3. 用户应确保儿童在拍摄当天身体状况良好，如因儿童身体不适无法拍摄，可协商改期。
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-title">六、免责条款</view>
+      <view class="section-body">
+        1. 因不可抗力（包括但不限于自然灾害、疫情、政府行为等）导致无法提供服务的，本店不承担违约责任。
+      </view>
+      <view class="section-body">
+        2. 因微信支付系统故障、网络问题等导致的支付延迟或失败，本店不承担责任。
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-title">七、其他</view>
+      <view class="section-body">
+        1. 本店有权根据实际运营需要修改本协议，修改后的协议将通过本页面公布。
+      </view>
+      <view class="section-body">
+        2. 如有争议，双方应友好协商解决；协商不成的，提交本店所在地人民法院诉讼解决。
+      </view>
+      <view class="section-body">
+        3. 本协议自用户支付成功之日起生效。
+      </view>
+    </view>
+
+    <view class="agreement-footer">
+      <text>乖宝宝儿童影楼</text>
+    </view>
+  </view>
+</view>

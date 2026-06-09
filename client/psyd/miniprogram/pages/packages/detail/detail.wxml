@@ -102,6 +102,27 @@
       </view>
     </view>
 
+    <!-- 商品内容 -->
+    <view wx:if="{{package.packageProducts && package.packageProducts.length > 0}}" class="product-section">
+      <view class="section-title">
+        <text class="title-text">商品内容</text>
+        <text class="title-icon">🎁</text>
+      </view>
+
+      <view class="product-list">
+        <view wx:for="{{package.packageProducts}}" wx:key="id" class="product-item">
+          <view class="product-info">
+            <text class="product-name">{{item.product.name}}</text>
+            <text wx:if="{{item.product.specification}}" class="product-spec">（{{item.product.specification}}）</text>
+          </view>
+          <view class="product-meta">
+            <text class="product-unit">{{item.product.unit}}</text>
+            <text wx:if="{{item.quantity > 1}}" class="product-qty">×{{item.quantity}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
     <!-- 套系说明 -->
     <view wx:if="{{package.description}}" class="description-section">
       <view class="section-title">
@@ -137,8 +158,8 @@
         <text class="action-text">客服</text>
       </view>
       <view class="action-btn" bindtap="toggleFavorite">
-        <text class="action-icon">❤️</text>
-        <text class="action-text">收藏</text>
+        <text class="action-icon">{{isFavorited ? '❤️' : '🤍'}}</text>
+        <text class="action-text">{{isFavorited ? '已收藏' : '收藏'}}</text>
       </view>
     </view>
     

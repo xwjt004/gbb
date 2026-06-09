@@ -1,7 +1,7 @@
 {
   "navigationBarTitleText": "优惠券中心",
-  "navigationBarBackgroundColor": "#667eea",
-  "navigationBarTextStyle": "white",
+  "navigationBarBackgroundColor": "#ffffff",
+  "navigationBarTextStyle": "black",
   "enablePullDownRefresh": true,
-  "backgroundTextStyle": "light"
+  "backgroundTextStyle": "dark"
 }

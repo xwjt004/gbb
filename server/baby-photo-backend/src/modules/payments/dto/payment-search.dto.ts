@@ -33,7 +33,7 @@ export class PaymentSearchDto {
   orderNo?: string;
 
   @IsOptional()
-  @IsEnum(['PENDING', 'PROCESSING', 'PAID', 'FAILED', 'CANCELLED', 'REFUNDING', 'REFUNDED'])
+  @IsEnum(['PENDING_PAYMENT', 'PARTIAL_PAID', 'FULLY_PAID', 'PROCESSING', 'PAID', 'FAILED', 'CANCELLED', 'REFUNDING', 'REFUNDED'])
   status?: string;
 
   @IsOptional()

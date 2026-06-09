@@ -1,0 +1,33 @@
+<view class="page">
+  <scroll-view scroll-y class="scroll-view" enhanced show-scrollbar="{{false}}">
+
+    <view wx:for="{{levels}}" wx:key="key" class="level-section" id="level-{{item.key}}">
+      <!-- 等级头 -->
+      <view class="level-head" style="background: linear-gradient(135deg, {{item.color}}, {{item.bgColor}});">
+        <view wx:if="{{item.key === currentLevel}}" class="current-tag">当前等级</view>
+        <view class="level-head-content">
+          <text class="level-icon-large">{{item.icon}}</text>
+          <view class="level-info">
+            <text class="level-name">{{item.name}}</text>
+            <text class="level-req">{{item.requirement}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 权益列表 -->
+      <view class="benefit-list">
+        <view wx:for="{{item.benefits}}" wx:key="label" class="benefit-row">
+          <view class="benefit-row-icon">
+            <text>{{item.icon}}</text>
+          </view>
+          <view class="benefit-row-content">
+            <text class="benefit-row-label">{{item.label}}</text>
+            <text class="benefit-row-desc">{{item.desc}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="footer-gap"></view>
+  </scroll-view>
+</view>

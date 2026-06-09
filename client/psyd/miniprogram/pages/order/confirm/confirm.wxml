@@ -118,8 +118,7 @@
       </view>
     </view>
 
-    <!-- 优惠券 - 暂时隐藏 -->
-    <!--
+    <!-- 优惠券 -->
     <view class="coupon-section" bindtap="onSelectCoupon">
       <view class="coupon-label">优惠券</view>
       <view class="coupon-value">
@@ -129,7 +128,6 @@
       </view>
       <view class="coupon-arrow">›</view>
     </view>
-    -->
 
     <!-- 订单备注 -->
     <view class="remark-section">

@@ -33,8 +33,8 @@ export class WechatPayService {
     this.apiV3Key = this.configService.get<string>('WECHAT_API_V3_KEY') || '';
     this.serialNo = this.configService.get<string>('WECHAT_SERIAL_NO') || '';
     this.notifyUrl = this.configService.get<string>('WECHAT_NOTIFY_URL') || '';
-    this.isSandbox = this.configService.get<boolean>('PAYMENT_SANDBOX_MODE', true);
-    this.isMock = this.configService.get<boolean>('PAYMENT_MOCK_MODE', false);
+    this.isSandbox = this.configService.get<string>('PAYMENT_SANDBOX_MODE', 'true') === 'true';
+    this.isMock = this.configService.get<string>('PAYMENT_MOCK_MODE', 'false') === 'true';
 
     // 加载商户私钥
     const privateKeyPath = this.configService.get<string>('WECHAT_PRIVATE_KEY_PATH');
@@ -220,24 +220,80 @@ export class WechatPayService {
     nonce: string,
   ): any {
     try {
-      // 使用 APIv3 密钥解密
-      const decipher = crypto.createDecipheriv(
-        'aes-256-gcm',
-        this.apiV3Key,
-        nonce,
-      );
-      
-      decipher.setAuthTag(Buffer.from(ciphertext.slice(-32), 'hex'));
+      // 微信支付 APIv3 使用 AEAD_AES_256_GCM
+      // ciphertext: base64 编码的密文 + 认证标签
+      // nonce: base64 编码的初始向量(12字节)
+      // APIv3Key: 32字节的字符串，直接作为密钥
+
+      this.logger.debug(`解密回调: nonce="${nonce}" nonce.length=${nonce.length} ad="${associatedData}"`);
+
+      const cipherBuffer = Buffer.from(ciphertext, 'base64');
+
+      // 认证标签是最后 16 字节
+      const authTag = cipherBuffer.subarray(cipherBuffer.length - 16);
+      const encryptedData = cipherBuffer.subarray(0, cipherBuffer.length - 16);
+
+      this.logger.debug(`解密参数: cipherLen=${cipherBuffer.length} tagLen=${authTag.length} dataLen=${encryptedData.length}`);
+
+      // 微信支付 APIv3: nonce 是 12 字节随机字符串（原始字符串，非 Base64）
+      // 官方 Node.js SDK 直接传字符串，Node.js 自动按 UTF-8 转为 12 字节 IV
+      const nonceBuffer = Buffer.from(nonce, 'utf8');
+      this.logger.debug(`nonceUtf8: len=${nonceBuffer.length} hex=${nonceBuffer.toString('hex')}`);
+
+      // APIv3 密钥是 32 字节字符串
+      const keyBuffer = Buffer.from(this.apiV3Key, 'utf8');
+      this.logger.debug(`keyLen=${keyBuffer.length} key=${this.apiV3Key}`);
+
+      const decipher = crypto.createDecipheriv('aes-256-gcm', keyBuffer, nonceBuffer);
+      decipher.setAuthTag(authTag);
       decipher.setAAD(Buffer.from(associatedData));
 
       const decrypted = Buffer.concat([
-        decipher.update(ciphertext.slice(0, -32), 'base64'),
+        decipher.update(encryptedData),
         decipher.final(),
       ]);
 
       return JSON.parse(decrypted.toString('utf-8'));
     } catch (error) {
       this.logger.error('解密回调数据失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 申请退款 (APIv3)
+   */
+  async refund(params: {
+    outTradeNo: string;
+    outRefundNo: string;
+    totalFee: number;
+    refundFee: number;
+    refundDesc?: string;
+  }) {
+    if (this.isMock) {
+      this.logger.warn('🎭 模拟退款模式');
+      return { refundId: `mock_refund_${Date.now()}`, outRefundNo: params.outRefundNo };
+    }
+
+    try {
+      const requestData = {
+        out_trade_no: params.outTradeNo,
+        out_refund_no: params.outRefundNo,
+        amount: {
+          total: params.totalFee,
+          refund: params.refundFee,
+          currency: 'CNY',
+        },
+        reason: params.refundDesc || '退款',
+      };
+
+      const url = `${this.baseUrl}/v3/refund/domestic/refunds`;
+      const response = await this.request('POST', url, requestData);
+
+      this.logger.log(`退款创建成功: refundId=${response.refund_id}`);
+      return { refundId: response.refund_id, outRefundNo: params.outRefundNo };
+    } catch (error) {
+      this.logger.error('退款失败:', error);
       throw error;
     }
   }
@@ -265,8 +321,19 @@ export class WechatPayService {
 
     this.logger.debug(`请求微信支付API: ${method} ${url}`);
 
-    const response = await axios(config);
-    return response.data;
+    try {
+      const response = await axios(config);
+      return response.data;
+    } catch (error: any) {
+      const wxError = error?.response?.data;
+      if (wxError) {
+        this.logger.error(`微信支付API返回错误 [HTTP ${error.response.status}]: code=${wxError.code}, message=${wxError.message}`);
+        if (wxError.detail) this.logger.error(`错误详情: ${JSON.stringify(wxError.detail)}`);
+      } else {
+        this.logger.error(`微信支付API请求失败: ${error.message || error}`);
+      }
+      throw error;
+    }
   }
 
   /**

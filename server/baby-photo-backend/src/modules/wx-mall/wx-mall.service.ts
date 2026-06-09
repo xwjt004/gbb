@@ -136,18 +136,25 @@ export class WxMallService {
       images: (pkg.images as string[]) || [],
     }));
 
+    // 从店铺信息获取轮播图配置
+    const shopInfo = await this.prisma.shopInfo.findFirst({
+      select: { banners: true, bannerInterval: true },
+    });
+
+    let banners: any[];
+    if (shopInfo?.banners && Array.isArray(shopInfo.banners) && shopInfo.banners.length > 0) {
+      banners = shopInfo.banners;
+    } else {
+      // 默认空轮播
+      banners = [];
+    }
+
     return {
       hotPackages: safePackages,
       recommendProducts: formattedProducts,
       stats,
-      banners: [
-        {
-          id: '1',
-          image: '/banners/banner1.jpg',
-          title: '新品上市',
-          link: '/pages/packages/list',
-        },
-      ],
+      banners,
+      bannerInterval: shopInfo?.bannerInterval || 4000,
     };
   }
 
@@ -155,13 +162,18 @@ export class WxMallService {
    * 获取套系列表
    */
   async getPackages(query: QueryPackagesDto) {
-    const { category, search, page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = query;
+    const { category, search, page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', isPopular } = query;
 
     const where: any = {
       // 默认只返回上架且激活的套系
       isOnSale: true,
       status: 'ACTIVE',
     };
+
+    // 热门筛选
+    if (isPopular !== undefined) {
+      where.isPopular = isPopular;
+    }
 
     // 分类筛选
     if (category) {
@@ -293,6 +305,17 @@ export class WxMallService {
         { name: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
       ];
+    }
+
+    // 分类筛选（通过分类 code 查找对应的 categoryId）
+    if (category) {
+      const cat = await this.prisma.productCategory.findUnique({
+        where: { code: category },
+        select: { id: true },
+      });
+      if (cat) {
+        where.categoryId = cat.id;
+      }
     }
 
     // 分页

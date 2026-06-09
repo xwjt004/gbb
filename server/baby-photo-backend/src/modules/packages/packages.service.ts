@@ -44,8 +44,9 @@ export class PackagesService {
           ? 'INACTIVE'
           : 'ACTIVE';
 
+      const { productIds, ...restDto } = createPackageDto;
       const packageData: any = {
-        ...createPackageDto,
+        ...restDto,
         status: normalizedStatus,
         deposit: createPackageDto.deposit ?? 0,
         includes: createPackageDto.includes ?? [],
@@ -56,6 +57,17 @@ export class PackagesService {
       const pkg = await this.prisma.package.create({
         data: packageData,
       });
+
+      // 创建商品关联
+      if (productIds && productIds.length > 0) {
+        await this.prisma.packageProduct.createMany({
+          data: productIds.map(productId => ({
+            packageId: pkg.id,
+            productId,
+            quantity: 1,
+          })),
+        });
+      }
 
       // 清除相关缓存
       await this.clearPackageListCache();
@@ -151,7 +163,7 @@ export class PackagesService {
           orderBy,
           skip: (page - 1) * limit,
           take: limit,
-          include: { 
+          include: {
             _count: { select: { orders: true } },
             packageCategory: {
               select: {
@@ -159,6 +171,20 @@ export class PackagesService {
                 name: true,
                 color: true,
                 icon: true,
+              },
+            },
+            packageProducts: {
+              include: {
+                product: {
+                  select: {
+                    id: true,
+                    name: true,
+                    specification: true,
+                    unit: true,
+                    salePrice: true,
+                    images: true,
+                  },
+                },
               },
             },
           },
@@ -183,6 +209,7 @@ export class PackagesService {
         is_popular: pkg.isPopular,
         order_count: pkg._count?.orders,
         created_at: pkg.createdAt,
+        packageProducts: pkg.packageProducts || [],
       }));      return {
         code: 200,
         message: '查询成功',
@@ -433,6 +460,20 @@ export class PackagesService {
                   icon: true,
                 },
               },
+              packageProducts: {
+                include: {
+                  product: {
+                    select: {
+                      id: true,
+                      name: true,
+                      specification: true,
+                      unit: true,
+                      salePrice: true,
+                      images: true,
+                    },
+                  },
+                },
+              },
             },
           });
 
@@ -465,6 +506,7 @@ export class PackagesService {
               customer_name: order.user.nickname,
               created_at: order.createdAt,
             })),
+            packageProducts: pkg.packageProducts || [],
             created_at: pkg.createdAt,
           };
 
@@ -516,7 +558,8 @@ export class PackagesService {
         }
       }
 
-      const updateData: any = { ...updatePackageDto };
+      const { productIds, ...updateRest } = updatePackageDto;
+      const updateData: any = { ...updateRest };
       if (updatePackageDto.status) {
         updateData.status =
           updatePackageDto.status.toUpperCase() === 'INACTIVE'
@@ -528,6 +571,22 @@ export class PackagesService {
         where: { id },
         data: updateData,
       });
+
+      // 同步商品关联
+      if (productIds !== undefined) {
+        await this.prisma.packageProduct.deleteMany({
+          where: { packageId: id },
+        });
+        if (productIds.length > 0) {
+          await this.prisma.packageProduct.createMany({
+            data: productIds.map(productId => ({
+              packageId: id,
+              productId,
+              quantity: 1,
+            })),
+          });
+        }
+      }
 
       // 清除缓存
       const cacheKey = this.cacheService.getPackageCacheKey(id);

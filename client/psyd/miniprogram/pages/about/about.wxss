@@ -1,0 +1,201 @@
+.page {
+  width: 100%;
+  min-height: 100vh;
+  background: #F8F6F7;
+}
+
+.scroll-view {
+  width: 100%;
+  height: 100vh;
+}
+
+/* ===== 品牌介绍 ===== */
+.brand-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 48rpx 40rpx;
+  background: linear-gradient(180deg, #FFF0F5, #F8F6F7);
+}
+
+.brand-icon-circle {
+  width: 140rpx;
+  height: 140rpx;
+  background: linear-gradient(135deg, #FF9A9E, #FBC2EB);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24rpx;
+  box-shadow: 0 12rpx 40rpx rgba(255,154,158,0.25);
+}
+
+.brand-icon-large {
+  font-size: 64rpx;
+}
+
+.brand-name {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #4A2C3A;
+  margin-bottom: 16rpx;
+}
+
+.brand-desc {
+  font-size: 26rpx;
+  color: #8A7A82;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ===== 店铺照片 ===== */
+.photo-wrap {
+  margin: 0 24rpx;
+  border-radius: 24rpx;
+  overflow: hidden;
+}
+
+.shop-photo {
+  width: 100%;
+  height: 360rpx;
+  display: block;
+}
+
+/* ===== 联系信息卡片 ===== */
+.info-card {
+  margin: 24rpx 24rpx 0;
+  background: #fff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.04);
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 24rpx;
+  border-bottom: 1rpx solid #F5F0F2;
+  gap: 20rpx;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row:active {
+  background: #FAF8F9;
+}
+
+.info-icon-wrap {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.info-icon {
+  font-size: 32rpx;
+}
+
+.info-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.info-label {
+  font-size: 24rpx;
+  color: #B8ADB2;
+}
+
+.info-value {
+  font-size: 28rpx;
+  color: #3D2C33;
+}
+
+.info-action {
+  font-size: 26rpx;
+  color: #FF6B9D;
+  font-weight: 500;
+  flex-shrink: 0;
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+}
+
+.info-action:active {
+  background: #FFF0F5;
+}
+
+/* ===== 版本信息 ===== */
+.version-row {
+  margin: 24rpx 24rpx 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.04);
+}
+
+.version-label {
+  font-size: 28rpx;
+  color: #3D2C33;
+}
+
+.version-value {
+  font-size: 26rpx;
+  color: #B8ADB2;
+}
+
+.footer-gap {
+  height: 48rpx;
+}
+
+/* ===== 店铺位置地图 ===== */
+.map-card {
+  margin: 24rpx 24rpx 0;
+  background: #fff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.04);
+}
+
+.map-header {
+  padding: 28rpx 24rpx 0;
+}
+
+.map-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #3D2C33;
+}
+
+.map-wrap {
+  margin: 16rpx 0 0;
+  overflow: hidden;
+}
+
+.map-wrap:active {
+  opacity: 0.9;
+}
+
+.map-footer {
+  padding: 20rpx 24rpx;
+  text-align: center;
+  border-top: 1rpx solid #F5F0F2;
+}
+
+.map-nav-btn {
+  font-size: 28rpx;
+  color: #FF6B9D;
+  font-weight: 500;
+}
+
+.map-nav-btn:active {
+  opacity: 0.7;
+}

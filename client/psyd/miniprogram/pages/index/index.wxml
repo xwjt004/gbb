@@ -56,7 +56,7 @@
           data-id="{{item.id}}"
           bindtap="viewPackageDetail"
         >
-          <image src="{{item.images?.[0] || '/images/placeholder.png'}}" mode="aspectFill" class="package-image" />
+          <image src="{{item.images ? item.images[0] : '/images/placeholder.png'}}" mode="aspectFill" class="package-image" />
           <view class="package-info">
             <text class="package-name">{{item.name}}</text>
             <view class="package-meta">
@@ -82,7 +82,7 @@
           data-id="{{item.id}}"
           bindtap="viewProductDetail"
         >
-          <image src="{{item.images?.[0] || '/images/placeholder.png'}}" mode="aspectFill" class="product-image" />
+          <image src="{{item.images ? item.images[0] : '/images/placeholder.png'}}" mode="aspectFill" class="product-image" />
           <view class="product-info">
             <text class="product-name">{{item.name}}</text>
             <view class="product-price-row">

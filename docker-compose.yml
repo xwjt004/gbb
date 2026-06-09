@@ -162,6 +162,47 @@ services:
       - ./client/admin-frontend:/app
       - /app/node_modules
 
+  # 商城前端（开发模式）
+  storefront-dev:
+    build:
+      context: ./client/ps-frontend
+      dockerfile: Dockerfile.dev
+    container_name: gbb-storefront-dev
+    profiles:
+      - dev
+    ports:
+      - "3003:3003"
+    depends_on:
+      - backend
+    networks:
+      - gbb-network
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=/api/v1
+      - VITE_HOST=0.0.0.0
+    volumes:
+      - ./client/ps-frontend:/app
+      - /app/node_modules
+
+  # 商城前端（生产模式）
+  storefront:
+    build:
+      context: ./client/ps-frontend
+      dockerfile: Dockerfile
+    container_name: gbb-storefront
+    ports:
+      - "3004:80"
+    depends_on:
+      - backend
+    networks:
+      - gbb-network
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    profiles:
+      - production
+
   # 前端管理后台（生产模式）
   admin-frontend:
     build:

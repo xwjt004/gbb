@@ -51,7 +51,7 @@
     "tabIndent": "insertSpaces",
     "tabSize": 2
   },
-  "libVersion": "3.11.2",
+  "libVersion": "3.15.0",
   "packOptions": {
     "ignore": [
       {
@@ -77,7 +77,7 @@
     ],
     "include": []
   },
-  "appid": "wx9cc0b9d42349bc3e",
+  "appid": "wxaf0f01abb6462633",
   "projectname": "baby-photo-mall",
   "cloudfunctionRoot": ""
 }

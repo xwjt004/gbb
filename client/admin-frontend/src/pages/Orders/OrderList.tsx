@@ -174,6 +174,7 @@ const OrderList: React.FC = () => {
         const paymentConfig: { [key: string]: { color: string; text: string } } = {
           'PENDING_PAYMENT': { color: 'orange', text: '待支付' },
           'PARTIAL_PAID': { color: 'blue', text: '部分支付' },
+          'FULLY_PAID': { color: 'green', text: '已支付' },
           'PAID': { color: 'green', text: '已支付' },
           'FAILED': { color: 'red', text: '支付失败' },
           'REFUNDING': { color: 'orange', text: '退款中' },
@@ -511,6 +512,7 @@ const OrderList: React.FC = () => {
     const statusMap: { [key: string]: string } = {
       'PENDING_PAYMENT': '待支付',
       'PARTIAL_PAID': '部分支付',
+      'FULLY_PAID': '已支付',
       'PAID': '已支付',
       'FAILED': '支付失败',
       'REFUNDING': '退款中',
@@ -626,7 +628,6 @@ const OrderList: React.FC = () => {
               <Option value="IN_PROGRESS">进行中</Option>
               <Option value="COMPLETED">已完成</Option>
               <Option value="CANCELLED">已取消</Option>
-              <Option value="REFUNDED">已退款</Option>
             </Select>
           </Col>
           <Col span={4}>
@@ -648,8 +649,7 @@ const OrderList: React.FC = () => {
             >
               <Option value="PENDING_PAYMENT">待支付</Option>
               <Option value="PARTIAL_PAID">部分支付</Option>
-              <Option value="PAID">已支付</Option>
-              <Option value="FAILED">支付失败</Option>
+              <Option value="FULLY_PAID">已支付</Option>
               <Option value="REFUNDING">退款中</Option>
               <Option value="REFUNDED">已退款</Option>
               <Option value="CANCELLED">已取消</Option>

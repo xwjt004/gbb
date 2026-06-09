@@ -1,5 +1,7 @@
 // pages/profile/profile.ts
 
+import { getImageUrl } from '../../utils/image';
+
 interface UserInfo {
   avatar?: string;
   nickname?: string;
@@ -38,14 +40,16 @@ Page({
     console.log('[ProfilePage] 页面加载');
     this.loadUserInfo();
     this.loadOrderCount();
-    this.loadAssetCount();
+    // 第二阶段开放：加载积分/优惠券数据
+    // this.loadAssetCount();
   },
 
   onShow() {
     // 每次显示页面时刷新数据（从登录页返回时会触发）
     this.loadUserInfo();
     this.loadOrderCount();
-    this.loadAssetCount();
+    // 第二阶段开放：加载积分/优惠券数据
+    // this.loadAssetCount();
   },
 
   /**
@@ -72,7 +76,7 @@ Page({
       if (userInfo) {
         this.setData({
           userInfo: {
-            avatar: userInfo.avatar || userInfo.avatarUrl,
+            avatar: getImageUrl(userInfo.avatar) || getImageUrl(userInfo.avatarUrl) || '',
             nickname: userInfo.nickname || userInfo.nickName || '微信用户',
             phone: userInfo.phone || userInfo.mobile || '未绑定手机号',
             isVip: userInfo.memberLevel && userInfo.memberLevel !== 'ORDINARY'
@@ -142,15 +146,10 @@ Page({
         url: '/pages/login/login?redirectUrl=' + encodeURIComponent('/pages/profile/profile')
       });
     } else {
-      // 已登录，跳转到个人信息编辑页（如果有的话）
-      wx.showToast({
-        title: '个人信息编辑功能开发中',
-        icon: 'none'
+      // 已登录，跳转到个人信息编辑页
+      wx.navigateTo({
+        url: '/pages/profile/edit/edit'
       });
-      // TODO: 实现个人信息编辑页
-      // wx.navigateTo({
-      //   url: '/pages/profile/edit'
-      // });
     }
   },
 
@@ -179,28 +178,27 @@ Page({
    * 跳转到会员中心
    */
   goToVip() {
-    wx.showToast({
-      title: '会员中心开发中',
-      icon: 'none'
+    wx.navigateTo({
+      url: '/pages/member/member'
     });
-    // TODO: 实现后跳转
-    // wx.navigateTo({
-    //   url: '/pages/vip/vip'
-    // });
   },
 
   /**
    * 跳转到积分中心
    */
   goToPoints() {
-    wx.showToast({
-      title: '积分中心开发中',
-      icon: 'none'
+    wx.navigateTo({
+      url: '/pages/member/points/points'
     });
-    // TODO: 实现后跳转
-    // wx.navigateTo({
-    //   url: '/pages/points/points'
-    // });
+  },
+
+  /**
+   * 跳转到收藏列表
+   */
+  goToFavorite() {
+    wx.navigateTo({
+      url: '/pages/favorite/list/list'
+    });
   },
 
   /**
@@ -228,14 +226,14 @@ Page({
   contactService() {
     wx.showModal({
       title: '联系客服',
-      content: '请拨打客服电话：400-123-4567',
+      content: '请拨打客服电话：0416-5577456',
       showCancel: true,
       confirmText: '拨打',
       cancelText: '取消',
       success: (res) => {
         if (res.confirm) {
           wx.makePhoneCall({
-            phoneNumber: '400-123-4567'
+            phoneNumber: '0416-5577456'
           });
         }
       }
@@ -246,27 +244,17 @@ Page({
    * 跳转到设置
    */
   goToSettings() {
-    wx.showToast({
-      title: '设置页面开发中',
-      icon: 'none'
+    wx.navigateTo({
+      url: '/pages/settings/settings'
     });
-    // TODO: 实现后跳转
-    // wx.navigateTo({
-    //   url: '/pages/settings/settings'
-    // });
   },
 
   /**
    * 跳转到关于我们
    */
   goToAbout() {
-    wx.showToast({
-      title: '关于我们页面开发中',
-      icon: 'none'
+    wx.navigateTo({
+      url: '/pages/about/about'
     });
-    // TODO: 实现后跳转
-    // wx.navigateTo({
-    //   url: '/pages/about/about'
-    // });
   }
 });

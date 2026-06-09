@@ -122,6 +122,14 @@ export class CreateWxOrderDto {
   customerName?: string;
 
   @ApiPropertyOptional({
+    description: '客户电话',
+    example: '13800138000',
+  })
+  @IsOptional()
+  @IsString({ message: '客户电话必须是字符串' })
+  customerPhone?: string;
+
+  @ApiPropertyOptional({
     description: '订单备注',
     example: '请准备粉色背景布',
   })

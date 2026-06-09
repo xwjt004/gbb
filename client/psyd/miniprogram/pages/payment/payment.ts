@@ -137,11 +137,8 @@ Page({
    * 查看支付协议
    */
   onViewAgreement() {
-    wx.showModal({
-      title: '支付协议',
-      content: '这是支付协议的内容，包括支付流程、退款政策、用户权益等...',
-      showCancel: false,
-      confirmText: '我知道了'
+    wx.navigateTo({
+      url: '/pages/payment/agreement/agreement'
     });
   },
 
@@ -282,6 +279,18 @@ Page({
 
       console.log('[PaymentPage] 微信支付成功');
       wx.hideLoading();
+
+      // 同步支付状态到后端（主动查询微信确认支付结果）
+      try {
+        await request({
+          url: `/wx-orders/${this.data.orderId}/pay/sync`,
+          method: 'POST',
+          needAuth: true,
+        });
+        console.log('[PaymentPage] 支付状态同步成功');
+      } catch (syncErr) {
+        console.warn('[PaymentPage] 支付状态同步失败，系统将通过回调自动处理:', syncErr);
+      }
 
       // 支付成功，跳转到结果页
       wx.redirectTo({

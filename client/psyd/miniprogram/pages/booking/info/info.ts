@@ -6,7 +6,7 @@ interface PackageInfo {
   name: string;
   price: number;
   depositAmount: number;
-  duration: number;
+  duration_minutes: number;
   image: string;
 }
 

@@ -1,0 +1,119 @@
+.page {
+  width: 100%;
+  min-height: 100vh;
+  background: #F8F6F7;
+}
+
+.scroll-view {
+  width: 100%;
+  height: 100vh;
+}
+
+/* ===== 等级区块 ===== */
+.level-section {
+  margin: 24rpx 24rpx 0;
+  border-radius: 28rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.04);
+}
+
+.level-head {
+  padding: 32rpx 28rpx;
+  position: relative;
+}
+
+.current-tag {
+  position: absolute;
+  top: 16rpx;
+  right: 16rpx;
+  font-size: 20rpx;
+  color: #fff;
+  background: rgba(255,107,157,0.8);
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+  font-weight: 500;
+}
+
+.level-head-content {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.level-icon-large {
+  font-size: 64rpx;
+  width: 80rpx;
+  text-align: center;
+}
+
+.level-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.level-name {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #3D2C33;
+}
+
+.level-req {
+  font-size: 22rpx;
+  color: #8A7A82;
+  line-height: 1.4;
+  white-space: pre-line;
+}
+
+/* ===== 权益列表 ===== */
+.benefit-list {
+  background: #fff;
+  padding: 8rpx 0;
+}
+
+.benefit-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 24rpx 28rpx;
+  border-bottom: 1rpx solid #F8F6F7;
+}
+
+.benefit-row:last-child {
+  border-bottom: none;
+}
+
+.benefit-row-icon {
+  width: 56rpx;
+  height: 56rpx;
+  background: #FFF0F5;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  flex-shrink: 0;
+}
+
+.benefit-row-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.benefit-row-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #3D2C33;
+}
+
+.benefit-row-desc {
+  font-size: 24rpx;
+  color: #B8ADB2;
+}
+
+.footer-gap {
+  height: 48rpx;
+}
