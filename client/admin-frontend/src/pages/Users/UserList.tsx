@@ -30,6 +30,7 @@ import { userService } from '@/services/users';
 import { exportService } from '@/services/export';
 import { Status } from '@/types/common';
 import UserForm from './UserForm';
+import PageContainer from '@/components/PageContainer';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -350,7 +351,7 @@ const UserList: React.FC = () => {
   };
 
   return (
-    <div>
+    <PageContainer>
       {/* 统计卡片 */}
       <Row gutter={16} style={{ marginBottom: 16 }}>
         <Col span={6}>
@@ -559,7 +560,7 @@ const UserList: React.FC = () => {
         }}
         onSubmit={handleFormSubmit}
       />
-    </div>
+    </PageContainer>
   );
 };
 

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import { WxUser, WxUserSearchParams } from '@/types/wxUser';
 import { wxUserService } from '@/services/wxUser';
+import PageContainer from '@/components/PageContainer';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -150,7 +151,7 @@ const WxUserList: React.FC = () => {
   ];
 
   return (
-    <div>
+    <PageContainer>
       <Row gutter={16} style={{ marginBottom: 16 }}>
         <Col span={6}>
           <Card><Statistic title="客户总数" value={stats.total} prefix={<UserOutlined />} /></Card>
@@ -216,7 +217,7 @@ const WxUserList: React.FC = () => {
           scroll={{ x: 1100 }}
         />
       </Card>
-    </div>
+    </PageContainer>
   );
 };
 

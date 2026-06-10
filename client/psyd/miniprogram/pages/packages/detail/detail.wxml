@@ -20,7 +20,7 @@
         <swiper-item wx:for="{{package.images}}" wx:key="*this">
           <image 
             src="{{item}}" 
-            mode="aspectFit"
+            mode="aspectFill"
             bindtap="previewImages"
             class="swiper-image"
           />
@@ -78,47 +78,61 @@
     </view>
 
     <!-- 服务内容 -->
-    <view class="service-section">
+    <view wx:if="{{package.packageServices && package.packageServices.length > 0}}" class="item-section">
       <view class="section-title">
         <text class="title-text">服务内容</text>
         <text class="title-icon">✨</text>
       </view>
-      
-      <view class="service-list {{servicesExpanded ? 'expanded' : ''}}">
-        <view wx:for="{{package.includes}}" wx:key="*this" class="service-item">
-          <text class="service-dot">•</text>
-          <text class="service-text">{{item}}</text>
+
+      <view class="item-list">
+        <view wx:for="{{package.packageServices}}" wx:key="id" class="item-row">
+          <image class="item-thumb" src="{{item._thumb}}" mode="aspectFill" />
+          <view class="item-info">
+            <text class="item-name">{{item.service.name}}</text>
+          </view>
+          <view class="item-price">¥{{item.service.basePrice}}</view>
+          <view class="item-qty">×{{item.quantity}}</view>
+          <view class="item-total">¥{{item._total}}</view>
         </view>
       </view>
+    </view>
 
-      <!-- 展开/收起按钮 -->
-      <view 
-        wx:if="{{package.includes.length > 4}}" 
-        class="expand-btn"
-        bindtap="toggleServices"
-      >
-        <text>{{servicesExpanded ? '收起' : '查看全部'}}</text>
-        <text class="expand-icon">{{servicesExpanded ? '▲' : '▼'}}</text>
+    <!-- 服务内容（卡片降级：适用于无结构化服务数据的旧套餐） -->
+    <view wx:elif="{{package._fallbackServices && package._fallbackServices.length > 0}}" class="item-section">
+      <view class="section-title">
+        <text class="title-text">服务内容</text>
+        <text class="title-icon">✨</text>
+      </view>
+
+      <view class="item-list">
+        <view wx:for="{{package._fallbackServices}}" wx:key="id" class="item-row">
+          <image class="item-thumb" src="/images/placeholder.png" mode="aspectFill" />
+          <view class="item-info">
+            <text class="item-name">{{item._name}}</text>
+          </view>
+          <view class="item-price">-</view>
+          <view class="item-qty">含</view>
+          <view class="item-total">-</view>
+        </view>
       </view>
     </view>
 
     <!-- 商品内容 -->
-    <view wx:if="{{package.packageProducts && package.packageProducts.length > 0}}" class="product-section">
+    <view wx:if="{{package.packageProducts && package.packageProducts.length > 0}}" class="item-section">
       <view class="section-title">
         <text class="title-text">商品内容</text>
         <text class="title-icon">🎁</text>
       </view>
 
-      <view class="product-list">
-        <view wx:for="{{package.packageProducts}}" wx:key="id" class="product-item">
-          <view class="product-info">
-            <text class="product-name">{{item.product.name}}</text>
-            <text wx:if="{{item.product.specification}}" class="product-spec">（{{item.product.specification}}）</text>
+      <view class="item-list">
+        <view wx:for="{{package.packageProducts}}" wx:key="id" class="item-row">
+          <image class="item-thumb" src="{{item._thumb}}" mode="aspectFill" />
+          <view class="item-info">
+            <text class="item-name">{{item.product.name}}</text>
           </view>
-          <view class="product-meta">
-            <text class="product-unit">{{item.product.unit}}</text>
-            <text wx:if="{{item.quantity > 1}}" class="product-qty">×{{item.quantity}}</text>
-          </view>
+          <view class="item-price">¥{{item.product.salePrice}}</view>
+          <view class="item-qty">×{{item.quantity}}</view>
+          <view class="item-total">¥{{item._total}}</view>
         </view>
       </view>
     </view>

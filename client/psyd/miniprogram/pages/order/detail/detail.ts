@@ -150,6 +150,7 @@ Page({
     canPay: false,
     canCancel: false,
     canContact: false,
+    canDelete: false,
   },
 
   /**
@@ -217,6 +218,7 @@ Page({
       const canPay = data.orderStatus === 'PENDING' && data.paymentStatus === 'PENDING_PAYMENT';
       const canCancel = data.orderStatus === 'PENDING' || data.orderStatus === 'CONFIRMED';
       const canContact = data.orderStatus === 'IN_PROGRESS' || data.orderStatus === 'COMPLETED';
+      const canDelete = data.orderStatus === 'CANCELLED';
       
       // 转换订单项中的图片 URL，添加格式化显示字段
       const orderWithImages = {
@@ -244,6 +246,7 @@ Page({
         canPay,
         canCancel,
         canContact,
+        canDelete,
         loading: false,
       });
       
@@ -357,6 +360,47 @@ Page({
         });
       }
     });
+  },
+
+  /**
+   * 删除订单（仅已取消状态）
+   */
+  async onDeleteOrder() {
+    if (!this.data.order) return;
+
+    const res = await wx.showModal({
+      title: '确认删除',
+      content: `确定要删除订单 ${this.data.order.orderNo} 吗？删除后不可恢复。`,
+    });
+
+    if (!res.confirm) return;
+
+    wx.showLoading({ title: '删除中...' });
+
+    try {
+      await request({
+        url: `/wx-order/${this.data.orderId}`,
+        method: 'DELETE',
+        needAuth: true,
+      });
+
+      wx.hideLoading();
+      wx.showToast({
+        title: '订单已删除',
+        icon: 'success',
+      });
+
+      // 返回列表页
+      setTimeout(() => {
+        wx.navigateBack();
+      }, 1500);
+    } catch (error: any) {
+      wx.hideLoading();
+      wx.showToast({
+        title: error.message || '删除失败',
+        icon: 'none',
+      });
+    }
   },
 
   /**

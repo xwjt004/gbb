@@ -44,7 +44,7 @@ export class PackagesService {
           ? 'INACTIVE'
           : 'ACTIVE';
 
-      const { productIds, ...restDto } = createPackageDto;
+      const { productIds, products, serviceIds, services, ...restDto } = createPackageDto;
       const packageData: any = {
         ...restDto,
         status: normalizedStatus,
@@ -58,13 +58,57 @@ export class PackagesService {
         data: packageData,
       });
 
-      // 创建商品关联
-      if (productIds && productIds.length > 0) {
+      // 创建商品关联（支持新版 products 带数量，兼容旧版 productIds）
+      const productItems = products || productIds?.map(id => ({ productId: id, quantity: 1 })) || [];
+      if (productItems.length > 0) {
         await this.prisma.packageProduct.createMany({
-          data: productIds.map(productId => ({
+          data: productItems.map(item => ({
             packageId: pkg.id,
-            productId,
-            quantity: 1,
+            productId: item.productId,
+            quantity: item.quantity ?? 1,
+          })),
+        });
+      }
+
+      // 创建服务项目关联（支持新建和已有服务，兼容旧版 serviceIds）
+      const rawServiceItems: { serviceId?: number; name?: string; quantity?: number; image?: string }[] =
+        services || serviceIds?.map(id => ({ serviceId: id, quantity: 1 })) || [];
+
+      // 区分已有服务和待新建服务
+      const resolvedLinks: { serviceId: number; quantity: number }[] = [];
+      const toCreate: { name: string; quantity: number; image?: string }[] = [];
+
+      for (const item of rawServiceItems) {
+        if (item.serviceId) {
+          resolvedLinks.push({ serviceId: item.serviceId, quantity: item.quantity ?? 1 });
+        } else if (item.name) {
+          toCreate.push({ name: item.name, quantity: item.quantity ?? 1, image: item.image });
+        }
+      }
+
+      // 批量新建服务项目
+      const createdServices = await Promise.all(
+        toCreate.map((item, idx) =>
+          this.prisma.serviceItem.create({
+            data: {
+              serviceNo: `AUTO-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
+              name: item.name,
+              category: 'CUSTOM',
+              isActive: true,
+              basePrice: 0,
+              images: item.image ? [item.image] : [],
+            },
+          })
+        )
+      );
+      createdServices.forEach((s, i) => resolvedLinks.push({ serviceId: s.id, quantity: toCreate[i].quantity }));
+
+      if (resolvedLinks.length > 0) {
+        await this.prisma.packageService.createMany({
+          data: resolvedLinks.map(item => ({
+            packageId: pkg.id,
+            serviceId: item.serviceId,
+            quantity: item.quantity,
           })),
         });
       }
@@ -187,6 +231,19 @@ export class PackagesService {
                 },
               },
             },
+            packageServices: {
+              include: {
+                service: {
+                  select: {
+                    id: true,
+                    name: true,
+                    category: true,
+                    basePrice: true,
+                    images: true,
+                  },
+                },
+              },
+            },
           },
         }) as any,
         this.prisma.package.count({ where }),
@@ -210,6 +267,7 @@ export class PackagesService {
         order_count: pkg._count?.orders,
         created_at: pkg.createdAt,
         packageProducts: pkg.packageProducts || [],
+        packageServices: pkg.packageServices || [],
       }));      return {
         code: 200,
         message: '查询成功',
@@ -466,9 +524,23 @@ export class PackagesService {
                     select: {
                       id: true,
                       name: true,
+                      productNo: true,
                       specification: true,
                       unit: true,
                       salePrice: true,
+                      images: true,
+                    },
+                  },
+                },
+              },
+              packageServices: {
+                include: {
+                  service: {
+                    select: {
+                      id: true,
+                      name: true,
+                      category: true,
+                      basePrice: true,
                       images: true,
                     },
                   },
@@ -507,6 +579,7 @@ export class PackagesService {
               created_at: order.createdAt,
             })),
             packageProducts: pkg.packageProducts || [],
+            packageServices: pkg.packageServices || [],
             created_at: pkg.createdAt,
           };
 
@@ -558,7 +631,7 @@ export class PackagesService {
         }
       }
 
-      const { productIds, ...updateRest } = updatePackageDto;
+      const { productIds, products, serviceIds, services, ...updateRest } = updatePackageDto;
       const updateData: any = { ...updateRest };
       if (updatePackageDto.status) {
         updateData.status =
@@ -572,17 +645,66 @@ export class PackagesService {
         data: updateData,
       });
 
-      // 同步商品关联
-      if (productIds !== undefined) {
+      // 同步商品关联（支持新版 products 带数量，兼容旧版 productIds）
+      if (products !== undefined || productIds !== undefined) {
+        const productItems = products || productIds?.map(id => ({ productId: id, quantity: 1 })) || [];
         await this.prisma.packageProduct.deleteMany({
           where: { packageId: id },
         });
-        if (productIds.length > 0) {
+        if (productItems.length > 0) {
           await this.prisma.packageProduct.createMany({
-            data: productIds.map(productId => ({
+            data: productItems.map(item => ({
               packageId: id,
-              productId,
-              quantity: 1,
+              productId: item.productId,
+              quantity: item.quantity ?? 1,
+            })),
+          });
+        }
+      }
+
+      // 同步服务项目关联（支持新建和已有服务，兼容旧版 serviceIds）
+      if (services !== undefined || serviceIds !== undefined) {
+        const rawServiceItems: { serviceId?: number; name?: string; quantity?: number; image?: string }[] =
+          services || serviceIds?.map(id => ({ serviceId: id, quantity: 1 })) || [];
+
+        // 区分已有服务和待新建服务
+        const resolvedLinks: { serviceId: number; quantity: number }[] = [];
+        const toCreate: { name: string; quantity: number; image?: string }[] = [];
+
+        for (const item of rawServiceItems) {
+          if (item.serviceId) {
+            resolvedLinks.push({ serviceId: item.serviceId, quantity: item.quantity ?? 1 });
+          } else if (item.name) {
+            toCreate.push({ name: item.name, quantity: item.quantity ?? 1, image: item.image });
+          }
+        }
+
+        // 批量新建服务项目
+        const createdServices = await Promise.all(
+          toCreate.map((item, idx) =>
+            this.prisma.serviceItem.create({
+              data: {
+                serviceNo: `AUTO-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
+                name: item.name,
+                category: 'CUSTOM',
+                isActive: true,
+                basePrice: 0,
+                images: item.image ? [item.image] : [],
+              },
+            })
+          )
+        );
+        createdServices.forEach((s, i) => resolvedLinks.push({ serviceId: s.id, quantity: toCreate[i].quantity }));
+
+        await this.prisma.packageService.deleteMany({
+          where: { packageId: id },
+        });
+        if (resolvedLinks.length > 0) {
+          await this.prisma.packageService.createMany({
+            data: resolvedLinks.map(item => ({
+              packageId: id,
+              serviceId: item.serviceId,
+              quantity: item.quantity,
             })),
           });
         }

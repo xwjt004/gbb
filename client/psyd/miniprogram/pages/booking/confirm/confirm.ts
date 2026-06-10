@@ -1,5 +1,6 @@
 // pages/booking/confirm/confirm.ts
 import { request } from '../../../utils/request';
+import { getImageUrl } from '../../../utils/image';
 
 interface BookingData {
   packageId: number;
@@ -7,9 +8,10 @@ interface BookingData {
     id: number;
     name: string;
     price: number;
-    deposit: number;
+    depositAmount: number;
     duration_minutes: number;
-    image: string;
+    coverImage: string;
+    description?: string;
   };
   date: string;
   dateDisplay: string;
@@ -32,6 +34,14 @@ interface PageData {
   totalPrice: number;
   payAmount: number;
   submitting: boolean;
+  packageCoverImage: string;
+  packageItems: Array<{
+    name: string;
+    image: string;
+    quantity: number;
+    type: string;
+  }>;
+  loadingDetail: boolean;
 }
 
 Page({
@@ -40,7 +50,10 @@ Page({
     paymentType: 'full', // 默认全款支付
     totalPrice: 0,
     payAmount: 0,
-    submitting: false
+    submitting: false,
+    packageCoverImage: '',
+    packageItems: [],
+    loadingDetail: true,
   } as PageData,
 
   onLoad(options: { data?: string }) {
@@ -60,8 +73,12 @@ Page({
         this.setData({
           bookingData,
           totalPrice,
-          payAmount: totalPrice // 默认全款支付
+          payAmount: totalPrice, // 默认全款支付
+          packageCoverImage: getImageUrl(bookingData.packageInfo.coverImage) || '',
         });
+
+        // 获取套系详情（商品、服务等）
+        this.loadPackageItems(bookingData.packageId);
       } catch (error) {
         console.error('解析预约数据失败：', error);
         wx.showToast({
@@ -88,7 +105,7 @@ Page({
    */
   selectPaymentType(e: any) {
     const type = e.currentTarget.dataset.type as 'deposit' | 'full';
-    const depositAmount = parseFloat(this.data.bookingData!.packageInfo.depositAmount as any) || 0;
+    const depositAmount = parseFloat(String(this.data.bookingData!.packageInfo.depositAmount)) || 0;
     const totalPrice = this.data.totalPrice;
     const payAmount = type === 'deposit' ? depositAmount : totalPrice;
 
@@ -100,6 +117,81 @@ Page({
     });
 
     console.log('💳 更新后的payAmount:', this.data.payAmount);
+  },
+
+  /**
+   * 加载套系商品/服务内容
+   */
+  async loadPackageItems(packageId: number) {
+    try {
+      const res: any = await request({
+        url: `/wx-mall/packages/${packageId}`,
+        method: 'GET',
+      });
+
+      const pkg = res.data || res;
+      const items: Array<{ name: string; image: string; quantity: number; type: string }> = [];
+
+      // 商品列表（含缩略图）
+      if (pkg.packageProducts) {
+        pkg.packageProducts.forEach((pp: any) => {
+          const product = pp.product || {};
+          const productImages = product.images;
+          let imgUrl = '';
+          if (typeof productImages === 'string') {
+            try { const parsed = JSON.parse(productImages); imgUrl = Array.isArray(parsed) ? getImageUrl(parsed[0]) : getImageUrl(productImages); } catch { imgUrl = getImageUrl(productImages); }
+          } else if (Array.isArray(productImages)) {
+            imgUrl = getImageUrl(productImages[0]);
+          }
+          items.push({
+            name: product.name || `商品#${pp.productId}`,
+            image: imgUrl || '/images/placeholder.png',
+            quantity: pp.quantity || 1,
+            type: 'product',
+          });
+        });
+      }
+
+      // 服务项目（含缩略图）
+      if (pkg.packageServices) {
+        pkg.packageServices.forEach((ps: any) => {
+          const service = ps.service || {};
+          const serviceImages = service.images;
+          let imgUrl = '';
+          if (typeof serviceImages === 'string') {
+            try { const parsed = JSON.parse(serviceImages); imgUrl = Array.isArray(parsed) ? getImageUrl(parsed[0]) : getImageUrl(serviceImages); } catch { imgUrl = getImageUrl(serviceImages); }
+          } else if (Array.isArray(serviceImages)) {
+            imgUrl = getImageUrl(serviceImages[0]);
+          }
+          items.push({
+            name: service.name || `服务#${ps.serviceId}`,
+            image: imgUrl || '/images/placeholder.png',
+            quantity: ps.quantity || 1,
+            type: 'service',
+          });
+        });
+      }
+
+      // 套系包含内容（自由文本）
+      if (pkg.includes && pkg.includes.length > 0) {
+        pkg.includes.forEach((desc: string) => {
+          items.push({
+            name: desc,
+            image: '/images/placeholder.png',
+            quantity: 1,
+            type: 'include',
+          });
+        });
+      }
+
+      this.setData({
+        packageItems: items,
+        loadingDetail: false,
+      });
+    } catch (error: any) {
+      console.error('加载套系详情失败:', error);
+      this.setData({ loadingDetail: false });
+    }
   },
 
   /**
@@ -149,7 +241,7 @@ Page({
         timeSlotId: bookingData.slotId,
         appointmentDate: new Date(bookingData.date).toISOString(),
         totalAmount: parseFloat(this.data.totalPrice as any),
-        depositAmount: parseFloat(bookingData.packageInfo.depositAmount as any) || 0,
+        depositAmount: parseFloat(String(bookingData.packageInfo.depositAmount)) || 0,
         childrenCount: bookingData.childrenCount,
         customerName: bookingData.contactName,
         customerPhone: bookingData.contactPhone,

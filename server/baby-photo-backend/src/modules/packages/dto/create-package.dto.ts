@@ -12,9 +12,51 @@ import {
   Min,
   MinLength,
   Length,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+
+export class ProductItemDto {
+  @ApiProperty({ description: '商品ID' })
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  productId: number;
+
+  @ApiProperty({ description: '数量', required: false, default: 1 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  quantity?: number;
+}
+
+export class ServiceItemDto {
+  @ApiProperty({ description: '服务项目ID（有则关联已有服务，无则新建）', required: false })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  serviceId?: number;
+
+  @ApiProperty({ description: '服务名称（新建服务时必填）', required: false })
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @ApiProperty({ description: '数量', required: false, default: 1 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  quantity?: number;
+
+  @ApiProperty({ description: '服务图片URL（新建服务时可选）', required: false })
+  @IsOptional()
+  @IsString()
+  image?: string;
+}
 
 export class CreatePackageDto {
   @ApiProperty({ description: '套餐名称' })
@@ -126,7 +168,28 @@ export class CreatePackageDto {
   @Type(() => Number)
   groupPrice?: number;
 
-  @ApiProperty({ description: '关联商品ID列表', type: [Number], required: false })
+  @ApiProperty({ description: '关联商品列表（含数量）', type: [ProductItemDto], required: false })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductItemDto)
+  products?: ProductItemDto[];
+
+  @ApiProperty({ description: '关联服务项目ID列表', type: [Number], required: false })
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  @Type(() => Number)
+  serviceIds?: number[];
+
+  @ApiProperty({ description: '关联服务项目列表（含数量）', type: [ServiceItemDto], required: false })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ServiceItemDto)
+  services?: ServiceItemDto[];
+
+  @ApiProperty({ description: '关联商品ID列表（兼容旧版）', type: [Number], required: false })
   @IsOptional()
   @IsArray()
   @IsInt({ each: true })

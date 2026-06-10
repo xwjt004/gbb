@@ -7,7 +7,7 @@ interface PackageInfo {
   price: number;
   depositAmount: number;
   duration_minutes: number;
-  image: string;
+  coverImage: string;
 }
 
 interface TimeSlotInfo {

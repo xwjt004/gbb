@@ -42,7 +42,7 @@
       <view class="package-image">
         <image 
           src="{{item.coverImage || '/images/placeholder.png'}}" 
-          mode="aspectFit"
+          mode="widthFix"
           lazy-load
         />
         <!-- 热门标签 -->

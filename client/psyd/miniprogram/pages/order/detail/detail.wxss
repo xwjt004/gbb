@@ -437,3 +437,9 @@
   background: linear-gradient(135deg, #ff5722, #ff9800);
   color: #fff;
 }
+
+.delete-btn {
+  background: #fff;
+  color: #999;
+  border: 1rpx solid #ddd;
+}

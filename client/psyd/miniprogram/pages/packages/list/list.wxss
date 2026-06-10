@@ -132,18 +132,15 @@
 /* ===== 图片区域 ===== */
 .package-image {
   width: 100%;
-  height: 380rpx;
   position: relative;
   background: #F5F0F2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   overflow: hidden;
+  max-height: 600rpx;
 }
 
 .package-image image {
   width: 100%;
-  height: 100%;
+  display: block;
 }
 
 /* 图片底部渐变过渡 */

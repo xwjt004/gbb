@@ -17,9 +17,23 @@ export interface PackageProductItem {
   product: {
     id: number;
     name: string;
+    productNo?: string;
     specification?: string;
     unit: string;
     salePrice: number;
+    images?: any;
+  };
+}
+
+export interface PackageServiceItem {
+  id: number;
+  serviceId: number;
+  quantity: number;
+  service: {
+    id: number;
+    name: string;
+    category: string;
+    basePrice: number;
     images?: any;
   };
 }
@@ -43,6 +57,7 @@ export interface Package extends BaseEntity {
   packageCategory?: PackageCategory; // 分类详情（从后端返回）
   maxBookings: number; // 最大预订数量
   packageProducts?: PackageProductItem[];
+  packageServices?: PackageServiceItem[];
 }
 
 export interface PackageSearchParams {

@@ -36,6 +36,7 @@ import { useAppSelector, useAppDispatch } from '@/store';
 import { fetchOrders, fetchOrderStats, updateOrderStatus, setSearchParams, setPagination } from '@/store/orderSlice';
 import OrderDetail from './OrderDetail';
 import OrderForm from './OrderForm';
+import PageContainer from '@/components/PageContainer';
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -556,7 +557,7 @@ const OrderList: React.FC = () => {
   };
 
   return (
-    <div>
+    <PageContainer>
       {/* 统计卡片 */}
       <Row gutter={16} style={{ marginBottom: 16 }}>
         <Col span={6}>
@@ -797,7 +798,7 @@ const OrderList: React.FC = () => {
           dispatch(fetchOrders({ pagination: stablePagination, searchParams: stableSearchParams }));
         }}
       />
-    </div>
+    </PageContainer>
   );
 };
 

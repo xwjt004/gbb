@@ -265,6 +265,7 @@ export class WxMallService {
                 description: true,
                 basePrice: true,
                 duration: true,
+                images: true,
               },
             },
           },

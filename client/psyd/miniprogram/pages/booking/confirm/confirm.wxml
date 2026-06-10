@@ -40,6 +40,11 @@
   <!-- 内容区域 -->
   <view class="content" wx:if="{{bookingData}}">
 
+    <!-- 套系封面图 -->
+    <view wx:if="{{packageCoverImage}}" class="package-cover">
+      <image src="{{packageCoverImage}}" mode="aspectFill" class="cover-image" />
+    </view>
+
     <!-- 预约信息卡片 -->
     <view class="info-card">
       <view class="card-header">
@@ -106,6 +111,21 @@
       <view class="price-item total">
         <text class="price-label">应付金额</text>
         <text class="price-amount highlight">¥{{payAmount}}</text>
+      </view>
+    </view>
+
+    <!-- 套系内容（商品和服务） -->
+    <view wx:if="{{packageItems.length > 0}}" class="info-card">
+      <view class="card-header">
+        <text class="header-icon">🎁</text>
+        <text class="header-title">套餐内容</text>
+      </view>
+      <view wx:for="{{packageItems}}" wx:key="index" class="package-item">
+        <image class="item-thumb" src="{{item.image}}" mode="aspectFill" />
+        <view class="item-detail">
+          <text class="item-name">{{item.name}}</text>
+          <text wx:if="{{item.quantity > 1}}" class="item-qty">×{{item.quantity}}</text>
+        </view>
       </view>
     </view>
 

@@ -15,9 +15,9 @@ interface PackageInfo {
   id: number;
   name: string;
   price: number;
-  deposit: number;
-  duration: number;
-  image: string;
+  depositAmount: number;
+  duration_minutes: number;
+  coverImage: string;
 }
 
 interface PageData {

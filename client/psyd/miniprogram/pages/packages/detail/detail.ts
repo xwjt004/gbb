@@ -35,6 +35,19 @@ interface PackageProductItem {
   };
 }
 
+interface PackageServiceItem {
+  id: number;
+  quantity: number;
+  service: {
+    id: number;
+    name: string;
+    description?: string;
+    basePrice: number;
+    images?: any;
+    duration?: number;
+  };
+}
+
 interface PackageDetail {
   id: number;
   name: string;
@@ -52,6 +65,7 @@ interface PackageDetail {
   tags: string[];
   includes: string[];
   packageProducts?: PackageProductItem[];
+  packageServices?: PackageServiceItem[];
 }
 
 Page({
@@ -62,9 +76,6 @@ Page({
 
     // 轮播图
     currentImageIndex: 0,
-
-    // 服务内容展开状态
-    servicesExpanded: false,
 
     // 收藏状态
     isFavorited: false,
@@ -105,11 +116,41 @@ Page({
         images: (res.images || []).map(img => getFullImageUrl(img)),
         includes: res.includes || [],
         tags: res.tags || [],
+
+        // 商品项目：预处理缩略图、合计金额
+        packageProducts: (res.packageProducts || []).map((item: PackageProductItem) => {
+          const img = item.product?.images;
+          return {
+            ...item,
+            _thumb: getFullImageUrl(Array.isArray(img) ? img[0] : (typeof img === 'string' ? img : '')),
+            _total: (item.product?.salePrice || 0) * (item.quantity || 1),
+          };
+        }),
+
+        // 服务项目：预处理缩略图、合计金额
+        packageServices: (res.packageServices || []).map((item: PackageServiceItem) => {
+          const img = item.service?.images;
+          return {
+            ...item,
+            _thumb: getFullImageUrl(Array.isArray(img) ? img[0] : (typeof img === 'string' ? img : '')),
+            _total: (item.service?.basePrice || 0) * (item.quantity || 1),
+          };
+        }),
+
+        // 当没有结构化服务数据时，将 includes 文本转为卡片格式显示
+        _fallbackServices: (res.includes || []).map((text: string, idx: number) => ({
+          id: `fallback-${idx}`,
+          _name: text,
+          _quantity: 1,
+          _price: null as number | null,
+          _total: null as number | null,
+          _thumb: '',
+        })),
       };
-      
+
       console.log('📦 处理后的套系数据:', packageData);
-      
-      this.setData({ 
+
+      this.setData({
         package: packageData
       });
 
@@ -163,15 +204,6 @@ Page({
     wx.previewImage({
       urls: images,
       current: images[this.data.currentImageIndex]
-    });
-  },
-
-  /**
-   * 切换服务内容展开状态
-   */
-  toggleServices() {
-    this.setData({
-      servicesExpanded: !this.data.servicesExpanded
     });
   },
 

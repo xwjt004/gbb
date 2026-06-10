@@ -185,6 +185,9 @@
       <button wx:if="{{canPay}}" class="action-btn primary-btn" bindtap="onPayOrder">
         立即支付
       </button>
+      <button wx:if="{{canDelete}}" class="action-btn delete-btn" bindtap="onDeleteOrder">
+        删除订单
+      </button>
     </view>
   </view>
 </view>

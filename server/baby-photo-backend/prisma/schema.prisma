@@ -519,6 +519,7 @@ model PackageService {
   isIncluded  Boolean     @default(true) @map("is_included")
   isOptional  Boolean     @default(false) @map("is_optional")
   extraCharge Decimal?    @map("extra_charge") @db.Decimal(10, 2)
+  quantity    Int         @default(1)
   sortOrder   Int         @default(0) @map("sort_order")
   createdAt   DateTime    @default(now()) @map("created_at")
   package     Package     @relation(fields: [packageId], references: [id], onDelete: Cascade)
