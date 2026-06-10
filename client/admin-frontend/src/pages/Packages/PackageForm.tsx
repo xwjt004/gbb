@@ -18,6 +18,8 @@ import {
   Image,
 } from 'antd';
 import { PlusOutlined, ThunderboltOutlined, TeamOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Resizable } from 'react-resizable';
+import 'react-resizable/css/styles.css';
 import type { UploadFile } from 'antd/es/upload/interface';
 import { Package } from '@/types/package';
 import { Status } from '@/types/common';
@@ -30,6 +32,31 @@ import api from '@/services/api';
 
 const { TextArea } = Input;
 const { Option } = Select;
+
+// 可拖拽调整宽度的表格列头
+const ResizableTitle = (props: Record<string, any>) => {
+  const { onResize, width, ...restProps } = props;
+  if (!width) return <th {...restProps} />;
+  const ResizableAny = Resizable as any;
+  return (
+    <ResizableAny
+      width={width}
+      height={0}
+      handle={
+        <span
+          className="react-resizable-handle"
+          onClick={(e: React.MouseEvent) => e.stopPropagation()}
+        />
+      }
+      onResize={onResize}
+      draggableOpts={{ enableUserSelectHack: false }}
+      axis="x"
+      minConstraints={[60, 0]}
+    >
+      <th {...restProps} />
+    </ResizableAny>
+  );
+};
 
 interface PackageFormProps {
   visible?: boolean; // undefined -> page mode, true -> modal mode
@@ -77,6 +104,27 @@ const PackageForm: React.FC<PackageFormProps> = ({
   const [customProductRows, setCustomProductRows] = useState<CustomProductRow[]>([]);
   // 已选的服务行（可编辑）
   const [serviceRows, setServiceRows] = useState<CustomServiceRow[]>([]);
+
+  // 表格列宽状态（可拖拽调整）
+  const [productColWidths, setProductColWidths] = useState<Record<string, number>>({});
+  const [serviceColWidths, setServiceColWidths] = useState<Record<string, number>>({});
+
+  // 创建可拖拽列头的 Table components 配置
+  const resizableComponents = {
+    header: {
+      cell: ResizableTitle,
+    },
+  };
+
+  // 生成列宽调整 handler
+  const genResizeHandler = (
+    setter: React.Dispatch<React.SetStateAction<Record<string, number>>>,
+    colKey: string,
+  ) => {
+    return (_: React.SyntheticEvent, { size }: { size: { width: number } }) => {
+      setter(prev => ({ ...prev, [colKey]: size.width }));
+    };
+  };
 
   // 加载分类列表
   useEffect(() => {
@@ -318,14 +366,22 @@ const PackageForm: React.FC<PackageFormProps> = ({
       title: '商品编号',
       dataIndex: 'productNo',
       key: 'productNo',
-      width: 130,
+      width: productColWidths.productNo || 140,
+      onHeaderCell: () => ({
+        width: productColWidths.productNo || 140,
+        onResize: genResizeHandler(setProductColWidths, 'productNo'),
+      }),
       render: (no: string) => <span style={{ color: '#666', fontSize: 12 }}>{no || '-'}</span>,
     },
     {
       title: '商品图片',
       dataIndex: 'imageUrl',
       key: 'imageUrl',
-      width: 80,
+      width: productColWidths.imageUrl || 90,
+      onHeaderCell: () => ({
+        width: productColWidths.imageUrl || 90,
+        onResize: genResizeHandler(setProductColWidths, 'imageUrl'),
+      }),
       render: (url: string) => url
         ? <Image src={url} style={{ width: 48, height: 48, borderRadius: 4, objectFit: 'cover' }} fallback="data:image/png;base64,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" />
         : <span style={{ color: '#ccc' }}>无</span>,
@@ -339,7 +395,11 @@ const PackageForm: React.FC<PackageFormProps> = ({
     {
       title: '选择商品',
       key: 'selectProduct',
-      width: 200,
+      width: productColWidths.selectProduct || 220,
+      onHeaderCell: () => ({
+        width: productColWidths.selectProduct || 220,
+        onResize: genResizeHandler(setProductColWidths, 'selectProduct'),
+      }),
       render: (_: any, record: CustomProductRow) => {
         // 同一行不排除自身，排除其他行已选商品
         const selectedIds = customProductRows
@@ -380,7 +440,11 @@ const PackageForm: React.FC<PackageFormProps> = ({
       title: '数量',
       dataIndex: 'quantity',
       key: 'quantity',
-      width: 120,
+      width: productColWidths.quantity || 100,
+      onHeaderCell: () => ({
+        width: productColWidths.quantity || 100,
+        onResize: genResizeHandler(setProductColWidths, 'quantity'),
+      }),
       render: (qty: number, record: CustomProductRow) => (
         <InputNumber
           min={1}
@@ -395,7 +459,11 @@ const PackageForm: React.FC<PackageFormProps> = ({
       title: '销售价',
       dataIndex: 'salePrice',
       key: 'salePrice',
-      width: 100,
+      width: productColWidths.salePrice || 100,
+      onHeaderCell: () => ({
+        width: productColWidths.salePrice || 100,
+        onResize: genResizeHandler(setProductColWidths, 'salePrice'),
+      }),
       render: (price: number) => (
         <span>¥{Number(price || 0).toFixed(2)}</span>
       ),
@@ -403,7 +471,11 @@ const PackageForm: React.FC<PackageFormProps> = ({
     {
       title: '合计',
       key: 'totalPrice',
-      width: 120,
+      width: productColWidths.totalPrice || 120,
+      onHeaderCell: () => ({
+        width: productColWidths.totalPrice || 120,
+        onResize: genResizeHandler(setProductColWidths, 'totalPrice'),
+      }),
       render: (_: any, record: CustomProductRow) => {
         const total = (Number(record.salePrice) || 0) * (record.quantity || 0);
         return <span style={{ fontWeight: 500, color: '#cf1322' }}>¥{total.toFixed(2)}</span>;
@@ -412,7 +484,11 @@ const PackageForm: React.FC<PackageFormProps> = ({
     {
       title: '操作',
       key: 'action',
-      width: 60,
+      width: productColWidths.action || 60,
+      onHeaderCell: () => ({
+        width: productColWidths.action || 60,
+        onResize: genResizeHandler(setProductColWidths, 'action'),
+      }),
       render: (_: any, record: CustomProductRow) => (
         <Button
           type="text"
@@ -430,14 +506,22 @@ const PackageForm: React.FC<PackageFormProps> = ({
       title: '服务编号',
       dataIndex: 'serviceNo',
       key: 'serviceNo',
-      width: 130,
+      width: serviceColWidths.serviceNo || 140,
+      onHeaderCell: () => ({
+        width: serviceColWidths.serviceNo || 140,
+        onResize: genResizeHandler(setServiceColWidths, 'serviceNo'),
+      }),
       render: (no: string) => <span style={{ color: '#666', fontSize: 12 }}>{no || '-'}</span>,
     },
     {
       title: '服务图片',
       dataIndex: 'imageUrl',
       key: 'imageUrl',
-      width: 80,
+      width: serviceColWidths.imageUrl || 90,
+      onHeaderCell: () => ({
+        width: serviceColWidths.imageUrl || 90,
+        onResize: genResizeHandler(setServiceColWidths, 'imageUrl'),
+      }),
       render: (url: string) => url
         ? <Image src={url} style={{ width: 48, height: 48, borderRadius: 4, objectFit: 'cover' }} fallback="data:image/png;base64,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" />
         : <span style={{ color: '#ccc' }}>无</span>,
@@ -446,12 +530,21 @@ const PackageForm: React.FC<PackageFormProps> = ({
       title: '服务名称',
       dataIndex: 'serviceName',
       key: 'serviceName',
+      width: serviceColWidths.serviceName || 150,
+      onHeaderCell: () => ({
+        width: serviceColWidths.serviceName || 150,
+        onResize: genResizeHandler(setServiceColWidths, 'serviceName'),
+      }),
       render: (name: string) => <span>{name || <span style={{ color: '#ccc' }}>未选择</span>}</span>,
     },
     {
       title: '选择服务',
       key: 'selectService',
-      width: 200,
+      width: serviceColWidths.selectService || 220,
+      onHeaderCell: () => ({
+        width: serviceColWidths.selectService || 220,
+        onResize: genResizeHandler(setServiceColWidths, 'selectService'),
+      }),
       render: (_: any, record: CustomServiceRow) => {
         const selectedIds = serviceRows
           .filter(r => r.tempId !== record.tempId && r.serviceId)
@@ -491,7 +584,11 @@ const PackageForm: React.FC<PackageFormProps> = ({
       title: '数量',
       dataIndex: 'quantity',
       key: 'quantity',
-      width: 120,
+      width: serviceColWidths.quantity || 100,
+      onHeaderCell: () => ({
+        width: serviceColWidths.quantity || 100,
+        onResize: genResizeHandler(setServiceColWidths, 'quantity'),
+      }),
       render: (qty: number, record: CustomServiceRow) => (
         <InputNumber
           min={1}
@@ -506,7 +603,11 @@ const PackageForm: React.FC<PackageFormProps> = ({
       title: '销售价',
       dataIndex: 'salePrice',
       key: 'salePrice',
-      width: 100,
+      width: serviceColWidths.salePrice || 100,
+      onHeaderCell: () => ({
+        width: serviceColWidths.salePrice || 100,
+        onResize: genResizeHandler(setServiceColWidths, 'salePrice'),
+      }),
       render: (price: number) => (
         <span>¥{Number(price || 0).toFixed(2)}</span>
       ),
@@ -514,7 +615,11 @@ const PackageForm: React.FC<PackageFormProps> = ({
     {
       title: '合计',
       key: 'totalPrice',
-      width: 120,
+      width: serviceColWidths.totalPrice || 120,
+      onHeaderCell: () => ({
+        width: serviceColWidths.totalPrice || 120,
+        onResize: genResizeHandler(setServiceColWidths, 'totalPrice'),
+      }),
       render: (_: any, record: CustomServiceRow) => {
         const total = (Number(record.salePrice) || 0) * (record.quantity || 0);
         return <span style={{ fontWeight: 500, color: '#cf1322' }}>¥{total.toFixed(2)}</span>;
@@ -523,7 +628,11 @@ const PackageForm: React.FC<PackageFormProps> = ({
     {
       title: '操作',
       key: 'action',
-      width: 60,
+      width: serviceColWidths.action || 60,
+      onHeaderCell: () => ({
+        width: serviceColWidths.action || 60,
+        onResize: genResizeHandler(setServiceColWidths, 'action'),
+      }),
       render: (_: any, record: CustomServiceRow) => (
         <Button
           type="text"
@@ -624,6 +733,8 @@ const PackageForm: React.FC<PackageFormProps> = ({
             pagination={false}
             size="small"
             bordered
+            components={resizableComponents}
+            scroll={{ x: 'max-content' }}
           />
         ) : (
           <span style={{ color: '#999', fontSize: 13 }}>尚未添加服务项目，点击上方按钮添加</span>
@@ -645,6 +756,8 @@ const PackageForm: React.FC<PackageFormProps> = ({
             pagination={false}
             size="small"
             bordered
+            components={resizableComponents}
+            scroll={{ x: 'max-content' }}
           />
         ) : (
           <span style={{ color: '#999', fontSize: 13 }}>尚未添加商品项目，点击上方按钮添加</span>
@@ -755,7 +868,7 @@ const PackageForm: React.FC<PackageFormProps> = ({
   const isPage = !visible;
   if (isPage) {
     return (
-      <div>
+      <div style={{ maxWidth: 1400, margin: '0 auto' }}>
         <h2 style={{ marginBottom: 16 }}>{pkg ? '编辑套餐' : '新增套餐'}</h2>
         <div>{formContent}</div>
         <div style={{ marginTop: 16, textAlign: 'right' }}>
@@ -774,7 +887,7 @@ const PackageForm: React.FC<PackageFormProps> = ({
       onOk={handleSubmit}
       confirmLoading={loading}
       destroyOnHidden
-      width={800}
+      width={1200}
       styles={{ body: { maxHeight: '65vh', overflowY: 'auto' } }}
     >
       {formContent}
