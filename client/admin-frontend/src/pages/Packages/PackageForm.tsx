@@ -868,7 +868,7 @@ const PackageForm: React.FC<PackageFormProps> = ({
   const isPage = !visible;
   if (isPage) {
     return (
-      <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto', resize: 'both', overflow: 'auto', minWidth: 800, minHeight: 400, padding: 4, border: '1px dashed #d9d9d9', borderRadius: 4 }}>
         <h2 style={{ marginBottom: 16 }}>{pkg ? '编辑套餐' : '新增套餐'}</h2>
         <div>{formContent}</div>
         <div style={{ marginTop: 16, textAlign: 'right' }}>
@@ -888,7 +888,7 @@ const PackageForm: React.FC<PackageFormProps> = ({
       confirmLoading={loading}
       destroyOnHidden
       width={1200}
-      styles={{ body: { maxHeight: '65vh', overflowY: 'auto' } }}
+      styles={{ body: { maxHeight: '65vh', overflow: 'auto', resize: 'both', minWidth: 600, minHeight: 300 } }}
     >
       {formContent}
     </Modal>
