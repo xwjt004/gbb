@@ -75,6 +75,12 @@ backups/
 # Server build artifacts
 server/baby-photo-backend/dist/
 
+# Large backup/build archives (exceed GitHub 100MB limit)
+backup/
+www-dist/
+server/baby-photo-backend/*.tar.gz
+client/ps-frontend/dist.tar.gz
+
 # SSL certificates (generated per-server)
 ssl/*.pem
 ssl/*.key
