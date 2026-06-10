@@ -227,6 +227,15 @@
   background: #f0f0f0;
 }
 
+.thumb-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 36rpx;
+  background: linear-gradient(135deg, #e8f4ff 0%, #d4edff 100%);
+  color: #1989fa;
+}
+
 .item-info {
   flex: 1;
   min-width: 0;

@@ -106,7 +106,7 @@
 
       <view class="item-list">
         <view wx:for="{{package._fallbackServices}}" wx:key="id" class="item-row">
-          <image class="item-thumb" src="/images/placeholder.png" mode="aspectFill" />
+          <view class="item-thumb thumb-placeholder">📷</view>
           <view class="item-info">
             <text class="item-name">{{item._name}}</text>
           </view>
