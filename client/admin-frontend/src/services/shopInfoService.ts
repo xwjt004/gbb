@@ -30,6 +30,7 @@ export interface ShopInfo {
   xiaohongshuId?: string;
   businessHours?: string;
   description?: string;
+  storefrontMarquee?: string;
   banners?: BannerItem[];
   bannerInterval?: number;
   createdAt: string;
@@ -50,6 +51,7 @@ export interface UpdateShopInfoDto {
   xiaohongshuId?: string;
   businessHours?: string;
   description?: string;
+  storefrontMarquee?: string;
   banners?: BannerItem[];
   bannerInterval?: number;
 }

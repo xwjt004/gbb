@@ -94,6 +94,91 @@ class ProductService {
   async batchUpdateStatus(data: BatchUpdateStatusDto): Promise<void> {
     await request.patch('/products/batch/status', data);
   }
+
+  /**
+   * 导出到Excel
+   */
+  async exportToExcel(params?: any) {
+    const response = await request.get('/products/export/excel', {
+      params,
+      responseType: 'blob',
+    });
+
+    const blob = new Blob([response.data.data || response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+
+    // 从 Content-Disposition 解析文件名
+    const disposition = response.headers?.['content-disposition'];
+    let filename = `商品数据_${new Date().getTime()}.xlsx`;
+    if (disposition) {
+      const match = disposition.match(/filename\*?=(?:UTF-8'')?([^;\n]+)/i);
+      if (match) {
+        filename = decodeURIComponent(match[1]);
+      }
+    }
+
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
+  /**
+   * 导出到CSV
+   */
+  async exportToCSV(params?: any) {
+    const response = await request.get('/products/export/csv', {
+      params,
+      responseType: 'blob',
+    });
+
+    const blob = new Blob([response.data.data || response.data], {
+      type: 'text/csv; charset=utf-8',
+    });
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+
+    const disposition = response.headers?.['content-disposition'];
+    let filename = `商品数据_${new Date().getTime()}.csv`;
+    if (disposition) {
+      const match = disposition.match(/filename\*?=(?:UTF-8'')?([^;\n]+)/i);
+      if (match) {
+        filename = decodeURIComponent(match[1]);
+      }
+    }
+
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
+  /**
+   * 导出到JSON
+   */
+  async exportToJSON(params?: any) {
+    const response = await request.get('/products/export/json', { params });
+    const jsonString = JSON.stringify(response.data, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `商品数据_${new Date().getTime()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
 }
 
 export default new ProductService();

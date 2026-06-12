@@ -121,6 +121,7 @@ export class WxMallService {
       stock: product.stockQuantity,
       salesCount: (product.baseSales || 0) + (product.salesVolume || 0), // 展示销量 = 基础销量 + 实际销量
       thumbnail: ((product.images as string[])?.[0]) || '',
+      coverImage: ((product.images as string[])?.[0]) || '',
     }));
 
     // 获取统计信息
@@ -134,6 +135,8 @@ export class WxMallService {
     const safePackages = hotPackages.map(pkg => ({
       ...pkg,
       images: (pkg.images as string[]) || [],
+      coverImage: ((pkg.images as string[])?.[0]) || '',
+      currentPrice: pkg.price,
     }));
 
     // 从店铺信息获取轮播图配置
@@ -221,6 +224,8 @@ export class WxMallService {
       images: (item.images as string[]) || [],
       tags: (item.tags as string[]) || [],
       detailImages: (item.detailImages as string[]) || [],
+      coverImage: ((item.images as string[])?.[0]) || '',
+      currentPrice: item.price,
     }));
 
     return {
@@ -231,6 +236,7 @@ export class WxMallService {
         limit,
         totalPages: Math.ceil(total / limit),
       },
+      data: safeItems,
     };
   }
 
@@ -281,8 +287,25 @@ export class WxMallService {
       throw new BadRequestException('该套系已下架');
     }
 
+    // 分离服务和商品名称数组
+    const serviceItems: string[] = [];
+    if (packageData.packageServices) {
+      for (const ps of packageData.packageServices) {
+        if (ps.service?.name) serviceItems.push(ps.service.name);
+      }
+    }
+    const productItems: string[] = [];
+    if (packageData.packageProducts) {
+      for (const pp of packageData.packageProducts) {
+        if (pp.product?.name) productItems.push(pp.product.name);
+      }
+    }
+
     return {
       ...packageData,
+      currentPrice: packageData.price,            // 全价，供前端展示
+      serviceItems,                                // 服务名称列表
+      productItems,                                // 商品名称列表
       includes: (packageData.includes as string[]) || [],
       images: (packageData.images as string[]) || [],
       tags: (packageData.tags as string[]) || [],
@@ -345,6 +368,10 @@ export class WxMallService {
           salesVolume: true,
           baseSales: true,
           createdAt: true,
+          categoryId: true,
+          category: {
+            select: { name: true },
+          },
         },
       }),
       this.prisma.product.count({ where }),
@@ -357,6 +384,8 @@ export class WxMallService {
       stock: item.stockQuantity,
       salesCount: (item.baseSales || 0) + (item.salesVolume || 0), // 展示销量 = 基础销量 + 实际销量
       thumbnail: ((item.images as string[])?.[0]) || '',
+      coverImage: ((item.images as string[])?.[0]) || '',
+      categoryName: (item as any).category?.name || '',
     }));
 
     return {
@@ -365,6 +394,7 @@ export class WxMallService {
       page,
       limit,
       totalPages: Math.ceil(total / limit),
+      data: formattedItems,
     };
   }
 
@@ -399,6 +429,7 @@ export class WxMallService {
       stock: product.stockQuantity, // 前端期望 stock 字段
       salesCount: (product.baseSales || 0) + (product.salesVolume || 0), // 展示销量 = 基础销量 + 实际销量
       thumbnail: ((product.images as string[])?.[0]) || '', // 第一张图片作为缩略图
+      categoryName: (product as any).category?.name || '',
     };
   }
 

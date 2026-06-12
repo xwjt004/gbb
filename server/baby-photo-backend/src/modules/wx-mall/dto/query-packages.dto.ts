@@ -29,7 +29,7 @@ export class QueryPackagesDto {
   @IsInt()
   @Min(1)
   @Type(() => Number)
-  limit?: number = 10;
+  limit?: number = 200;
 
   @IsOptional()
   @IsString()

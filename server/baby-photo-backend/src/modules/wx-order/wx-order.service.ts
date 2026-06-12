@@ -194,10 +194,10 @@ export class WxOrderService {
   async getMyOrders(wxUserId: string, dto: QueryMyOrdersDto) {
     const { orderStatus, paymentStatus, page = 1, limit = 10 } = dto;
 
-    // 获取 WxUser 的 linkedUserId，预约创建的订单只有 userId 没有 wxUserId
+    // 获取 WxUser 的 linkedUserId 和 phone，预约创建的订单只有 userId 没有 wxUserId
     const wxUser = await this.prisma.wxUser.findUnique({
       where: { id: wxUserId },
-      select: { linkedUserId: true },
+      select: { linkedUserId: true, phone: true },
     });
 
     const where: Prisma.OrderWhereInput = {
@@ -211,7 +211,12 @@ export class WxOrderService {
         { userId: wxUser.linkedUserId },
       ];
     } else {
-      where.wxUserId = wxUserId;
+      where.OR = [{ wxUserId }];
+    }
+
+    // 兜底：用手机号匹配管理后台创建的订单
+    if (wxUser?.phone) {
+      where.OR.push({ customerPhone: wxUser.phone });
     }
 
     if (orderStatus) {
@@ -271,10 +276,10 @@ export class WxOrderService {
   async getOrderDetail(wxUserId: string, orderId: string) {
     const wxUser = await this.prisma.wxUser.findUnique({
       where: { id: wxUserId },
-      select: { linkedUserId: true },
+      select: { linkedUserId: true, phone: true },
     });
 
-    const order = await this.prisma.order.findFirst({
+    let order = await this.prisma.order.findFirst({
       where: {
         id: orderId,
         deletedAt: null,
@@ -309,6 +314,42 @@ export class WxOrderService {
         },
       },
     });
+
+    // 兜底：如果按用户关联查不到，尝试用手机号匹配（适用于管理后台创建的订单）
+    if (!order && wxUser?.phone) {
+      order = await this.prisma.order.findFirst({
+        where: {
+          id: orderId,
+          deletedAt: null,
+          customerPhone: wxUser.phone,
+        },
+        include: {
+          items: {
+            include: {
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  images: true,
+                  specification: true,
+                },
+              },
+              package: {
+                select: {
+                  id: true,
+                  name: true,
+                  images: true,
+                },
+              },
+            },
+          },
+          timeSlot: true,
+          payments: {
+            orderBy: { createdAt: 'desc' },
+          },
+        },
+      });
+    }
 
     if (!order) {
       throw new NotFoundException('订单不存在');

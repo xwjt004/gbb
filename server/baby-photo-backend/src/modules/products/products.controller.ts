@@ -8,8 +8,10 @@ import {
   Delete,
   Query,
   ParseIntPipe,
+  Res,
   Logger,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -97,5 +99,23 @@ export class ProductsController {
   remove(@Param('id', ParseIntPipe) id: number) {
     this.logger.log(`删除商品: ID=${id}`);
     return this.productsService.remove(id);
+  }
+
+  @Get('export/excel')
+  @ApiOperation({ summary: '导出商品到Excel' })
+  async exportToExcel(@Query() searchDto: QueryProductDto, @Res() res: Response) {
+    return this.productsService.exportToExcel(searchDto, res);
+  }
+
+  @Get('export/csv')
+  @ApiOperation({ summary: '导出商品到CSV' })
+  async exportToCSV(@Query() searchDto: QueryProductDto, @Res() res: Response) {
+    return this.productsService.exportToCSV(searchDto, res);
+  }
+
+  @Get('export/json')
+  @ApiOperation({ summary: '导出商品到JSON' })
+  async exportToJSON(@Query() searchDto: QueryProductDto) {
+    return this.productsService.exportToJSON(searchDto);
   }
 }

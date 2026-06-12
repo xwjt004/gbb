@@ -1,4 +1,4 @@
-import { wxLogin, phoneLogin as phoneAuthLogin, getAccessToken, getUserInfo, saveAuthData } from '../../utils/auth';
+import { wxLogin, getAccessToken, getUserInfo, saveAuthData } from '../../utils/auth';
 import { getImageUrl } from '../../utils/image';
 
 Page({
@@ -6,16 +6,6 @@ Page({
     loading: false,
     error: '',
     redirectUrl: '',
-    // 登录方式: 'wechat' | 'phone'
-    loginMode: 'wechat' as 'wechat' | 'phone',
-    // 手机号登录表单
-    phone: '',
-    smsCode: '',
-    sendingCode: false,
-    codeSent: false,
-    countdown: 0,
-    codeBtnDisabled: false,
-    codeBtnClass: '',
     // 完善资料弹窗
     showCompleteProfile: false,
     // 微信头像临时路径（chooseAvatar 返回）
@@ -24,6 +14,8 @@ Page({
     nickname: '',
     // 手机号是否已绑定
     phoneBound: false,
+    // 是否同意隐私政策
+    agreed: false,
   },
 
   onLoad(options: any) {
@@ -36,96 +28,13 @@ Page({
     }
   },
 
-  /** 切换登录方式 */
-  switchMode() {
-    this.setData({
-      loginMode: this.data.loginMode === 'wechat' ? 'phone' : 'wechat',
-      error: '',
-    });
-  },
-
-  /** 手机号输入 */
-  onPhoneInput(e: any) {
-    this.setData({ phone: e.detail.value });
-  },
-
-  /** 验证码输入 */
-  onCodeInput(e: any) {
-    this.setData({ smsCode: e.detail.value });
-  },
-
-  /** 发送验证码 */
-  async sendCode() {
-    const phone = this.data.phone;
-    if (!/^1[3-9]\d{9}$/.test(phone)) {
-      this.setData({ error: '请输入正确的手机号' });
-      return;
-    }
-
-    this.setData({ sendingCode: true, error: '' });
-    this.updateCodeBtnState();
-
-    try {
-      const res: any = await new Promise((resolve, reject) => {
-        wx.request({
-          url: `${getApp().globalData.apiBaseUrl}/auth/phone/send-code`,
-          method: 'POST',
-          header: { 'Content-Type': 'application/json' },
-          data: { phone },
-          timeout: 10000,
-          success: resolve,
-          fail: reject,
-        });
-      });
-
-      if (res.statusCode === 200 || res.statusCode === 201) {
-        // 发送成功
-      } else {
-        console.log('[LoginPage] 验证码接口暂不可用，测试验证码: 123456');
-      }
-
-      this.setData({ codeSent: true, sendingCode: false });
-      this.updateCodeBtnState();
-      wx.showToast({ title: '验证码已发送', icon: 'success' });
-
-      // 开始倒计时
-      this.startCountdown();
-    } catch (error) {
-      console.log('[LoginPage] 发送验证码网络错误，降级使用测试验证码: 123456');
-      this.setData({ codeSent: true, sendingCode: false });
-      this.updateCodeBtnState();
-      wx.showToast({ title: '验证码已发送', icon: 'success' });
-      this.startCountdown();
-    }
-  },
-
-  /** 更新验证码按钮状态 */
-  updateCodeBtnState() {
-    const disabled = this.data.sendingCode || (this.data.codeSent && this.data.countdown > 0);
-    this.setData({
-      codeBtnDisabled: disabled,
-      codeBtnClass: disabled ? 'code-btn-disabled' : '',
-    });
-  },
-
-  /** 倒计时 */
-  startCountdown() {
-    this.setData({ countdown: 60 });
-    this.updateCodeBtnState();
-    const timer = setInterval(() => {
-      if (this.data.countdown <= 1) {
-        clearInterval(timer);
-        this.setData({ countdown: 0, codeSent: false });
-      } else {
-        this.setData({ countdown: this.data.countdown - 1 });
-      }
-      this.updateCodeBtnState();
-    }, 1000);
-  },
-
   /** 微信登录 */
   async onLogin() {
     if (this.data.loading) return;
+    if (!this.data.agreed) {
+      wx.showToast({ title: '请先阅读并同意隐私政策', icon: 'none' });
+      return;
+    }
     this.setData({ loading: true, error: '' });
     wx.showLoading({ title: '登录中...' });
 
@@ -307,41 +216,6 @@ Page({
     this.redirectToTarget();
   },
 
-  /** 手机号登录 */
-  async onPhoneLogin() {
-    const { phone, smsCode } = this.data;
-
-    if (!/^1[3-9]\d{9}$/.test(phone)) {
-      this.setData({ error: '请输入正确的手机号' });
-      return;
-    }
-    if (!/^\d{6}$/.test(smsCode)) {
-      this.setData({ error: '请输入6位数字验证码' });
-      return;
-    }
-
-    if (this.data.loading) return;
-    this.setData({ loading: true, error: '' });
-    wx.showLoading({ title: '登录中...' });
-
-    try {
-      const result = await phoneAuthLogin(phone, smsCode);
-      const app = getApp<IAppOption>();
-      app.globalData.justLoggedIn = true;
-      app.globalData.loginTimestamp = Date.now();
-
-      wx.hideLoading();
-      this.setData({ loading: false });
-      this.redirectToTarget();
-    } catch (error: any) {
-      wx.hideLoading();
-      this.setData({
-        loading: false,
-        error: error.message || '登录失败，请重试',
-      });
-    }
-  },
-
   redirectToTarget() {
     let redirectUrl = this.data.redirectUrl;
     if (redirectUrl && !redirectUrl.startsWith('/')) {
@@ -391,4 +265,9 @@ Page({
   },
 
   preventMove() {},
+
+  /** 勾选/取消勾选隐私政策 */
+  onAgreementChange() {
+    this.setData({ agreed: !this.data.agreed });
+  },
 });

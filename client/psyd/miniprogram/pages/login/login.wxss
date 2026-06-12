@@ -181,12 +181,12 @@
   z-index: 1;
   background: #fff;
   border-radius: 36rpx;
-  padding: 48rpx 40rpx;
+  padding: 48rpx 40rpx 56rpx;
   box-shadow: 0 12rpx 48rpx rgba(255,154,158,0.12), 0 2rpx 8rpx rgba(0,0,0,0.04);
 }
 
 .card-header {
-  margin-bottom: 40rpx;
+  margin-bottom: 48rpx;
   text-align: center;
 }
 
@@ -206,71 +206,73 @@
   letter-spacing: 1rpx;
 }
 
-/* ===== 主按钮 ===== */
-.btn-primary {
+/* ===== 微信一键登录按钮 - 大号3D效果 ===== */
+.btn-wechat {
   width: 100%;
-  height: 96rpx;
-  background: linear-gradient(135deg, #07C160, #06AD56);
-  border-radius: 48rpx;
+  height: 120rpx;
+  background: linear-gradient(180deg, #07C160 0%, #06AD56 40%, #059B4C 100%);
+  border-radius: 60rpx;
   border: none;
   color: #fff;
-  font-size: 30rpx;
-  font-weight: 600;
+  font-size: 36rpx;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14rpx;
-  box-shadow: 0 8rpx 32rpx rgba(7,193,96,0.3);
-  transition: all 0.3s ease;
-  letter-spacing: 2rpx;
+  gap: 16rpx;
+  box-shadow:
+    0 8rpx 0 #047A3E,
+    0 12rpx 32rpx rgba(7,193,96,0.4),
+    inset 0 2rpx 4rpx rgba(255,255,255,0.3);
+  transition: all 0.1s ease;
+  letter-spacing: 4rpx;
+  position: relative;
+  text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.2);
 }
 
-.btn-primary:active {
-  opacity: 0.85;
-  transform: scale(0.98);
-  box-shadow: 0 4rpx 16rpx rgba(7,193,96,0.2);
+/* 顶部高光 */
+.btn-wechat::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 40%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 100%);
+  border-radius: 60rpx 60rpx 50% 50%;
+  pointer-events: none;
 }
 
-.btn-primary.btn-loading {
-  opacity: 0.6;
-  box-shadow: none;
-  transform: none;
+.btn-wechat:active {
+  transform: translateY(6rpx);
+  box-shadow:
+    0 2rpx 0 #047A3E,
+    0 10rpx 28rpx rgba(7,193,96,0.35);
 }
 
-.btn-primary::after {
+.btn-wechat.btn-loading {
+  opacity: 0.8;
+  transform: translateY(4rpx);
+  box-shadow:
+    0 4rpx 0 #047A3E,
+    0 6rpx 16rpx rgba(7,193,96,0.25);
+}
+
+.btn-wechat::after {
   border: none;
 }
 
-.btn-icon {
-  font-size: 32rpx;
+.btn-wechat-icon {
+  font-size: 44rpx;
+  line-height: 1;
 }
 
-/* ===== 次按钮 ===== */
-.btn-secondary {
-  width: 100%;
-  height: 88rpx;
-  border: 2rpx solid #F0E8EB;
-  border-radius: 44rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12rpx;
-  transition: all 0.2s ease;
-}
-
-.btn-secondary:active {
-  background: #FAF8F9;
-  border-color: #E0D5DA;
-}
-
-.btn-s-icon {
-  font-size: 28rpx;
-}
-
-.btn-s-text {
-  font-size: 26rpx;
-  color: #8A7A82;
-  font-weight: 500;
+.btn-wechat-text {
+  font-size: 36rpx;
+  font-weight: 700;
+  letter-spacing: 6rpx;
+  color: #FFFFFF;
+  text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.2);
 }
 
 /* ===== 错误提示 ===== */
@@ -287,124 +289,6 @@
   color: #FF6B6B;
   line-height: 1.5;
   text-align: center;
-}
-
-/* ===== 分隔线 ===== */
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
-  margin: 36rpx 0;
-}
-
-.divider-line {
-  flex: 1;
-  height: 1rpx;
-  background: linear-gradient(90deg, transparent, #EDE8EA, transparent);
-}
-
-.divider-text {
-  font-size: 24rpx;
-  color: #C8BCC2;
-  white-space: nowrap;
-}
-
-/* ===== 手机号输入 ===== */
-.phone-input-group {
-  display: flex;
-  align-items: center;
-  height: 96rpx;
-  background: #F8F6F7;
-  border-radius: 20rpx;
-  padding: 0 24rpx;
-  margin-bottom: 24rpx;
-  border: 2rpx solid transparent;
-  transition: border-color 0.2s;
-}
-
-.phone-input-group:focus-within {
-  border-color: #FF9A9E;
-  background: #FFF;
-}
-
-.input-prefix {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #3D2C33;
-  padding-right: 20rpx;
-  border-right: 2rpx solid #EDE8EA;
-  margin-right: 20rpx;
-  flex-shrink: 0;
-}
-
-.phone-input {
-  flex: 1;
-  height: 100%;
-  font-size: 28rpx;
-  color: #3D2C33;
-  background: transparent;
-}
-
-/* ===== 验证码输入 ===== */
-.code-input-group {
-  display: flex;
-  gap: 16rpx;
-  margin-bottom: 36rpx;
-}
-
-.code-input {
-  flex: 1;
-  height: 96rpx;
-  background: #F8F6F7;
-  border-radius: 20rpx;
-  padding: 0 24rpx;
-  font-size: 28rpx;
-  color: #3D2C33;
-  box-sizing: border-box;
-  border: 2rpx solid transparent;
-  transition: border-color 0.2s;
-}
-
-.code-input:focus {
-  border-color: #FF9A9E;
-  background: #FFF;
-}
-
-.code-btn {
-  flex-shrink: 0;
-  width: 200rpx;
-  height: 96rpx;
-  background: linear-gradient(135deg, #FF9A9E, #FBC2EB);
-  border-radius: 20rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24rpx;
-  color: #fff;
-  font-weight: 600;
-  border: none;
-  padding: 0;
-  margin: 0;
-  transition: all 0.2s;
-}
-
-.code-btn:active {
-  opacity: 0.85;
-  transform: scale(0.97);
-}
-
-.code-btn::after {
-  border: none;
-}
-
-.code-btn-disabled {
-  opacity: 0.5;
-  transform: none !important;
-}
-
-.input-ph {
-  font-size: 28rpx;
-  color: #C8BCC2;
 }
 
 /* ===== 跳过 ===== */
@@ -426,20 +310,91 @@
   color: #FF9A9E;
 }
 
-/* ===== 协议 ===== */
+/* ===== 协议区域（精致大号） ===== */
 .agreement {
-  text-align: center;
-  margin-top: 36rpx;
-  padding-bottom: 48rpx;
-  font-size: 22rpx;
-  color: #D5CDD1;
+  margin-top: 48rpx;
+  padding: 36rpx 28rpx;
   position: relative;
   z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6rpx 12rpx;
+  background: rgba(255,255,255,0.65);
+  border-radius: 28rpx;
+  backdrop-filter: blur(4rpx);
+}
+
+.agreement-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 18rpx 24rpx;
+  border-radius: 16rpx;
+  transition: background 0.2s;
+}
+
+.agreement-checkbox:active {
+  background: rgba(255,154,158,0.12);
+}
+
+.check-box {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 12rpx;
+  border: 3rpx solid #C5B5BD;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.25s ease;
+  background: rgba(255,255,255,0.95);
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
+}
+
+.check-box.checked {
+  background: linear-gradient(135deg, #07C160, #06AD56);
+  border-color: #07C160;
+  box-shadow: 0 4rpx 16rpx rgba(7,193,96,0.35);
+  transform: scale(1.05);
+}
+
+.check-mark {
+  font-size: 30rpx;
+  color: #fff;
+  font-weight: 700;
+}
+
+.agree-text {
+  font-size: 28rpx;
+  color: #6A5A62;
+  font-weight: 500;
+  letter-spacing: 1rpx;
 }
 
 .agreement-link {
-  color: #FF9A9E;
-  text-decoration: underline;
+  color: #D9363E;
+  font-weight: 600;
+  padding: 12rpx 8rpx;
+  font-size: 28rpx;
+  letter-spacing: 1rpx;
+  border-bottom: 2rpx solid rgba(217,54,62,0.25);
+  transition: all 0.2s;
+}
+
+.agreement-link:active {
+  color: #C62A32;
+  border-bottom-color: #C62A32;
+  background: rgba(217,54,62,0.06);
+  border-radius: 6rpx;
+}
+
+.agree-text-and {
+  font-size: 28rpx;
+  color: #A898A0;
+  font-weight: 400;
+  padding: 0 2rpx;
 }
 
 /* ===== 完善资料弹窗 ===== */

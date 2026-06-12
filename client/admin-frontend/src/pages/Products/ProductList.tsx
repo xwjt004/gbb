@@ -19,7 +19,9 @@ import {
   Descriptions,
   Badge,
   Image,
+  Dropdown,
 } from 'antd';
+import type { MenuProps } from 'antd';
 import {
   PlusOutlined,
   EditOutlined,
@@ -28,6 +30,8 @@ import {
   ReloadOutlined,
   StockOutlined,
   WarningOutlined,
+  ExportOutlined,
+  DownOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import ImageUpload from '@/components/ImageUpload';
@@ -68,6 +72,7 @@ const ProductList: React.FC = () => {
     outOfStock: 0,
   });
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [exportLoading, setExportLoading] = useState(false);
   const [form] = Form.useForm();
   const [stockForm] = Form.useForm();
   const isFirstRender = useRef(true);
@@ -509,6 +514,58 @@ const ProductList: React.FC = () => {
     },
   ];
 
+  // 导出功能
+  const handleExport = async (format: 'excel' | 'csv' | 'json') => {
+    try {
+      setExportLoading(true);
+
+      const exportParams: any = {};
+      if (searchText) exportParams.keyword = searchText;
+      if (categoryFilter) exportParams.categoryId = categoryFilter;
+      if (statusFilter !== undefined) exportParams.isActive = statusFilter;
+      if (stockFilter === 'low') exportParams.stockStatus = 'LOW';
+      else if (stockFilter === 'out') exportParams.stockStatus = 'OUT';
+
+      switch (format) {
+        case 'excel':
+          await productService.exportToExcel(exportParams);
+          message.success('Excel 文件导出成功');
+          break;
+        case 'csv':
+          await productService.exportToCSV(exportParams);
+          message.success('CSV 文件导出成功');
+          break;
+        case 'json':
+          await productService.exportToJSON(exportParams);
+          message.success('JSON 文件导出成功');
+          break;
+      }
+    } catch (error: any) {
+      message.error('导出失败: ' + (error.message || '未知错误'));
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  // 导出菜单配置
+  const exportMenuItems: MenuProps['items'] = [
+    {
+      key: 'excel',
+      label: '导出 Excel',
+      onClick: () => handleExport('excel'),
+    },
+    {
+      key: 'csv',
+      label: '导出 CSV',
+      onClick: () => handleExport('csv'),
+    },
+    {
+      key: 'json',
+      label: '导出 JSON',
+      onClick: () => handleExport('json'),
+    },
+  ];
+
   return (
     <div style={{ padding: '24px' }}>
       {/* 统计卡片 */}
@@ -651,6 +708,18 @@ const ProductList: React.FC = () => {
           >
             刷新
           </Button>
+          <Dropdown
+            menu={{ items: exportMenuItems }}
+            placement="bottomLeft"
+            arrow
+          >
+            <Button
+              loading={exportLoading}
+              icon={<ExportOutlined />}
+            >
+              导出数据 <DownOutlined />
+            </Button>
+          </Dropdown>
         </Space>
 
         {/* 批量操作 */}

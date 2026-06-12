@@ -90,6 +90,12 @@ export class UpdateShopInfoDto {
   @IsString()
   description?: string;
 
+  @ApiPropertyOptional({ description: '网页商城首页滚动字幕' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  storefrontMarquee?: string;
+
   @ApiPropertyOptional({ description: '轮播图列表（最多5张）', type: 'array', example: [{ image: '/uploads/banner1.jpg', title: '标题', link: '/pages/packages/list' }] })
   @IsOptional()
   banners?: any;

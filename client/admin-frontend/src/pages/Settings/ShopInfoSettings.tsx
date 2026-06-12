@@ -76,7 +76,11 @@ const ShopInfoSettings: React.FC = () => {
     try {
       setLoading(true);
       const data = await getShopInfo();
-      form.setFieldsValue(data);
+      form.setFieldsValue({
+        ...data,
+        latitude: data.latitude != null ? Number(data.latitude) : undefined,
+        longitude: data.longitude != null ? Number(data.longitude) : undefined,
+      });
       setShopPhoto(data.shopPhoto);
       setLocationMap(data.locationMap);
       setBanners(data.banners || []);
@@ -349,6 +353,15 @@ const ShopInfoSettings: React.FC = () => {
               placeholder="请输入店铺描述信息"
               rows={3}
               maxLength={1000}
+            />
+          </Form.Item>
+
+          <Form.Item label="网页商城滚动字幕" name="storefrontMarquee">
+            <TextArea
+              placeholder="商城首页顶部滚动显示的文字内容，留空则不显示"
+              rows={2}
+              maxLength={500}
+              showCount
             />
           </Form.Item>
 
