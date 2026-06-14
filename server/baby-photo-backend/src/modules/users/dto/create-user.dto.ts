@@ -1,4 +1,4 @@
-import { IsOptional, IsString, Length, Matches, IsUrl, IsEnum } from 'class-validator';
+import { IsOptional, IsString, Length, Matches, IsUrl, IsEnum, IsInt } from 'class-validator';
 
 export enum UserStatusEnum {
   ACTIVE = 'ACTIVE',
@@ -31,4 +31,8 @@ export class CreateUserDto {
   @IsOptional()
   @IsEnum(UserStatusEnum)
   status?: UserStatusEnum; // 前端通常不传, 默认 ACTIVE
+
+  @IsOptional()
+  @IsInt()
+  roleId?: number;
 }

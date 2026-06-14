@@ -7,9 +7,9 @@
       <text class="points-hero-value">{{points}}</text>
       <text class="points-hero-label">当前积分</text>
       <view class="points-hero-actions">
-        <view class="hero-action" bindtap="goToRules">
-          <text class="hero-action-icon">📖</text>
-          <text class="hero-action-text">积分规则</text>
+        <view class="hero-action" bindtap="contactService">
+          <text class="hero-action-icon">📞</text>
+          <text class="hero-action-text">联系客服</text>
         </view>
       </view>
     </view>
@@ -38,7 +38,7 @@
               <text>{{item.type === 'INCOME' ? '➕' : '➖'}}</text>
             </view>
             <view class="record-info">
-              <text class="record-remark">{{item.remark}}</text>
+              <text class="record-remark">{{item.remark || item.reason}}</text>
               <text class="record-time">{{item.createdAt}}</text>
             </view>
           </view>

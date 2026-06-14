@@ -33,6 +33,11 @@ export class QueryWxUserDto {
   @IsOptional()
   @Transform(({ value }) => value === '' ? undefined : value)
   @IsString()
+  openid?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => value === '' ? undefined : value)
+  @IsString()
   memberLevel?: string;
 
   @IsOptional()

@@ -1,10 +1,6 @@
 // 支付页面
 import { request } from '../../utils/request';
 
-// 生产模式：是否模拟支付（true = 模拟支付，false = 真实微信支付）
-// 上线前已确认关闭，使用真实微信支付
-const DEV_MODE_MOCK_PAYMENT = false;
-
 interface PaymentData {
   orderId: string;
   orderNo: string;
@@ -237,38 +233,7 @@ Page({
         paySign: payParams.paySign
       });
 
-      // 开发模式：模拟支付成功
-      if (DEV_MODE_MOCK_PAYMENT) {
-        console.log('[PaymentPage] 🎭 开发模式：模拟支付成功');
-        
-        // 显示模拟支付对话框
-        await new Promise<void>((resolve, reject) => {
-          wx.showModal({
-            title: '🎭 开发模式模拟支付',
-            content: `订单金额：¥${this.data.totalAmount}\n\n这是模拟支付，实际不会扣款。\n生产环境将使用真实微信支付。`,
-            confirmText: '支付成功',
-            cancelText: '支付失败',
-            success: (res) => {
-              if (res.confirm) {
-                resolve();
-              } else {
-                reject(new Error('用户取消支付'));
-              }
-            }
-          });
-        });
-
-        console.log('[PaymentPage] 模拟支付成功');
-        wx.hideLoading();
-
-        // 支付成功，跳转到结果页
-        wx.redirectTo({
-          url: `/pages/payment/result/result?status=success&orderId=${this.data.orderId}`
-        });
-        return;
-      }
-
-      // 真实微信支付（生产环境）
+      // 微信支付
       await wx.requestPayment({
         timeStamp: payParams.timeStamp || '',
         nonceStr: payParams.nonceStr || '',

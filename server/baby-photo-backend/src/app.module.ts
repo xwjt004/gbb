@@ -59,6 +59,7 @@ import { AutomationRulesModule } from './modules/automation-rules/automation-rul
 import { SmartMarketingModule } from './modules/smart-marketing/smart-marketing.module';
 import { WxUserModule } from './modules/wx-user/wx-user.module';
 import { WxFavoriteModule } from './modules/wx-favorite/wx-favorite.module';
+import { PhotoAlbumModule } from './modules/photo-albums/photo-album.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { OperationLogInterceptor } from './shared/interceptors/operation-log.interceptor';
 
@@ -158,6 +159,7 @@ import { OperationLogInterceptor } from './shared/interceptors/operation-log.int
     SmartMarketingModule,
     WxUserModule,
     WxFavoriteModule,
+    PhotoAlbumModule,
   ],
   controllers: [AppController],
   providers: [

@@ -13,6 +13,10 @@ model User {
   nickname           String?
   avatar             String?
   phone              String?
+  email              String?            @map("email")
+  passwordHash       String?            @map("password_hash")
+  resetToken         String?            @map("reset_token")
+  resetExpires       DateTime?          @map("reset_expires")
   createdAt          DateTime           @default(now()) @map("created_at")
   updatedAt          DateTime           @default(now()) @updatedAt @map("updated_at")
   status             UserStatus         @default(ACTIVE)
@@ -814,8 +818,9 @@ model ShopInfo {
   xiaohongshuId   String?  @map("xiaohongshu_id") @db.VarChar(100)
   businessLicense String?  @map("business_license") @db.VarChar(100)
   businessHours   String?  @map("business_hours") @db.VarChar(200)
-  description     String?
-  banners         Json?    @map("banners")
+  description         String?
+  storefrontMarquee   String?  @map("storefront_marquee")
+  banners             Json?    @map("banners")
   bannerInterval  Int?     @default(4000) @map("banner_interval")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
@@ -1192,6 +1197,7 @@ model WxUser {
   totalAmount    Decimal           @default(0) @map("total_amount") @db.Decimal(12, 2)
   memberLevel    String            @default("NORMAL") @map("member_level")
   growthPoints   Int               @default(0) @map("growth_points")
+  pointsBalance  Int               @default(0) @map("points_balance") // 可消费积分
   lastOrderAt    DateTime?         @map("last_order_at")
   churnStatus    String            @default("ACTIVE") @map("churn_status")
   lastLoginAt    DateTime?         @map("last_login_at")
@@ -1205,6 +1211,11 @@ model WxUser {
   complaints     Complaint[]
   linkedUser     User?             @relation(fields: [linkedUserId], references: [id])
   favorites      UserFavorite[]
+  photoAlbums    PhotoAlbum[]
+  milestones     BabyMilestone[]
+  pointsTransactions PointsTransaction[]
+  milestoneUploadLogs BabyMilestoneUploadLog[]
+  milestonePlayLogs BabyMilestonePlayLog[]
 
   @@index([openid])
   @@index([phone])
@@ -1288,6 +1299,51 @@ model MemberLevel {
 
   @@index([level])
   @@map("member_levels")
+}
+
+model BabyMilestone {
+  id            String   @id @default(uuid())
+  wxUserId      String   @map("wx_user_id")
+  type          String   @db.VarChar(50)  // 幸福空间类型: 出生, 百天, 周岁, 二周岁, 三周岁, 四周岁, 五周岁, 幼儿园, 小学, 初中, 高中, 大学, 硕士, 博士
+  recordDate    DateTime? @map("record_date")
+  height        Float?
+  weight        Float?
+  hobby         String?
+  photo         String?
+  momBlessing   String?  @map("mom_blessing")
+  dadBlessing   String?  @map("dad_blessing")
+  elderBlessing String?  @map("elder_blessing")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  wxUser        WxUser   @relation(fields: [wxUserId], references: [id], onDelete: Cascade)
+
+  @@index([wxUserId])
+  @@index([type])
+  @@map("baby_milestones")
+}
+
+// 幸福空间上传次数记录（每年最多3次照片上传、3次视频上传）
+model BabyMilestoneUploadLog {
+  id         String   @id @default(uuid())
+  wxUserId   String   @map("wx_user_id")
+  uploadType String   @db.VarChar(20)    // PHOTO / VIDEO
+  createdAt  DateTime @default(now()) @map("created_at")
+  wxUser     WxUser   @relation(fields: [wxUserId], references: [id], onDelete: Cascade)
+
+  @@index([wxUserId, createdAt])
+  @@map("baby_milestone_upload_logs")
+}
+
+// 幸福空间视频播放次数记录（每天最多5次）
+model BabyMilestonePlayLog {
+  id        String   @id @default(uuid())
+  wxUserId  String   @map("wx_user_id")
+  playDate  DateTime @map("play_date")     // 归一化到当天 00:00:00
+  createdAt DateTime @default(now()) @map("created_at")
+  wxUser    WxUser   @relation(fields: [wxUserId], references: [id], onDelete: Cascade)
+
+  @@index([wxUserId, playDate])
+  @@map("baby_milestone_play_logs")
 }
 
 model Complaint {
@@ -1657,4 +1713,50 @@ model CampaignTrack {
   @@index([wxUserId])
   @@index([event])
   @@map("campaign_tracks")
+}
+
+model PhotoAlbum {
+  id          String   @id @default(uuid())
+  wxUserId    String?  @map("wx_user_id")    // null = 公共样片
+  albumType   String   @map("album_type")    // "SAMPLE" | "ALBUM"
+  title       String
+  coverUrl    String?  @map("cover_url")
+  photoUrls   String   @map("photo_urls")    // JSON 数组存储多个图片 URL
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  wxUser      WxUser?  @relation(fields: [wxUserId], references: [id], onDelete: Cascade)
+
+  @@index([albumType])
+  @@index([wxUserId, albumType])
+  @@map("photo_albums")
+}
+
+// 积分交易记录
+model PointsTransaction {
+  id         String   @id @default(uuid())
+  wxUserId   String   @map("wx_user_id")
+  type       String   @db.VarChar(20)    // CREDIT(收入) / DEBIT(支出)
+  amount     Int                          // 变动积分数
+  balance    Int                          // 变动后余额
+  reason     String   @db.VarChar(50)    // 原因: upload_photo / upload_video / play_video / purchase
+  remark     String?                      // 备注（订单号等）
+  createdAt  DateTime @default(now()) @map("created_at")
+  wxUser     WxUser   @relation(fields: [wxUserId], references: [id], onDelete: Cascade)
+
+  @@index([wxUserId, createdAt])
+  @@map("points_transactions")
+}
+
+// 积分配置（后台管理）
+model PointsConfig {
+  id              String @id @default(uuid())
+  photoUploadCost Int    @default(50)   // 上传照片消耗积分
+  videoUploadCost Int    @default(50)   // 上传视频消耗积分
+  videoPlayCost   Int    @default(50)   // 播放视频消耗积分
+  purchaseRate    Int    @default(1000) // 1元兑换积分数（如1000=1元1000积分）
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("points_configs")
 }

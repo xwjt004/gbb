@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateUserDto } from './create-user.dto';
-import { IsOptional, IsDate, IsEnum } from 'class-validator';
+import { IsOptional, IsDate, IsEnum, IsInt } from 'class-validator';
 
 export enum UserStatusEnum {
   ACTIVE = 'ACTIVE',
@@ -15,4 +15,8 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsOptional()
   @IsEnum(UserStatusEnum)
   status?: UserStatusEnum;
+
+  @IsOptional()
+  @IsInt()
+  roleId?: number;
 }

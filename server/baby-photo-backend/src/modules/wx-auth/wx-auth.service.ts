@@ -1,8 +1,9 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { WxLoginDto } from './dto/wx-login.dto';
 import { PhoneAuthDto } from './dto/phone-auth.dto';
+import { CacheService } from '../../shared/cache/cache.service';
 import axios from 'axios';
 import * as crypto from 'crypto';
 
@@ -26,6 +27,7 @@ export class WxAuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private cacheService: CacheService,
   ) {}
 
   /**
@@ -66,6 +68,12 @@ export class WxAuthService {
         linkedUserId = existingUser.id;
       }
 
+      // 查询最小会员等级作为新用户默认等级
+      const defaultLevel = await this.prisma.memberLevel.findFirst({
+        orderBy: { level: 'asc' },
+        select: { name: true },
+      });
+
       // 创建新用户
       wxUser = await this.prisma.wxUser.create({
         data: {
@@ -76,6 +84,7 @@ export class WxAuthService {
           avatar: userInfo?.avatarUrl,
           gender: userInfo?.gender,
           status: 'ACTIVE',
+          memberLevel: defaultLevel?.name || '普通会员',
           linkedUserId,
         },
       });
@@ -229,23 +238,76 @@ export class WxAuthService {
   }
 
   /**
-   * 获取微信 Access Token
-   * TODO: 实现 Redis 缓存（access_token 有效期 7200秒）
+   * 获取微信 Access Token（带缓存，有效期 7200 秒，提前 5 分钟刷新）
    */
   private async getAccessToken(): Promise<string> {
-    const appId = process.env.WX_APP_ID;
-    const appSecret = process.env.WX_APP_SECRET;
-    const url = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appId}&secret=${appSecret}`;
+    const cacheKey = 'wx:access_token';
+    return this.cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const appId = process.env.WX_APP_ID;
+        const appSecret = process.env.WX_APP_SECRET;
+        const url = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appId}&secret=${appSecret}`;
+        try {
+          const response = await axios.get(url);
+          if (response.data.errcode) {
+            throw new Error(response.data.errmsg);
+          }
+          return response.data.access_token;
+        } catch (error) {
+          this.logger.error('获取AccessToken失败', error);
+          throw new UnauthorizedException('获取AccessToken失败');
+        }
+      },
+      6900, // TTL: 7200 - 300（预留 5 分钟缓冲）
+    );
+  }
+
+  /**
+   * 内容安全检测 — 文本（调用微信 msg_sec_check）
+   * 检测失败时抛出 HttpException，API 异常仅记录日志不阻断
+   */
+  async checkText(content: string): Promise<void> {
+    const accessToken = await this.getAccessToken();
+    const url = `https://api.weixin.qq.com/wxa/msg_sec_check?access_token=${accessToken}`;
 
     try {
-      const response = await axios.get(url);
-      if (response.data.errcode) {
-        throw new Error(response.data.errmsg);
+      const response = await axios.post(url, { content });
+      const data = response.data;
+
+      if (data.errcode === 87014) {
+        throw new HttpException('内容包含违规信息，请修改后重试', HttpStatus.BAD_REQUEST);
       }
-      return response.data.access_token;
-    } catch (error) {
-      this.logger.error('获取AccessToken失败', error);
-      throw new UnauthorizedException('获取AccessToken失败');
+      if (data.errcode !== 0) {
+        this.logger.warn(`文本安全检测API异常: ${data.errcode} - ${data.errmsg}`);
+      }
+    } catch (error: any) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error('文本安全检测请求失败', error);
+    }
+  }
+
+  /**
+   * 内容安全检测 — 图片（调用微信 img_sec_check）
+   * 检测失败时抛出 HttpException，API 异常仅记录日志不阻断
+   */
+  async checkImage(imageUrl: string): Promise<void> {
+    const accessToken = await this.getAccessToken();
+    const url = `https://api.weixin.qq.com/wxa/img_sec_check?access_token=${accessToken}`;
+
+    try {
+      const response = await axios.post(url, { img_url: imageUrl });
+      const data = response.data;
+
+      if (data.errcode === 87014) {
+        throw new HttpException('头像包含违规信息，请更换后重试', HttpStatus.BAD_REQUEST);
+      }
+      if (data.errcode !== 0) {
+        this.logger.warn(`图片安全检测API异常: ${data.errcode} - ${data.errmsg}`);
+      }
+    } catch (error: any) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error('图片安全检测请求失败', error);
     }
   }
 

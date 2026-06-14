@@ -1202,6 +1202,33 @@ export class OrdersService {
       },
     });
 
+    // 订单完成送积分：每100元=1000积分（即下单金额×10积分）
+    if (completedOrder.wxUserId) {
+      const earnPoints = Math.floor(Number(completedOrder.totalAmount || 0) * 10);
+      if (earnPoints > 0) {
+        const user = await this.prisma.wxUser.findUnique({ where: { id: completedOrder.wxUserId } });
+        if (user) {
+          const newBalance = (user.pointsBalance ?? 0) + earnPoints;
+          await this.prisma.$transaction([
+            this.prisma.wxUser.update({
+              where: { id: completedOrder.wxUserId },
+              data: { pointsBalance: newBalance },
+            }),
+            this.prisma.pointsTransaction.create({
+              data: {
+                wxUserId: completedOrder.wxUserId,
+                type: 'CREDIT',
+                amount: earnPoints,
+                balance: newBalance,
+                reason: 'purchase',
+                remark: `订单 ${completedOrder.orderNo} 完成奖励`,
+              },
+            }),
+          ]);
+        }
+      }
+    }
+
     // 触发自动化规则（不阻塞主流程）
     this.automationRulesService.evaluate('ORDER_COMPLETED', { order: completedOrder, wxUser: completedOrder.wxUser })
       .catch((err: Error) => console.error('自动化规则执行失败', err));

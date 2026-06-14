@@ -15,7 +15,6 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserSearchDto } from './dto/user-search.dto';
-import { UsersWxLoginDto } from './dto/wx-login.dto';
 import { AdminLoginDto } from './dto/admin-login.dto';
 
 @ApiTags('用户')
@@ -24,16 +23,6 @@ export class UsersController {
   private readonly logger = new Logger(UsersController.name);
 
   constructor(private readonly usersService: UsersService) {}
-
-  /**
-   * 微信小程序登录
-   */
-  @Post('wx-login')
-  @ApiOperation({ summary: '微信小程序登录' })
-  async wxLogin(@Body() wxLoginDto: UsersWxLoginDto) {
-    this.logger.log(`微信登录: ${JSON.stringify(wxLoginDto)}`);
-    return this.usersService.wxLogin(wxLoginDto);
-  }
 
   /**
    * 创建用户

@@ -70,6 +70,13 @@ export class WxOrderController {
     return this.wxOrderService.cancelOrder(req.user.id, orderId);
   }
 
+  @Delete('clear/all')
+  @ApiOperation({ summary: '清空所有订单（软删除）' })
+  @ApiResponse({ status: 200, description: '清空成功' })
+  async clearAllOrders(@Req() req: any) {
+    return this.wxOrderService.clearAllOrders(req.user.id);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: '删除订单（软删除）' })
   @ApiResponse({ status: 200, description: '删除成功' })

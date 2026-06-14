@@ -808,4 +808,36 @@ export class WxOrderService {
 
     return { code: 200, message: '订单已删除' };
   }
+
+  /**
+   * 清空所有订单（软删除）—— 使用与 getMyOrders 相同的查询条件
+   */
+  async clearAllOrders(wxUserId: string) {
+    const wxUser = await this.prisma.wxUser.findUnique({
+      where: { id: wxUserId },
+      select: { linkedUserId: true, phone: true },
+    });
+
+    const where: Prisma.OrderWhereInput = { deletedAt: null };
+
+    if (wxUser?.linkedUserId) {
+      where.OR = [
+        { wxUserId },
+        { userId: wxUser.linkedUserId },
+      ];
+    } else {
+      where.OR = [{ wxUserId }];
+    }
+
+    if (wxUser?.phone) {
+      where.OR!.push({ customerPhone: wxUser.phone });
+    }
+
+    await this.prisma.order.updateMany({
+      where,
+      data: { deletedAt: new Date() },
+    });
+
+    return { code: 200, message: '已清空所有订单' };
+  }
 }

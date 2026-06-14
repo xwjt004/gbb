@@ -11,10 +11,8 @@ import { CacheService } from '../../shared/cache/cache.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserSearchDto } from './dto/user-search.dto';
-import { UsersWxLoginDto } from './dto/wx-login.dto';
 import { AdminLoginDto } from './dto/admin-login.dto';
 import { JwtService } from '@nestjs/jwt';
-import axios from 'axios';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -26,72 +24,6 @@ export class UsersService {
     private readonly cacheService: CacheService,
     private readonly jwtService: JwtService,
   ) {}
-
-  /**
-   * 微信小程序登录
-   */
-  async wxLogin(wxLoginDto: UsersWxLoginDto) {
-    const { code, userInfo } = wxLoginDto;
-
-    try {
-      // 1. 通过code获取openid
-      const openid = await this.getOpenidByCode(code);
-
-      // 2. 查找或创建用户
-      let user = await this.prisma.user.findUnique({
-        where: { openid },
-      });
-
-      if (!user) {
-        // 创建新用户
-        user = await this.prisma.user.create({
-          data: {
-            openid,
-            nickname: userInfo?.nickName || '微信用户',
-            avatar: userInfo?.avatarUrl || '',
-            phone: '', // 小程序登录时可能没有手机号
-          },
-        });
-        this.logger.log(`创建新用户: ${openid}`);
-      } else {
-        // 更新用户信息
-        if (userInfo) {
-          user = await this.prisma.user.update({
-            where: { openid },
-            data: {
-              nickname: userInfo.nickName || user.nickname,
-              avatar: userInfo.avatarUrl || user.avatar,
-            },
-          });
-        }
-        this.logger.log(`用户登录: ${openid}`);
-      }
-
-      // 3. 生成会话token（这里简化处理，实际应该使用JWT）
-      const token = this.generateToken(user.openid);
-
-      // 4. 缓存用户信息
-      const cacheKey = this.cacheService.getUserCacheKey(user.openid);
-      this.cacheService.set(cacheKey, user, 3600); // 缓存1小时
-
-      return {
-        code: 200,
-        message: '登录成功',
-        data: {
-          token,
-          user: {
-            openid: user.openid,
-            nickname: user.nickname,
-            avatar: user.avatar,
-            phone: user.phone,
-          },
-        },
-      };
-    } catch (error) {
-      this.logger.error(`微信登录失败: ${error.message}`, error.stack);
-      throw new BadRequestException('登录失败，请稍后重试');
-    }
-  }
 
   /**
    * 创建用户
@@ -268,6 +200,9 @@ export class UsersService {
           status: true,
           createdAt: true,
           updatedAt: true,
+          role: {
+            select: { id: true, name: true },
+          },
           _count: {
             select: { orders: true },
           },
@@ -1047,49 +982,6 @@ export class UsersService {
   }
 
   // 私有辅助方法
-
-  /**
-   * 通过code获取微信openid
-   */
-  private async getOpenidByCode(code: string): Promise<string> {
-    const appId = process.env.WX_APP_ID;
-    const appSecret = process.env.WX_APP_SECRET;
-
-    if (!appId || !appSecret) {
-      throw new BadRequestException('微信配置未完成');
-    }
-
-    try {
-      const response = await axios.get(
-        `https://api.weixin.qq.com/sns/jscode2session`,
-        {
-          params: {
-            appid: appId,
-            secret: appSecret,
-            js_code: code,
-            grant_type: 'authorization_code',
-          },
-        },
-      );
-
-      if (response.data.errcode) {
-        throw new Error(response.data.errmsg);
-      }
-
-      return response.data.openid;
-    } catch (error) {
-      this.logger.error(`获取openid失败: ${error.message}`, error.stack);
-      throw new BadRequestException('微信登录失败');
-    }
-  }
-
-  /**
-   * 生成用户token
-   */
-  private generateToken(openid: string): string {
-    // 这里简化处理，实际应该使用JWT
-    return Buffer.from(`${openid}:${Date.now()}`).toString('base64');
-  }
 
   /**
    * 构建排序条件

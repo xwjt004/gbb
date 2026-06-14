@@ -50,6 +50,10 @@ export class UpdateWxUserDto {
   firstBirthdayDate?: string;
 
   @IsOptional()
+  @IsDateString()
+  birthday?: string;
+
+  @IsOptional()
   @IsString()
   graspGift?: string;
 
