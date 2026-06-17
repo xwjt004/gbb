@@ -8,7 +8,7 @@ import {
   Button,
   Image,
   Rate,
-  List,
+  Divider,
 } from "antd";
 import {
   StarOutlined,
@@ -105,23 +105,117 @@ const PackageDetail: React.FC<PackageDetailProps> = ({
             {pkg.description || "-"}
           </Descriptions.Item>
         </Descriptions>
-  <Card title="服务内容" style={{ marginBottom: 16 }}>
-        <List
-          dataSource={pkg.services}
-          renderItem={(service) => (
-            <List.Item>
-              <List.Item.Meta title={service} />
-            </List.Item>
-          )}
-        />
-      </Card>
-  <Space wrap>
-          {pkg.tags.map((tag, index) => (
-            <Tag key={index} color="blue">
-              {tag}
-            </Tag>
-          ))}
-        </Space>
+
+        {/* 标签 */}
+        {pkg.tags?.length > 0 && (
+          <div style={{ marginTop: 16 }}>
+            <div style={{ fontWeight: 500, marginBottom: 8, color: '#666', fontSize: 13 }}>标签</div>
+            <Space wrap>
+              {pkg.tags.map((tag, index) => (
+                <Tag key={index} color="blue">{tag}</Tag>
+              ))}
+            </Space>
+          </div>
+        )}
+
+        {/* 服务内容 */}
+        {(pkg.packageServices?.length > 0 || pkg.services?.length > 0) && (
+          <>
+            <Divider />
+            <div style={{ fontWeight: 500, marginBottom: 12, fontSize: 15 }}>服务内容</div>
+            {pkg.packageServices?.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {pkg.packageServices.map((ps: any) => (
+                  <div
+                    key={ps.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '10px 12px',
+                      background: '#fafafa',
+                      borderRadius: 6,
+                      border: '1px solid #f0f0f0',
+                    }}
+                  >
+                    {ps.service?.images?.[0] && (
+                      <Image
+                        src={formatImageUrl(ps.service.images[0])}
+                        width={56}
+                        height={56}
+                        style={{ objectFit: 'cover', borderRadius: 4, flexShrink: 0 }}
+                        preview={false}
+                      />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 500, fontSize: 14 }}>{ps.service?.name}</div>
+                      {ps.service?.category && (
+                        <div style={{ color: '#888', fontSize: 12, marginTop: 2 }}>{ps.service.category}</div>
+                      )}
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ color: '#f50', fontWeight: 600, fontSize: 14 }}>
+                        ¥{Number(ps.service?.basePrice ?? 0).toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {pkg.services.map((item: string, i: number) => (
+                  <Tag key={i} color="purple">{item}</Tag>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* 商品内容 */}
+        {pkg.packageProducts?.length > 0 && (
+          <>
+            <Divider />
+            <div style={{ fontWeight: 500, marginBottom: 12, fontSize: 15 }}>商品内容</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {pkg.packageProducts.map((pp: any) => (
+                <div
+                  key={pp.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '10px 12px',
+                    background: '#fafafa',
+                    borderRadius: 6,
+                    border: '1px solid #f0f0f0',
+                  }}
+                >
+                  {pp.product?.images?.[0] && (
+                    <Image
+                      src={formatImageUrl(pp.product.images[0])}
+                      width={56}
+                      height={56}
+                      style={{ objectFit: 'cover', borderRadius: 4, flexShrink: 0 }}
+                      preview={false}
+                    />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 500, fontSize: 14 }}>{pp.product?.name}</div>
+                    {pp.product?.specification && (
+                      <div style={{ color: '#888', fontSize: 12, marginTop: 2 }}>规格：{pp.product.specification}</div>
+                    )}
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ color: '#f50', fontWeight: 600, fontSize: 14 }}>
+                      ¥{Number(pp.product?.salePrice ?? 0).toFixed(2)}
+                    </div>
+                    <div style={{ color: '#999', fontSize: 12 }}>× {pp.quantity}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </Card>
 
       {/* 促销信息 */}
