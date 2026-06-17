@@ -1,0 +1,34 @@
+<view class="container">
+  <view class="header">
+    <text class="title">发起拼团</text>
+    <text class="subtitle">邀请好友一起享受团购优惠</text>
+  </view>
+
+  <view wx:if="{{packageInfo}}" class="package-card">
+    <image class="package-img" src="{{packageInfo.coverImage || ''}}" mode="aspectFill" />
+    <view class="package-info">
+      <text class="package-name">{{packageInfo.name}}</text>
+      <view class="price-row">
+        <text class="price-label">拼团价</text>
+        <text class="price-value">¥{{packageInfo.groupPrice || packageInfo.price}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="setting-card">
+    <text class="setting-label">成团人数</text>
+    <view class="counter-row">
+      <view class="counter-btn" bindtap="onDecrease">−</view>
+      <text class="counter-value">{{minCount}}人</text>
+      <view class="counter-btn" bindtap="onIncrease">+</view>
+    </view>
+    <text class="setting-tip">满 {{minCount}} 人成团，未成团自动退款</text>
+  </view>
+
+  <view class="bottom-bar">
+    <view class="start-btn {{loading ? 'disabled' : ''}}" bindtap="onStart">
+      <text wx:if="{{!loading}}">立即开团</text>
+      <text wx:else>开团中...</text>
+    </view>
+  </view>
+</view>

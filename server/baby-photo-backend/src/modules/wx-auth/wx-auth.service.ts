@@ -312,6 +312,44 @@ export class WxAuthService {
   }
 
   /**
+   * 生成小程序码（B 方案：wxacode.getUnlimited，scene 参数长度最多 32 字符）
+   * 返回图片 Buffer
+   */
+  async generateWxaCode(scene: string, page: string, checkPath = false): Promise<Buffer> {
+    const accessToken = await this.getAccessToken();
+    const url = `https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=${accessToken}`;
+
+    try {
+      const response = await axios.post(
+        url,
+        {
+          scene,
+          page,
+          check_path: checkPath,
+          env_version: process.env.NODE_ENV === 'production' ? 'release' : 'trial',
+          width: 280,
+        },
+        { responseType: 'arraybuffer' },
+      );
+
+      // 微信返回的 Content-Type 为 image/jpeg 表示成功，application/json 表示错误
+      const contentType = response.headers['content-type'] || '';
+      if (contentType.includes('image')) {
+        return Buffer.from(response.data);
+      }
+
+      // 错误响应（JSON）
+      const errData = JSON.parse(Buffer.from(response.data).toString('utf-8'));
+      this.logger.error(`生成小程序码失败: ${errData.errcode} - ${errData.errmsg}`);
+      throw new HttpException('生成小程序码失败', HttpStatus.INTERNAL_SERVER_ERROR);
+    } catch (error: any) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error('生成小程序码请求失败', error);
+      throw new HttpException('生成小程序码失败', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
    * 解密微信数据
    */
   private decryptData(encryptedData: string, sessionKey: string, iv: string) {

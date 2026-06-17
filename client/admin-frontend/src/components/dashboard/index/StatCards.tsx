@@ -2,7 +2,7 @@ import React from 'react';
 import { Row, Col, Card, Typography } from 'antd';
 const { Text } = Typography;
 import {
-  RiseOutlined, FallOutlined, ExclamationCircleOutlined,
+  RiseOutlined, FallOutlined,
 } from '@ant-design/icons';
 
 /* ── SVG Circular Ring ── */
@@ -64,10 +64,13 @@ const StatCards: React.FC<Props> = ({ userStats, orderStats }) => {
 
   /* Normalize values to 0-100 for ring fill */
   const userPct = Math.min(userStats.totalUsers / 2000 * 100, 100);
-  const orderPct = Math.min(orderStats.totalOrders / 1000 * 100, 100);
+  const paidOrderPct = Math.min(orderStats.paidOrders / 1000 * 100, 100);
   const revenuePct = Math.min(orderStats.totalRevenue / 100000 * 100, 100);
-  const pendingPct = orderStats.pendingOrders > 0
-    ? Math.min(orderStats.pendingOrders / 50 * 100, 100)
+  const paidPending = Number(orderStats.paidPendingOrders || 0);
+  const unpaidPending = Number(orderStats.unpaidPendingOrders || 0);
+  const totalPending = paidPending + unpaidPending;
+  const pendingPct = totalPending > 0
+    ? Math.min(totalPending / 50 * 100, 100)
     : 100;
 
   return (
@@ -88,12 +91,12 @@ const StatCards: React.FC<Props> = ({ userStats, orderStats }) => {
         </Card>
       </Col>
 
-      {/* ── Orders ── */}
+      {/* ── Paid Orders ── */}
       <Col xs={12} lg={6}>
         <Card styles={{ body: { padding: '20px 16px', textAlign: 'center' as const } }}>
-          <CircularRing value={orderPct} size={ringSize} stroke="#00e5ff">
-            <div style={{ fontSize: 24, fontWeight: 800, color: '#00e5ff', lineHeight: 1.1 }}>{orderStats.totalOrders}</div>
-            <div style={{ fontSize: 11, color: '#8888b0', marginTop: 2 }}>总订单</div>
+          <CircularRing value={paidOrderPct} size={ringSize} stroke="#00e5ff">
+            <div style={{ fontSize: 24, fontWeight: 800, color: '#00e5ff', lineHeight: 1.1 }}>{orderStats.paidOrders}</div>
+            <div style={{ fontSize: 11, color: '#8888b0', marginTop: 2 }}>已支付总订单</div>
           </CircularRing>
           <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
             <TrendBadge value={cr} />
@@ -115,19 +118,20 @@ const StatCards: React.FC<Props> = ({ userStats, orderStats }) => {
         </Card>
       </Col>
 
-      {/* ── Pending ── */}
+      {/* ── Pending (split into paid & unpaid) ── */}
       <Col xs={12} lg={6}>
         <Card styles={{ body: { padding: '20px 16px', textAlign: 'center' as const } }}>
-          <CircularRing value={pendingPct} size={ringSize} stroke={orderStats.pendingOrders > 0 ? '#ffab40' : '#52c41a'}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: orderStats.pendingOrders > 0 ? '#ffab40' : '#52c41a', lineHeight: 1.1 }}>{orderStats.pendingOrders}</div>
+          <CircularRing value={pendingPct} size={ringSize} stroke={totalPending > 0 ? '#ffab40' : '#52c41a'}>
+            <div style={{ fontSize: 24, fontWeight: 800, color: totalPending > 0 ? '#ffab40' : '#52c41a', lineHeight: 1.1 }}>{totalPending}</div>
             <div style={{ fontSize: 11, color: '#8888b0', marginTop: 2 }}>待处理</div>
           </CircularRing>
-          <div style={{ marginTop: 8 }}>
-            {orderStats.pendingOrders > 0 ? (
-              <Text style={{ fontSize: 11, color: '#ffab40' }}><ExclamationCircleOutlined /> 需要及时处理</Text>
-            ) : (
-              <Text type="secondary" style={{ fontSize: 11 }}>一切正常 <span style={{ color: '#52c41a' }}>✓</span></Text>
-            )}
+          <div style={{ marginTop: 8, display: 'flex', justifyContent: 'center', gap: 16 }}>
+            <Text style={{ fontSize: 12, color: paidPending > 0 ? '#ee0a24' : '#52c41a' }}>
+              已付款 <strong>{paidPending}</strong>
+            </Text>
+            <Text style={{ fontSize: 12, color: unpaidPending > 0 ? '#fa8c16' : '#8888b0' }}>
+              未付款 <strong>{unpaidPending}</strong>
+            </Text>
           </div>
         </Card>
       </Col>

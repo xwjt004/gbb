@@ -28,7 +28,7 @@ const ExportUsers: React.FC = () => {
   const [totalCount, setTotalCount] = useState(0);
 
   const columns: ColumnsType<UserRecord> = [
-    { title: '用户ID', dataIndex: 'id', width: 80 },
+    { title: '员工ID', dataIndex: 'id', width: 80 },
     { title: '昵称', dataIndex: 'nickname', width: 150 },
     { title: '手机号', dataIndex: 'phone', width: 130 },
     { title: '订单数', dataIndex: 'orderCount', width: 80 },
@@ -47,7 +47,7 @@ const ExportUsers: React.FC = () => {
       setTotalCount(d.pagination?.total || d.list?.length || 0);
       setPreviewVisible(true);
     } catch {
-      message.error('获取用户数据失败');
+      message.error('获取员工数据失败');
     } finally {
       setLoading(false);
     }
@@ -57,7 +57,7 @@ const ExportUsers: React.FC = () => {
     setExporting(true);
     try {
       await exportService.exportUsers();
-      message.success('用户数据导出已开始，文件正在下载...');
+      message.success('员工数据导出已开始，文件正在下载...');
     } catch {
       message.error('导出失败');
     } finally {
@@ -67,10 +67,10 @@ const ExportUsers: React.FC = () => {
 
   return (
     <div style={{ padding: 24 }}>
-      <Card title="导出用户数据" variant="borderless">
+      <Card title="导出员工数据" variant="borderless">
         <Alert
           message="功能说明"
-          description="导出系统中所有注册用户的基本信息，包含用户ID、昵称、手机号、注册时间等字段，生成 Excel 文件。"
+          description="导出系统中所有注册员工的基本信息，包含员工ID、昵称、手机号、注册时间等字段，生成 Excel 文件。"
           type="info"
           showIcon
           style={{ marginBottom: 24 }}

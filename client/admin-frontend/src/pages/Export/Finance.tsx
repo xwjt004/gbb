@@ -43,7 +43,7 @@ const ExportFinance: React.FC = () => {
   const columns: ColumnsType<PaymentRecord> = [
     { title: '支付单号', dataIndex: 'id', width: 200 },
     { title: '订单号', dataIndex: 'orderNo', width: 180 },
-    { title: '用户', dataIndex: 'userName', width: 120 },
+    { title: '客户', dataIndex: 'userName', width: 120 },
     { title: '套餐', dataIndex: 'packageName', width: 200 },
     {
       title: '金额', dataIndex: 'amount', width: 100,

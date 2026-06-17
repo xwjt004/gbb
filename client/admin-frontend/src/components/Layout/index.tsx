@@ -24,6 +24,7 @@ import {
   MenuOutlined,
   BarChartOutlined,
   TeamOutlined,
+  LockOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/store';
@@ -82,9 +83,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     {
       key: 'users-menu',
       icon: <UserOutlined />,
-      label: '用户管理',
+      label: '员工管理',
       children: [
-        { key: '/users', label: '用户列表' },
+        { key: '/users', label: '员工列表' },
       ],
     },
     {
@@ -215,6 +216,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         { key: '/marketing/coupons', label: '优惠券管理' },
         { key: '/marketing/segments', label: '客户分群' },
         { key: '/marketing/campaigns', label: '营销活动' },
+        { key: '/marketing/points-config', label: '积分配置' },
+        { key: '/marketing/points-transactions', label: '积分明细' },
+        { key: '/marketing/group-buy', label: '团购管理' },
       ],
     },
     {
@@ -252,6 +256,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const userMenuItems: MenuProps['items'] = [
     {
+      key: 'change-password',
+      icon: <LockOutlined />,
+      label: '修改密码',
+    },
+    {
       key: 'profile',
       icon: <UserOutlined />,
       label: '个人资料',
@@ -284,6 +293,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         dispatch(logout());
         navigate('/login');
         break;
+      case 'change-password':
+        navigate('/system/change-password');
+        break;
       case 'profile':
         setProfileModalVisible(true);
         break;
@@ -300,12 +312,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { key: '/time-slots', label: '时间槽管理' },
     { key: '/payments', label: '支付管理' },
     { key: '/reconciliation', label: '对账管理' },
-    { key: '/users', label: '用户管理' },
+    { key: '/users', label: '员工管理' },
   ];
 
   const exportMenu: MenuProps['items'] = [
     { key: '/export/orders', label: '订单导出' },
-    { key: '/export/users', label: '用户导出' },
+    { key: '/export/users', label: '员工导出' },
     { key: '/export/finance', label: '财务导出' },
     { key: '/export/all', label: '全部导出' },
   ];
@@ -348,7 +360,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       if (pathname.startsWith('/dashboard/data')) return '数据看板';
       return '仪表盘';
     }
-    if (pathname.startsWith('/users')) return '用户管理';
+    if (pathname.startsWith('/users')) return '员工管理';
     if (pathname.startsWith('/wx-users')) return '客户管理';
     if (pathname.startsWith('/orders')) return '订单管理';
     if (pathname.startsWith('/packages')) return '套系管理';
@@ -371,8 +383,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (pathname.startsWith('/stock/restock-suggestions')) return '补货建议';
     if (pathname.startsWith('/stock/slow-moving')) return '呆滞预警';
     if (pathname.startsWith('/stock/turnover-analysis')) return '库存周转分析';
+    if (pathname.startsWith('/marketing/points-config')) return '积分配置';
+    if (pathname.startsWith('/marketing/points-transactions')) return '积分明细';
     if (pathname.startsWith('/marketing/segments')) return '客户分群';
     if (pathname.startsWith('/marketing/campaigns')) return '营销活动';
+    if (pathname.startsWith('/marketing/group-buy')) return '团购管理';
     if (pathname.startsWith('/marketing')) return '营销管理';
     if (pathname.startsWith('/analytics')) return '数据分析';
     return '管理后台';
@@ -618,12 +633,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         footer={<Button onClick={() => setProfileModalVisible(false)}>关闭</Button>}
       >
         <Descriptions column={1} size="middle" style={{ marginTop: 16 }}>
-          <Descriptions.Item label="用户ID">{user?.id || '-'}</Descriptions.Item>
+          <Descriptions.Item label="员工ID">{user?.id || '-'}</Descriptions.Item>
           <Descriptions.Item label="昵称">{user?.nickname || '-'}</Descriptions.Item>
           <Descriptions.Item label="手机号">{user?.phone || '-'}</Descriptions.Item>
           <Descriptions.Item label="OpenID">{user?.openid || '-'}</Descriptions.Item>
           <Descriptions.Item label="角色">
-            {user?.isAdmin ? <Tag color="red">管理员</Tag> : <Tag color="blue">普通用户</Tag>}
+            {user?.isAdmin ? <Tag color="red">管理员</Tag> : <Tag color="blue">普通员工</Tag>}
           </Descriptions.Item>
         </Descriptions>
       </Modal>

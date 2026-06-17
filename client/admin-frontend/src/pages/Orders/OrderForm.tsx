@@ -204,7 +204,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
       const selectedUser = users.find(u => u.id.toString() === values.userId?.toString());
       console.log('选中的用户:', selectedUser);
       if (!selectedUser) {
-        message.error("请选择有效的用户");
+        message.error("请选择有效的员工");
         return;
       }
 
@@ -256,10 +256,10 @@ const OrderForm: React.FC<OrderFormProps> = ({
         <Col span={12}>
           <Form.Item
             name="userId"
-            label="用户"
-            rules={[{ required: true, message: '请选择用户' }]}
+            label="员工"
+            rules={[{ required: true, message: '请选择员工' }]}
           >
-            <Select placeholder="请选择用户" showSearch optionFilterProp="children">
+            <Select placeholder="请选择员工" showSearch optionFilterProp="children">
               {users.map(u => (
                 <Option key={u.id} value={u.id?.toString()}>{u.nickname || u.phone || u.id}</Option>
               ))}

@@ -30,6 +30,7 @@ interface DashboardData {
   packageStats: PackageStats;
   recentOrders: Order[];
   cashFlowTrends: CashFlowTrendData[];
+  radarIndicators: { users: number; revenue: number };
 }
 
 
@@ -80,8 +81,9 @@ const Dashboard: React.FC = () => {
       totalUsers: 0, activeUsers: 0, newUsersToday: 0, vipUsers: 0, growthRate: 0,
     },
     orderStats: {
-      totalOrders: 0, pendingOrders: 0, confirmedOrders: 0, completedOrders: 0,
-      cancelledOrders: 0, totalRevenue: 0, todayOrders: 0, conversionRate: 0,
+      totalOrders: 0, paidOrders: 0, pendingOrders: 0, confirmedOrders: 0, completedOrders: 0,
+      cancelledOrders: 0, paidPendingOrders: 0, unpaidPendingOrders: 0,
+      totalRevenue: 0, todayOrders: 0, conversionRate: 0,
     },
     packageStats: {
       totalPackages: 0, activePackages: 0, popularPackages: 0, avgPrice: 0,
@@ -89,6 +91,7 @@ const Dashboard: React.FC = () => {
     },
     recentOrders: [],
     cashFlowTrends: [],
+    radarIndicators: { users: 0, revenue: 0 },
   });
 
   useEffect(() => {
@@ -119,9 +122,11 @@ const Dashboard: React.FC = () => {
         ),
         orderService.getOrders({ page: 1, pageSize: 10 }),
       ]);
+      const totalUsers = userStats.data?.totalUsers || 0;
+      const totalRevenue = orderStats.data?.totalRevenue || 0;
       setData({
         userStats: {
-          totalUsers: userStats.data?.totalUsers || 0,
+          totalUsers,
           activeUsers: userStats.data?.activeUsers || 0,
           newUsersToday: userStats.data?.newUsersToday || 0,
           vipUsers: userStats.data?.vipUsers || 0,
@@ -129,11 +134,14 @@ const Dashboard: React.FC = () => {
         },
         orderStats: {
           totalOrders: orderStats.data?.totalOrders || 0,
+          paidOrders: orderStats.data?.paidOrders || 0,
           pendingOrders: orderStats.data?.pendingOrders || 0,
           confirmedOrders: orderStats.data?.confirmedOrders || 0,
           completedOrders: orderStats.data?.completedOrders || 0,
           cancelledOrders: orderStats.data?.cancelledOrders || 0,
-          totalRevenue: orderStats.data?.totalRevenue || 0,
+          paidPendingOrders: orderStats.data?.paidPendingOrders || 0,
+          unpaidPendingOrders: orderStats.data?.unpaidPendingOrders || 0,
+          totalRevenue,
           todayOrders: orderStats.data?.todayOrders || 0,
           conversionRate: orderStats.data?.conversionRate || 0,
         },
@@ -143,6 +151,10 @@ const Dashboard: React.FC = () => {
         },
         recentOrders: recentOrders.data?.list || [],
         cashFlowTrends: cashFlowTrends.data || [],
+        radarIndicators: {
+          users: Math.min(100, Math.round(totalUsers / 10)),
+          revenue: Math.min(100, Math.round(totalRevenue / 1000)),
+        },
       });
     } catch (error) {
       console.error('加载仪表盘数据失败:', error);
@@ -244,9 +256,9 @@ const Dashboard: React.FC = () => {
   const radarOption = {
     radar: {
       indicator: [
-        { name: '用户总量', max: Math.max(Number(data.userStats.totalUsers) * 1.5, 100) },
+        { name: '用户总量', max: 100 },
         { name: '订单转化率', max: 100 },
-        { name: '总收入', max: Math.max(Number(data.orderStats.totalRevenue) * 1.5, 10000) },
+        { name: '总收入', max: 100 },
         { name: '活跃度', max: 100 },
         { name: 'VIP占比', max: 100 },
       ],
@@ -264,9 +276,9 @@ const Dashboard: React.FC = () => {
       type: 'radar',
       data: [{
         value: [
-          data.userStats.totalUsers,
+          data.radarIndicators?.users ?? 0,
           data.orderStats.conversionRate,
-          data.orderStats.totalRevenue,
+          data.radarIndicators?.revenue ?? 0,
           data.userStats.totalUsers > 0
             ? Number((data.userStats.activeUsers / data.userStats.totalUsers * 100).toFixed(1))
             : 0,
@@ -304,14 +316,15 @@ const Dashboard: React.FC = () => {
   /* ── System health gauge ── */
   const healthScore = (() => {
     const cr = Number(data.orderStats.conversionRate || 0);
-    const pendingRatio = data.orderStats.totalOrders > 0
-      ? Math.max(0, 100 - (data.orderStats.pendingOrders / data.orderStats.totalOrders) * 100)
+    const orderDenom = data.orderStats.paidOrders + data.orderStats.unpaidPendingOrders;
+    const pendingRatio = orderDenom > 0
+      ? Math.max(0, 100 - (data.orderStats.pendingOrders / orderDenom) * 100)
       : 100;
     const activeRatio = data.userStats.totalUsers > 0
       ? (data.userStats.activeUsers / data.userStats.totalUsers) * 100
       : 0;
-    const completionRatio = data.orderStats.totalOrders > 0
-      ? (data.orderStats.completedOrders / data.orderStats.totalOrders) * 100
+    const completionRatio = data.orderStats.paidOrders > 0
+      ? (data.orderStats.completedOrders / data.orderStats.paidOrders) * 100
       : 0;
     return Math.min(100, Math.round(cr * 0.3 + pendingRatio * 0.3 + activeRatio * 0.2 + completionRatio * 0.2));
   })();

@@ -1293,6 +1293,36 @@ export class PaymentsService {
         paidAmount,
       );
 
+      // 支付成功后锁定时间槽（订单创建时不再锁定，防止不付款占位）
+      if (order.timeSlotId) {
+        try {
+          const timeSlot = await this.prisma.timeSlot.findUnique({
+            where: { id: order.timeSlotId },
+          });
+          if (timeSlot) {
+            // 检查容量，防止超卖
+            if ((timeSlot.bookedCount || 0) >= timeSlot.capacity) {
+              this.logger.warn(`时间槽已满但仍收到支付: slot=${order.timeSlotId}, order=${order.orderNo}`);
+            } else {
+              const newBookedCount = (timeSlot.bookedCount || 0) + 1;
+              const isFullyBooked = newBookedCount >= timeSlot.capacity;
+              await this.prisma.timeSlot.update({
+                where: { id: order.timeSlotId },
+                data: {
+                  bookedCount: newBookedCount,
+                  availableCount: Math.max(0, timeSlot.capacity - newBookedCount),
+                  isBooked: isFullyBooked,
+                  status: isFullyBooked ? 'BOOKED' : 'AVAILABLE',
+                },
+              });
+              this.logger.log(`支付成功锁定时间槽: slot=${order.timeSlotId}, 预订 ${newBookedCount}/${timeSlot.capacity}`);
+            }
+          }
+        } catch (slotErr) {
+          this.logger.error(`锁定时间槽失败: ${slotErr.message}`, slotErr.stack);
+        }
+      }
+
       // 触发自动状态转换
       await this.autoStatusTransitionService.onPaymentSuccess(
         order.id,
@@ -1771,6 +1801,35 @@ export class PaymentsService {
           }
         }
 
+        // 5. 确认收款后锁定时间槽
+        if (isFullyPaid && order.timeSlotId) {
+          try {
+            const timeSlot = await tx.timeSlot.findUnique({
+              where: { id: order.timeSlotId },
+            });
+            if (timeSlot) {
+              if ((timeSlot.bookedCount || 0) >= timeSlot.capacity) {
+                this.logger.warn(`时间槽已满但仍收到确认: slot=${order.timeSlotId}, order=${order.orderNo}`);
+              } else {
+                const newBookedCount = (timeSlot.bookedCount || 0) + 1;
+                const isFullyBooked = newBookedCount >= timeSlot.capacity;
+                await tx.timeSlot.update({
+                  where: { id: order.timeSlotId },
+                  data: {
+                    bookedCount: newBookedCount,
+                    availableCount: Math.max(0, timeSlot.capacity - newBookedCount),
+                    isBooked: isFullyBooked,
+                    status: isFullyBooked ? 'BOOKED' : 'AVAILABLE',
+                  },
+                });
+                this.logger.log(`确认收款锁定时间槽: slot=${order.timeSlotId}, 预订 ${newBookedCount}/${timeSlot.capacity}`);
+              }
+            }
+          } catch (slotErr) {
+            this.logger.error(`锁定时间槽失败: ${slotErr.message}`, slotErr.stack);
+          }
+        }
+
         this.logger.log(
           `虚拟支付确认: ${paymentId} → 创建真实支付 ${newPayment.id}, 订单 ${order.orderNo}`
         );
@@ -1878,6 +1937,35 @@ export class PaymentsService {
             });
             this.logger.log(`库存扣减: ${product.name} x${item.quantity}, 剩余: ${product.stockQuantity - item.quantity}`);
           }
+        }
+      }
+
+      // 5. 支付确认后锁定时间槽（订单创建时不再锁定，防止不付款占位）
+      if (isFullyPaid && order.timeSlotId) {
+        try {
+          const timeSlot = await tx.timeSlot.findUnique({
+            where: { id: order.timeSlotId },
+          });
+          if (timeSlot) {
+            if ((timeSlot.bookedCount || 0) >= timeSlot.capacity) {
+              this.logger.warn(`时间槽已满但仍收到确认支付: slot=${order.timeSlotId}, order=${order.orderNo}`);
+            } else {
+              const newBookedCount = (timeSlot.bookedCount || 0) + 1;
+              const isFullyBooked = newBookedCount >= timeSlot.capacity;
+              await tx.timeSlot.update({
+                where: { id: order.timeSlotId },
+                data: {
+                  bookedCount: newBookedCount,
+                  availableCount: Math.max(0, timeSlot.capacity - newBookedCount),
+                  isBooked: isFullyBooked,
+                  status: isFullyBooked ? 'BOOKED' : 'AVAILABLE',
+                },
+              });
+              this.logger.log(`确认支付锁定时间槽: slot=${order.timeSlotId}, 预订 ${newBookedCount}/${timeSlot.capacity}`);
+            }
+          }
+        } catch (slotErr) {
+          this.logger.error(`锁定时间槽失败: ${slotErr.message}`, slotErr.stack);
         }
       }
 

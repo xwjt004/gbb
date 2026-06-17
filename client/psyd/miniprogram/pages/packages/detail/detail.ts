@@ -261,6 +261,27 @@ Page({
   },
 
   /**
+   * 发起拼团
+   */
+  onStartGroupBuy() {
+    const pkg = this.data.package;
+    if (!pkg) return;
+
+    const packageInfo = {
+      id: pkg.id,
+      name: pkg.name,
+      price: pkg.price,
+      groupPrice: pkg.groupPrice,
+      groupMinCount: pkg.groupMinCount,
+      coverImage: pkg.images?.[0] || '',
+    };
+
+    wx.navigateTo({
+      url: `/pages/group-buy/start/start?packageId=${pkg.id}&packageInfo=${encodeURIComponent(JSON.stringify(packageInfo))}`,
+    });
+  },
+
+  /**
    * 分享
    */
   onShareAppMessage() {

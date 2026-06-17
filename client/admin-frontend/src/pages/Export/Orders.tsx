@@ -77,7 +77,7 @@ const ExportOrders: React.FC = () => {
       width: 180,
     },
     {
-      title: '用户',
+      title: '客户',
       key: 'user',
       width: 120,
       render: (_, record) => record.user?.nickname || '未设置',

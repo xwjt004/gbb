@@ -6,29 +6,23 @@ Page({
     loading: false,
     error: '',
     redirectUrl: '',
-    // 完善资料弹窗
     showCompleteProfile: false,
-    // 微信头像临时路径（chooseAvatar 返回）
     tempAvatarPath: '',
-    // 昵称（input type="nickname" 自动填充）
     nickname: '',
-    // 手机号是否已绑定
     phoneBound: false,
-    // 是否同意隐私政策
     agreed: false,
   },
 
-  onLoad(options: any) {
-    const redirectUrl = options.redirectUrl ? decodeURIComponent(options.redirectUrl) : '';
-    this.setData({ redirectUrl });
+  onLoad(options) {
+    var redirectUrl = options.redirectUrl ? decodeURIComponent(options.redirectUrl) : '';
+    this.setData({ redirectUrl: redirectUrl });
 
-    const token = wx.getStorageSync('accessToken');
+    var token = wx.getStorageSync('accessToken');
     if (token) {
       this.redirectToTarget();
     }
   },
 
-  /** 微信登录 */
   async onLogin() {
     if (this.data.loading) return;
     if (!this.data.agreed) {
@@ -39,17 +33,16 @@ Page({
     wx.showLoading({ title: '登录中...' });
 
     try {
-      const result = await wxLogin();
-      const app = getApp<IAppOption>();
+      var result = await wxLogin();
+      var app = getApp();
       app.globalData.justLoggedIn = true;
       app.globalData.loginTimestamp = Date.now();
 
       wx.hideLoading();
       this.setData({ loading: false });
 
-      // 检查是否需要完善资料（昵称、头像、手机号）
-      const needNickname = !result.userInfo.nickname;
-      const needPhone = !result.userInfo.phone;
+      var needNickname = !result.userInfo.nickname;
+      var needPhone = !result.userInfo.phone;
 
       if (needNickname || needPhone) {
         this.setData({
@@ -60,7 +53,7 @@ Page({
       } else {
         this.redirectToTarget();
       }
-    } catch (error: any) {
+    } catch (error) {
       wx.hideLoading();
       this.setData({
         loading: false,
@@ -69,19 +62,15 @@ Page({
     }
   },
 
-  /** 微信选择头像（chooseAvatar） */
-  onChooseAvatar(e: any) {
-    // e.detail.avatarUrl 是微信头像的临时文件路径
+  onChooseAvatar(e) {
     this.setData({ tempAvatarPath: e.detail.avatarUrl });
   },
 
-  /** 昵称输入 */
-  onNicknameInput(e: any) {
+  onNicknameInput(e) {
     this.setData({ nickname: e.detail.value });
   },
 
-  /** 获取手机号（微信手机号快速绑定） */
-  onGetPhoneNumber(e: any) {
+  onGetPhoneNumber(e) {
     if (e.detail.errMsg !== 'getPhoneNumber:ok') {
       wx.showToast({ title: '获取手机号失败', icon: 'none' });
       return;
@@ -89,20 +78,19 @@ Page({
     this.bindPhone(e.detail.code);
   },
 
-  /** 调用后端绑定手机号 */
-  async bindPhone(code: string) {
+  async bindPhone(code) {
     wx.showLoading({ title: '绑定中...' });
     try {
-      const token = getAccessToken();
-      const res: any = await new Promise((resolve, reject) => {
+      var token = getAccessToken();
+      var res = await new Promise(function(resolve, reject) {
         wx.request({
-          url: `${getApp().globalData.apiBaseUrl}/wx-auth/phone`,
+          url: getApp().globalData.apiBaseUrl + '/wx-auth/phone',
           method: 'POST',
           header: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            Authorization: 'Bearer ' + token,
           },
-          data: { code },
+          data: { code: code },
           timeout: 10000,
           success: resolve,
           fail: reject,
@@ -112,19 +100,17 @@ Page({
       wx.hideLoading();
 
       if (res.statusCode === 200 || res.statusCode === 201) {
-        // 更新本地存储的用户信息中的手机号
-        const userInfo = getUserInfo();
+        var userInfo = getUserInfo();
         if (userInfo) {
-          saveAuthData(getAccessToken(), '', {
-            ...userInfo,
+          saveAuthData(getAccessToken(), '', Object.assign({}, userInfo, {
             phone: res.data.purePhone || res.data.phone,
-          });
+          }));
         }
         wx.showToast({ title: '手机号绑定成功', icon: 'success' });
         this.setData({ phoneBound: true });
       } else {
         wx.showToast({
-          title: res.data?.message || '绑定失败',
+          title: res.data && res.data.message ? res.data.message : '绑定失败',
           icon: 'none',
         });
       }
@@ -134,70 +120,73 @@ Page({
     }
   },
 
-  /** 提交完善资料 */
   async onSubmitProfile() {
-    const token = getAccessToken();
+    var token = getAccessToken();
     if (!token) return;
 
     wx.showLoading({ title: '保存中...' });
+    var self = this;
 
     try {
-      // 1. 上传头像（如果有新选的微信头像）
-      let avatarUrl = '';
+      var avatarUrl = '';
       if (this.data.tempAvatarPath) {
         try {
-          const uploadRes: any = await new Promise((resolve, reject) => {
+          var uploadRes = await new Promise(function(resolve, reject) {
             wx.uploadFile({
-              url: `${getApp().globalData.apiBaseUrl}/files/upload`,
-              filePath: this.data.tempAvatarPath,
+              url: getApp().globalData.apiBaseUrl + '/files/upload',
+              filePath: self.data.tempAvatarPath,
               name: 'file',
-              header: { Authorization: `Bearer ${token}` },
+              header: { Authorization: 'Bearer ' + token },
               success: resolve,
               fail: reject,
             });
           });
           if (uploadRes.statusCode === 201) {
-            const body = typeof uploadRes.data === 'string' ? JSON.parse(uploadRes.data) : uploadRes.data;
-            avatarUrl = body.url || body.data?.url || '';
+            var body = typeof uploadRes.data === 'string' ? JSON.parse(uploadRes.data) : uploadRes.data;
+            avatarUrl = body.url || (body.data && body.data.url) || '';
           }
         } catch (e) {
           console.warn('[LoginPage] 头像上传失败', e);
         }
       }
 
-      // 2. 同时更新昵称和头像
-      const updateData: any = {};
+      var updateData = {};
       if (this.data.nickname) updateData.nickname = this.data.nickname;
       if (avatarUrl) {
-        const fullAvatarUrl = getImageUrl(avatarUrl);
-        updateData.avatar = fullAvatarUrl;
+        updateData.avatar = getImageUrl(avatarUrl);
       }
 
       if (Object.keys(updateData).length > 0) {
-        await new Promise((resolve, reject) => {
+        var userInfoData = getUserInfo();
+        var patchRes = await new Promise(function(resolve, reject) {
           wx.request({
-            url: `${getApp().globalData.apiBaseUrl}/wx-users/${getUserInfo()?.id}`,
-            method: 'PATCH',
+            url: getApp().globalData.apiBaseUrl + '/wx-users/' + (userInfoData ? userInfoData.id : ''),
+            method: 'POST',
             header: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
+              'X-HTTP-Method-Override': 'PATCH',
+              Authorization: 'Bearer ' + token,
             },
             data: updateData,
             timeout: 10000,
-            success: resolve,
+            success: function(res) {
+              if (res.statusCode >= 400) {
+                reject(new Error((res.data && res.data.message) || '保存失败'));
+              } else {
+                resolve(res);
+              }
+            },
             fail: reject,
           });
         });
       }
 
-      // 3. 更新本地存储
-      const userInfo = getUserInfo();
-      if (userInfo) {
-        saveAuthData(getAccessToken(), '', {
-          ...userInfo,
-          nickname: this.data.nickname || userInfo.nickname,
-          avatar: updateData.avatar || userInfo.avatar,
-        });
+      var currentUserInfo = getUserInfo();
+      if (currentUserInfo) {
+        saveAuthData(getAccessToken(), '', Object.assign({}, currentUserInfo, {
+          nickname: this.data.nickname || currentUserInfo.nickname,
+          avatar: updateData.avatar || currentUserInfo.avatar,
+        }));
       }
 
       wx.hideLoading();
@@ -206,37 +195,42 @@ Page({
       this.redirectToTarget();
     } catch (error) {
       wx.hideLoading();
-      wx.showToast({ title: '保存失败', icon: 'none' });
+      wx.showToast({ title: error.message || '保存失败', icon: 'none' });
     }
   },
 
-  /** 跳过完善资料 */
   skipCompleteProfile() {
     this.setData({ showCompleteProfile: false });
     this.redirectToTarget();
   },
 
   redirectToTarget() {
-    let redirectUrl = this.data.redirectUrl;
-    if (redirectUrl && !redirectUrl.startsWith('/')) {
+    var redirectUrl = this.data.redirectUrl;
+    if (redirectUrl && redirectUrl.charAt(0) !== '/') {
       redirectUrl = '/' + redirectUrl;
     }
 
     if (redirectUrl) {
-      const tabBarPages = [
+      var tabBarPages = [
         'pages/packages/list/list', 'pages/product/list',
         'pages/cart/cart', 'pages/profile/profile',
       ];
-      const normalizedUrl = redirectUrl.replace(/^\//, '');
-      const baseUrl = normalizedUrl.split('?')[0];
-      const isTabBar = tabBarPages.includes(baseUrl);
+      var normalizedUrl = redirectUrl.replace(/^\//, '');
+      var baseUrl = normalizedUrl.split('?')[0];
+      var isTabBar = false;
+      for (var i = 0; i < tabBarPages.length; i++) {
+        if (tabBarPages[i] === baseUrl) {
+          isTabBar = true;
+          break;
+        }
+      }
 
       if (isTabBar) {
         wx.switchTab({ url: '/' + baseUrl });
       } else {
-        const pages = getCurrentPages();
+        var pages = getCurrentPages();
         if (pages.length > 1) {
-          wx.navigateBack({ fail: () => wx.redirectTo({ url: redirectUrl }) });
+          wx.navigateBack({ fail: function() { wx.redirectTo({ url: redirectUrl }); } });
         } else {
           wx.redirectTo({ url: redirectUrl });
         }
@@ -246,14 +240,12 @@ Page({
     }
   },
 
-  /** 查看用户协议 */
   onViewUserAgreement() {
     wx.navigateTo({
       url: '/pages/agreement/user/user'
     });
   },
 
-  /** 查看隐私政策 */
   onViewPrivacyPolicy() {
     wx.navigateTo({
       url: '/pages/agreement/privacy/privacy'
@@ -266,7 +258,6 @@ Page({
 
   preventMove() {},
 
-  /** 勾选/取消勾选隐私政策 */
   onAgreementChange() {
     this.setData({ agreed: !this.data.agreed });
   },

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const BASE = 'http://localhost:3001';
+const BASE = 'http://localhost:3001/admin';
 const ADMIN_USER = 'admin';
 const ADMIN_PASS = 'admin123';
 
@@ -20,12 +20,12 @@ test.describe('1. 仪表盘业务', () => {
     await page.goto(`${BASE}/dashboard`);
     await page.waitForTimeout(3000);
     // 验证统计卡片存在
-    const stats = page.locator('.ant-card, .ant-statistic');
+    const stats = page.locator('.ant-card');
     await expect(stats.first()).toBeVisible({ timeout: 8000 });
-    // 验证统计数值显示
-    const statValues = page.locator('.ant-statistic-content-value');
-    const count = await statValues.count();
-    expect(count).toBeGreaterThanOrEqual(1);
+    // 验证统计数值显示（StatCards 使用自定义环形组件，非 ant-statistic）
+    const statCards = page.locator('.ant-card');
+    const cardCount = await statCards.count();
+    expect(cardCount).toBeGreaterThanOrEqual(4);
   });
 });
 

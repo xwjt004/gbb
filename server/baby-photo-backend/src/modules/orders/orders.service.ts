@@ -99,12 +99,12 @@ export class OrdersService {
         throw new NotFoundException(`TimeSlot with id ${timeSlotId} not found`);
       }
 
-      // 使用精确的容量管理：检查当前预订数量是否超过容量
-      const currentBookedCount = timeSlot._count?.orders;
+      // 使用 bookedCount 检查容量（bookedCount 只在支付成功后递增，防止未支付订单占用）
+      const currentBookedCount = timeSlot.bookedCount || 0;
       if (currentBookedCount >= timeSlot.capacity) {
-        console.error(`时间槽容量已满: ${timeSlotId}, 当前预订: ${currentBookedCount}, 最大容量: ${timeSlot.capacity}`);
+        console.error(`时间槽容量已满: ${timeSlotId}, 当前已支付预订: ${currentBookedCount}, 最大容量: ${timeSlot.capacity}`);
         throw new BadRequestException(
-          `时间槽容量已满，当前预订 ${currentBookedCount}/${timeSlot.capacity}`
+          `时间槽容量已满，当前已支付预订 ${currentBookedCount}/${timeSlot.capacity}`
         );
       }
 
@@ -212,35 +212,8 @@ export class OrdersService {
 
         console.log('订单创建成功:', order.id);
 
-        // 如果有时间槽，更新时间槽状态
-        if (timeSlotId) {
-          // 获取当前时间槽的实际预订数量
-          const currentTimeSlot = await prisma.timeSlot.findUnique({
-            where: { id: timeSlotId },
-            include: {
-              _count: {
-                select: { orders: true }
-              }
-            }
-          });
-
-          if (currentTimeSlot) {
-            const newBookedCount = currentTimeSlot._count?.orders;
-            const isFullyBooked = newBookedCount >= currentTimeSlot.capacity;
-
-            await prisma.timeSlot.update({
-              where: { id: timeSlotId },
-              data: {
-                bookedCount: newBookedCount,
-                availableCount: Math.max(0, currentTimeSlot.capacity - newBookedCount),
-                isBooked: isFullyBooked,
-                status: isFullyBooked ? 'BOOKED' : 'AVAILABLE'
-              },
-            });
-            
-            console.log(`时间槽状态已更新: 预订数量 ${newBookedCount}/${currentTimeSlot.capacity}, 状态: ${isFullyBooked ? 'BOOKED' : 'AVAILABLE'}`);
-          }
-        }
+        // 注意：时间槽不在创建订单时锁定，而是在支付成功后锁定
+        // 防止用户不付款却占用时间槽
 
         // 如果有优惠券，核销并应用折扣
         if (createOrderDto.couponId) {
@@ -397,6 +370,9 @@ export class OrdersService {
         diyPackage: true,
         timeSlot: true,
         payments: true,
+        groupBuyActivity: {
+          select: { id: true, status: true, minCount: true },
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -424,6 +400,9 @@ export class OrdersService {
         diyPackage: true,
         timeSlot: true,
         payments: true,
+        groupBuyActivity: {
+          select: { id: true, status: true, minCount: true },
+        },
       },
     });
 
@@ -443,6 +422,9 @@ export class OrdersService {
         diyPackage: true,
         timeSlot: true,
         payments: true,
+        groupBuyActivity: {
+          select: { id: true, status: true, minCount: true },
+        },
       },
     });
 
@@ -759,15 +741,32 @@ export class OrdersService {
 
   async getStats() {
     try {
-      // 获取订单总数
-      const totalOrders = await this.prisma.order.count();
+      // 已支付订单总数（FULLY_PAID）
+      const paidOrders = await this.prisma.order.count({
+        where: { paymentStatus: PaymentStatus.FULLY_PAID },
+      });
 
       // 获取各种状态的订单数量
-      const [pendingOrders, paidOrders, cancelledOrders, completedOrders] = await Promise.all([
+      const [pendingOrders, cancelledOrders, completedOrders] = await Promise.all([
         this.prisma.order.count({ where: { orderStatus: OrderStatus.PENDING } }),
-        this.prisma.order.count({ where: { orderStatus: OrderStatus.COMPLETED } }),
         this.prisma.order.count({ where: { orderStatus: OrderStatus.CANCELLED } }),
         this.prisma.order.count({ where: { orderStatus: OrderStatus.COMPLETED } }),
+      ]);
+
+      // 待处理细分：已付款待处理 vs 未付款待处理
+      const [paidPendingOrders, unpaidPendingOrders] = await Promise.all([
+        this.prisma.order.count({
+          where: {
+            orderStatus: OrderStatus.PENDING,
+            paymentStatus: PaymentStatus.FULLY_PAID,
+          },
+        }),
+        this.prisma.order.count({
+          where: {
+            orderStatus: OrderStatus.PENDING,
+            paymentStatus: PaymentStatus.PENDING_PAYMENT,
+          },
+        }),
       ]);
 
       // 获取总收入
@@ -797,15 +796,18 @@ export class OrdersService {
         },
       });
 
-      // 计算转化率（完成订单 / 总订单）
-      const conversionRate = totalOrders > 0 ? (completedOrders / totalOrders) * 100 : 0;
+      // 计算转化率（完成订单 / 已支付订单）
+      const conversionRate = paidOrders > 0 ? (completedOrders / paidOrders) * 100 : 0;
 
       return {
-        totalOrders,
+        totalOrders: paidOrders, // 总订单改为已支付总订单
+        paidOrders,              // 已支付订单数
         pendingOrders,
-        confirmedOrders: paidOrders, // 确认订单等同于已支付
+        confirmedOrders: paidOrders,
         completedOrders,
         cancelledOrders,
+        paidPendingOrders,       // 已付款待处理
+        unpaidPendingOrders,     // 未付款待处理
         totalRevenue: totalRevenue._sum?.totalAmount || 0,
         paidAmount: paidAmount._sum?.paidAmount || 0,
         todayOrders,
@@ -1388,6 +1390,8 @@ export class OrdersService {
     const where: any = {
       appointmentDate: { gte: start, lte: end },
       orderStatus: { notIn: ['CANCELLED', 'REJECTED'] },
+      // 未支付的订单不显示在日程看板中（支付后才锁定时间槽）
+      paymentStatus: { not: 'PENDING_PAYMENT' },
     };
     if (photographerId) where.photographerId = photographerId;
 

@@ -77,7 +77,31 @@
 }
 
 .orders-wrapper {
-  padding: 20rpx 0;
+  padding: 0 0 20rpx;
+}
+
+/* 清空全部 */
+.clear-all-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 32rpx;
+  background: #f5f5f5;
+}
+
+.clear-all-hint {
+  font-size: 26rpx;
+  color: #999;
+}
+
+.clear-all-btn {
+  padding: 8rpx 28rpx;
+  border-radius: 32rpx;
+  font-size: 24rpx;
+  border: 1rpx solid #f44336;
+  color: #f44336;
+  background: transparent;
+  line-height: 1.4;
 }
 
 /* 订单卡片 */

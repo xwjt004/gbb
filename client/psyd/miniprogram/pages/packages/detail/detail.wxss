@@ -318,6 +318,56 @@
   white-space: pre-wrap;
 }
 
+/* 拼团入口 */
+.group-buy-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+  padding: 28rpx 32rpx;
+  margin-bottom: 16rpx;
+  border-left: 8rpx solid #ee0a24;
+}
+
+.group-buy-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.group-buy-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #ee0a24;
+}
+
+.group-buy-desc {
+  font-size: 24rpx;
+  color: #646566;
+}
+
+.group-buy-right {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.group-buy-price {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #ee0a24;
+}
+
+.group-buy-price::before {
+  content: '¥';
+  font-size: 28rpx;
+}
+
+.group-buy-arrow {
+  font-size: 40rpx;
+  color: #ccc;
+}
+
 /* 温馨提示区 */
 .tips-section {
   background: #fff;

@@ -7,7 +7,7 @@ App<IAppOption>({
     loginTimestamp: 0,   // 登录时间戳
     apiBaseUrl: config.BASE_URL  // API基础URL
   },
-  onLaunch() {
+  onLaunch(options: any) {
     // 输出环境信息
     console.log('==========================================');
     console.log('🚀 小程序启动');
@@ -22,6 +22,33 @@ App<IAppOption>({
     wx.setStorageSync('logs', logs)
 
     // 登录在 login 页面处理，此处不提前调用
+
+    // 处理扫码进入（onLaunch 时也可能携带 scene）
+    this.handleScene(options);
+  },
+
+  onShow(options: any) {
+    // 处理扫码进入（小程序从后台切前台时也可能携带 scene）
+    this.handleScene(options);
+  },
+
+  /** 解析 scene 参数，识别团购小程序码扫码后直达团购详情 */
+  handleScene(options: any) {
+    if (!options || !options.query) return;
+    const rawScene: string = options.query.scene;
+    if (!rawScene) return;
+
+    // scene 可能被 URL 编码
+    const scene = decodeURIComponent(rawScene);
+    if (scene.length !== 32 || !/^[0-9a-f]{32}$/i.test(scene)) return;
+
+    // 还原 UUID 格式：xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    const uuid = `${scene.slice(0,8)}-${scene.slice(8,12)}-${scene.slice(12,16)}-${scene.slice(16,20)}-${scene.slice(20)}`;
+
+    // 扫码直达团购详情，零中间页
+    wx.reLaunch({
+      url: `/pages/group-buy/detail/detail?id=${uuid}`,
+    });
   },
   
   onError(error: string) {

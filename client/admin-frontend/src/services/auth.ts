@@ -20,12 +20,6 @@ export interface LoginResponse {
   };
 }
 
-// 微信登录请求接口
-export interface WxLoginRequest {
-  openid: string;
-  nickname: string;
-}
-
 // 配置axios实例
 const api = axios.create({
   baseURL: '/api/v1', // 使用Vite代理，会转发到http://localhost:3000/api/v1
@@ -40,13 +34,30 @@ export const adminLogin = async (data: LoginRequest): Promise<LoginResponse> => 
   return response.data;
 };
 
-// 微信登录 - 用于小程序
-export const wxLogin = async (data: WxLoginRequest): Promise<LoginResponse> => {
-  const response = await api.post('/users/wx-login', data);
+// 修改密码
+export const changePassword = async (userId: number, oldPassword: string, newPassword: string) => {
+  const token = localStorage.getItem('token');
+  const response = await api.post('/auth/change-password', { userId, oldPassword, newPassword }, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+// 忘记密码
+export const forgotPassword = async (email: string) => {
+  const response = await api.post('/auth/forgot-password', { email });
+  return response.data;
+};
+
+// 重置密码
+export const resetPassword = async (token: string, newPassword: string) => {
+  const response = await api.post('/auth/reset-password', { token, newPassword });
   return response.data;
 };
 
 export default {
   adminLogin,
-  wxLogin,
+  changePassword,
+  forgotPassword,
+  resetPassword,
 };

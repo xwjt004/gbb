@@ -5,7 +5,7 @@ const ADMIN_PASS = 'admin123';
 
 // 在所有测试前登录
 test.beforeEach(async ({ page }) => {
-  await page.goto('/login');
+  await page.goto('/admin/login');
   await page.waitForSelector('.login-input', { timeout: 10000 });
   await page.fill('input[placeholder*="用户名"]', ADMIN_USER);
   await page.fill('input[placeholder*="密码"]', ADMIN_PASS);
@@ -35,15 +35,15 @@ test.describe('管理后台核心功能', () => {
     await page.screenshot({ path: 'e2e-screenshots/orders.png', fullPage: true });
   });
 
-  test('3. 用户管理页面', async ({ page }) => {
-    // 导航到用户管理
-    await page.click('text=用户管理');
+  test('3. 员工管理页面', async ({ page }) => {
+    // 导航到员工管理
+    await page.click('text=员工管理');
     await page.waitForTimeout(500);
-    await page.click('text=用户列表');
+    await page.click('text=员工列表');
     await page.waitForURL('**/users', { timeout: 10000 });
     await page.waitForTimeout(2000);
 
-    // 验证用户列表
+    // 验证员工列表
     await expect(page.locator('.ant-table')).toBeVisible({ timeout: 10000 });
     await page.screenshot({ path: 'e2e-screenshots/users.png', fullPage: true });
   });

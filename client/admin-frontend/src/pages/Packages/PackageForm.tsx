@@ -17,7 +17,7 @@ import {
   Space,
   Image,
 } from 'antd';
-import { PlusOutlined, ThunderboltOutlined, TeamOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, ThunderboltOutlined, TeamOutlined, PictureOutlined, DeleteOutlined } from '@ant-design/icons';
 import { Resizable } from 'react-resizable';
 import 'react-resizable/css/styles.css';
 import type { UploadFile } from 'antd/es/upload/interface';
@@ -95,6 +95,7 @@ const PackageForm: React.FC<PackageFormProps> = ({
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [posterFileList, setPosterFileList] = useState<UploadFile[]>([]);
   const [categories, setCategories] = useState<PackageCategory[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
@@ -226,6 +227,10 @@ const PackageForm: React.FC<PackageFormProps> = ({
           promotionEnd: (pkg as any).promotionEnd ? dayjs((pkg as any).promotionEnd) : undefined,
           groupMinCount: (pkg as any).groupMinCount,
           groupPrice: (pkg as any).groupPrice,
+          groupBuyDescription: (pkg as any).groupBuyDescription,
+          posterTitle: (pkg as any).posterTitle,
+          posterContent: (pkg as any).posterContent,
+          posterBackground: (pkg as any).posterBackground,
         });
 
         if (pkg.images) {
@@ -235,9 +240,19 @@ const PackageForm: React.FC<PackageFormProps> = ({
               .map((url, index) => ({ uid: `-${index}`, name: `image-${index}`, status: 'done', url }))
           );
         }
+
+        const posterImgs = (pkg as any).posterImages || [];
+        if (posterImgs.length > 0) {
+          setPosterFileList(
+            posterImgs
+              .filter((u) => u)
+              .map((url: string, index: number) => ({ uid: `poster-${index}`, name: `poster-${index}`, status: 'done', url }))
+          );
+        }
       } else {
         form.resetFields();
         setFileList([]);
+        setPosterFileList([]);
         setCustomProductRows([]);
         setServiceRows([]);
       }
@@ -317,6 +332,11 @@ const PackageForm: React.FC<PackageFormProps> = ({
         promotionEnd: values.promotionEnd ? values.promotionEnd.toISOString() : null,
         groupMinCount: values.groupMinCount || 0,
         groupPrice: values.groupPrice || null,
+        groupBuyDescription: values.groupBuyDescription || '',
+        posterTitle: values.posterTitle || '',
+        posterContent: values.posterContent || '',
+        posterBackground: values.posterBackground || '',
+        posterImages: (posterFileList || []).filter(f => !!(f as any).url).map(f => (f as any).url),
         // 商品关联（含数量）
         products: customProductRows
           .filter(r => r.productId) // 只提交已选商品的行
@@ -796,6 +816,74 @@ const PackageForm: React.FC<PackageFormProps> = ({
       </Form.Item>
       <Form.Item name="groupPrice" label="团购价">
         <InputNumber style={{ width: '100%' }} min={0} precision={2} addonBefore="¥" />
+      </Form.Item>
+      <Form.Item name="groupBuyDescription" label="团购说明">
+        <TextArea rows={3} placeholder="例：3人成团享8折优惠，2人成团赠送精修照片5张" maxLength={500} showCount />
+      </Form.Item>
+
+      <Divider orientation="left"><PictureOutlined /> 团购海报设置</Divider>
+      <Form.Item name="posterTitle" label="海报标题">
+        <Input placeholder="默认使用套餐名称，可自定义" maxLength={200} showCount />
+      </Form.Item>
+      <Form.Item name="posterContent" label="海报描述">
+        <TextArea rows={2} placeholder="海报上展示的宣传语" maxLength={1000} showCount />
+      </Form.Item>
+      <Form.Item name="posterBackground" label="海报背景">
+        <Input placeholder="颜色代码如 #fce4ec，或背景图片URL" maxLength={500} />
+      </Form.Item>
+      <Form.Item name="posterImages" label="宣传照片">
+        <Upload
+          listType="picture-card"
+          fileList={posterFileList}
+          onRemove={(file) => {
+            const uid = (file as any).uid;
+            setPosterFileList(prev => prev.filter(f => f.uid !== uid));
+          }}
+          onChange={({ fileList: newFileList }) => {
+            setPosterFileList(prev => {
+              const prevMap = new Map((prev || []).map(f => [(f as any).uid, f]));
+              return (newFileList || []).map(f => {
+                const uid = (f as any).uid;
+                const existing = prevMap.get(uid) || {};
+                const merged = { ...existing, ...f } as UploadFile;
+                if (!merged.url && existing && (existing as any).url) {
+                  (merged as any).url = (existing as any).url;
+                }
+                return merged;
+              });
+            });
+          }}
+          beforeUpload={async (file: UploadFile) => {
+            const uid = (file as any).uid || `uid-${Date.now()}`;
+            setPosterFileList(prev => [
+              ...prev,
+              { uid, name: file.name || 'image', status: 'uploading' } as UploadFile,
+            ]);
+
+            const formData = new FormData();
+            formData.append('file', file as unknown as Blob, file.name || 'upload.jpg');
+            try {
+              const resp = await api.post('/files/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+              });
+              const data = resp.data?.data;
+              if (data && data.url) {
+                setPosterFileList(prev => prev.map(f => (f.uid === uid ? ({ ...f, status: 'done', url: data.url } as UploadFile) : f)));
+              } else {
+                message.error('图片上传失败');
+                setPosterFileList(prev => prev.filter(f => f.uid !== uid));
+              }
+            } catch (err: any) {
+              message.error('图片上传失败: ' + (err.message || ''));
+              setPosterFileList(prev => prev.filter(f => f.uid !== uid));
+            }
+
+            return false;
+          }}
+        >
+          <PlusOutlined />
+          <div style={{ marginTop: 8 }}>上传照片</div>
+        </Upload>
       </Form.Item>
 
       <Form.Item name="tags" label="套餐标签">

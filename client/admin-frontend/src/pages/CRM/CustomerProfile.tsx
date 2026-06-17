@@ -94,7 +94,7 @@ const CustomerProfile: React.FC = () => {
   return (
     <div style={{ padding: 24 }}>
       <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/users')} style={{ marginBottom: 16 }}>
-        返回用户列表
+        返回客户列表
       </Button>
 
       {/* 会员卡片 */}

@@ -27,6 +27,7 @@ import {
   CloseCircleOutlined,
   DeleteOutlined,
   DownOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { Order, OrderSearchParams, OrderStatus } from '@/types/order';
@@ -87,11 +88,18 @@ const OrderList: React.FC = () => {
     {
       title: '订单信息',
       key: 'orderInfo',
-      width: 200,
+      width: 260,
       render: (_, record) => (
         <div>
-          <div style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-            {record.orderNo}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+              {record.orderNo}
+            </span>
+            {record.groupBuyActivityId && (
+              <Tag color="red" style={{ fontSize: 11, lineHeight: '18px', padding: '0 6px' }}>
+                <TeamOutlined /> 团购
+              </Tag>
+            )}
           </div>
           <div style={{ color: '#666', fontSize: '12px' }}>
             {new Date(record.createdAt).toLocaleString()}
@@ -125,13 +133,23 @@ const OrderList: React.FC = () => {
     {
       title: '套餐信息',
       dataIndex: ['package', 'name'],
-      width: 180,
+      width: 200,
       render: (text, record) => (
         <div>
           <div>{text}</div>
           <div style={{ color: '#666', fontSize: '12px' }}>
             ¥{Number(record.totalAmount || 0).toFixed(2)}
           </div>
+          {record.groupBuyActivity && record.groupBuyActivity.status === 'SUCCESS' && (
+            <Tag color="green" style={{ fontSize: 11, lineHeight: '18px', padding: '0 6px', marginTop: 2 }}>
+              团购已成团
+            </Tag>
+          )}
+          {record.groupBuyActivity && record.groupBuyActivity.status === 'ACTIVE' && (
+            <Tag color="orange" style={{ fontSize: 11, lineHeight: '18px', padding: '0 6px', marginTop: 2 }}>
+              团购进行中
+            </Tag>
+          )}
         </div>
       ),
     },

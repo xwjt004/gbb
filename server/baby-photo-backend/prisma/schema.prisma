@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -117,6 +118,12 @@ model Package {
   // 团购相关
   groupMinCount     Int?       @default(0) @map("group_min_count")
   groupPrice        Decimal?   @map("group_price") @db.Decimal(10, 2)
+  groupBuyDescription String?  @map("group_buy_description") @db.Text
+  // 团购海报配置
+  posterTitle       String?    @map("poster_title") @db.VarChar(200)
+  posterContent     String?    @map("poster_content") @db.Text
+  posterBackground  String?    @map("poster_background") @db.VarChar(500)
+  posterImages      String[]   @default([]) @map("poster_images")
   // 关联
   seasonalPrices    SeasonalPrice[]
   crossSellPackages CrossSellPackage[] @relation("SourcePackage")
@@ -128,6 +135,7 @@ model Package {
   packageServices   PackageService[]
   packageCategory   PackageCategory? @relation(fields: [categoryId], references: [id])
   favorites         UserFavorite[]
+  groupBuyActivities GroupBuyActivity[]
 
   @@index([categoryId])
   @@index([packageType])
@@ -236,6 +244,8 @@ model Order {
   diyPackage        DiyPackage?       @relation(fields: [diyPackageId], references: [id])
   package           Package?          @relation(fields: [packageId], references: [id])
   timeSlot          TimeSlot?         @relation(fields: [timeSlotId], references: [id])
+  groupBuyActivityId String?          @map("group_buy_activity_id")
+  groupBuyActivity  GroupBuyActivity? @relation(fields: [groupBuyActivityId], references: [id])
   user              User              @relation(fields: [userId], references: [id])
   photographer      User?             @relation("PhotographerOrders", fields: [photographerId], references: [id])
   wxUser            WxUser?           @relation("WxOrders", fields: [wxUserId], references: [id])
@@ -250,6 +260,7 @@ model Order {
   @@index([depositTimeout])
   @@index([finalTimeout])
   @@index([checkinStatus])
+  @@index([groupBuyActivityId])
   @@map("orders")
 }
 
@@ -1216,6 +1227,8 @@ model WxUser {
   pointsTransactions PointsTransaction[]
   milestoneUploadLogs BabyMilestoneUploadLog[]
   milestonePlayLogs BabyMilestonePlayLog[]
+  groupBuyActivities GroupBuyActivity[]
+  groupBuyParticipations GroupBuyParticipant[]
 
   @@index([openid])
   @@index([phone])
@@ -1416,6 +1429,41 @@ model UserCoupon {
   @@map("user_coupons")
 }
 
+// 团购活动
+model GroupBuyActivity {
+  id            String   @id @default(uuid())
+  packageId     Int      @map("package_id")
+  creatorUserId String   @map("creator_user_id")
+  minCount      Int      @default(3) @map("min_count")
+  status        String   @default("ACTIVE") @db.VarChar(20) // ACTIVE / SUCCESS / FAILED
+  createdAt     DateTime @default(now()) @map("created_at")
+  expiredAt     DateTime @map("expired_at")
+  package       Package  @relation(fields: [packageId], references: [id])
+  creator       WxUser   @relation(fields: [creatorUserId], references: [id])
+  participants  GroupBuyParticipant[]
+  orders        Order[]
+
+  @@index([packageId])
+  @@index([creatorUserId])
+  @@index([status])
+  @@map("group_buy_activities")
+}
+
+// 团购参团记录
+model GroupBuyParticipant {
+  id         String   @id @default(uuid())
+  activityId String   @map("activity_id")
+  userId     String   @map("user_id")
+  status     String   @default("JOINED") @db.VarChar(20) // JOINED / SUCCESS / REFUNDED
+  joinedAt   DateTime @default(now()) @map("joined_at")
+  activity   GroupBuyActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user       WxUser           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([activityId])
+  @@index([userId])
+  @@map("group_buy_participants")
+}
+
 model AutomationRule {
   id          Int      @id @default(autoincrement())
   name        String   @db.VarChar(100)
@@ -1560,6 +1608,7 @@ enum CouponType {
   PROMOTION
   REBATE
   BIRTHDAY
+  GROUP_BUY
 }
 
 enum DiscountType {
@@ -1750,11 +1799,11 @@ model PointsTransaction {
 
 // 积分配置（后台管理）
 model PointsConfig {
-  id              String @id @default(uuid())
-  photoUploadCost Int    @default(50)   // 上传照片消耗积分
-  videoUploadCost Int    @default(50)   // 上传视频消耗积分
-  videoPlayCost   Int    @default(50)   // 播放视频消耗积分
-  purchaseRate    Int    @default(1000) // 1元兑换积分数（如1000=1元1000积分）
+  id              String   @id @default(uuid())
+  photoUploadCost Int      @default(50) @map("photo_upload_cost")
+  videoUploadCost Int      @default(50) @map("video_upload_cost")
+  videoPlayCost   Int      @default(50) @map("video_play_cost")
+  purchaseRate    Int      @default(1000) @map("purchase_rate")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 

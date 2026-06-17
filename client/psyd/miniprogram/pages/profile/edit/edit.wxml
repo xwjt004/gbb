@@ -8,6 +8,9 @@
 
     <block wx:else>
 
+      <!-- ===== 编辑里程碑时隐藏其他区域 ===== -->
+      <block wx:if="{{!showMilestoneForm}}">
+
       <!-- ===== 头像 ===== -->
       <view class="avatar-section" bindtap="chooseAvatar">
         <view class="avatar-wrap">
@@ -78,7 +81,18 @@
       <view class="form-group">
         <view class="group-title">宝宝信息</view>
         <view class="form-row">
-          <text class="form-label">身高 (cm)</text>
+          <text class="form-label">宝宝姓名</text>
+          <input
+            class="form-input"
+            placeholder="请输入宝宝姓名"
+            placeholder-class="form-ph"
+            value="{{realName}}"
+            data-field="realName"
+            bindinput="onInput"
+          />
+        </view>
+        <view class="form-row">
+          <text class="form-label">宝宝身高 (cm)</text>
           <input
             class="form-input"
             type="number"
@@ -90,7 +104,7 @@
           />
         </view>
         <view class="form-row">
-          <text class="form-label">体重 (kg)</text>
+          <text class="form-label">宝宝体重 (kg)</text>
           <input
             class="form-input"
             type="number"
@@ -154,33 +168,229 @@
         <view class="group-title">纪念日</view>
         <view class="form-row">
           <text class="form-label">百日纪念</text>
-          <picker
-            mode="date"
-            value="{{hundredDaysDate}}"
-            data-field="hundredDaysDate"
-            bindchange="onDateChange"
-          >
-            <text class="form-input form-picker {{hundredDaysDate ? '' : 'form-ph'}}">
-              {{hundredDaysDate || '请选择日期'}}
-            </text>
-          </picker>
+          <view class="form-datetime">
+            <picker
+              mode="date"
+              value="{{hundredDaysDate}}"
+              data-field="hundredDaysDate"
+              bindchange="onDateChange"
+            >
+              <text class="form-input form-picker {{hundredDaysDate ? '' : 'form-ph'}}">
+                {{hundredDaysDate || '选择日期'}}
+              </text>
+            </picker>
+            <picker
+              mode="time"
+              value="{{hundredDaysTime}}"
+              data-field="hundredDaysTime"
+              bindchange="onTimeChange"
+            >
+              <text class="form-input form-picker form-time">
+                {{hundredDaysTime}}
+              </text>
+            </picker>
+          </view>
         </view>
         <view class="form-row">
           <text class="form-label">周岁纪念</text>
-          <picker
-            mode="date"
-            value="{{firstBirthdayDate}}"
-            data-field="firstBirthdayDate"
-            bindchange="onDateChange"
-          >
-            <text class="form-input form-picker {{firstBirthdayDate ? '' : 'form-ph'}}">
-              {{firstBirthdayDate || '请选择日期'}}
-            </text>
-          </picker>
+          <view class="form-datetime">
+            <picker
+              mode="date"
+              value="{{firstBirthdayDate}}"
+              data-field="firstBirthdayDate"
+              bindchange="onDateChange"
+            >
+              <text class="form-input form-picker {{firstBirthdayDate ? '' : 'form-ph'}}">
+                {{firstBirthdayDate || '选择日期'}}
+              </text>
+            </picker>
+            <picker
+              mode="time"
+              value="{{firstBirthdayTime}}"
+              data-field="firstBirthdayTime"
+              bindchange="onTimeChange"
+            >
+              <text class="form-input form-picker form-time">
+                {{firstBirthdayTime}}
+              </text>
+            </picker>
+          </view>
+        </view>
+      </view>
+      </block>
+
+      <!-- ===== 成长里程碑 ===== -->
+      <view class="form-group">
+        <view class="group-title">宝宝幸福空间</view>
+
+        <!-- 里程碑列表：完整内容展示 -->
+        <view wx:if="{{milestones.length > 0 && !showMilestoneForm}}" class="ms-list">
+          <view wx:for="{{milestones}}" wx:key="id" class="ms-card">
+            <!-- 头部：类型徽章 + 日期 -->
+            <view class="ms-header">
+              <text class="ms-badge">{{item.type}}</text>
+              <text class="ms-date">{{item.recordDate ? item.recordDate.slice(0,10) : '未设置日期'}}</text>
+            </view>
+
+            <!-- 身体数据 -->
+            <view wx:if="{{item.height || item.weight}}" class="ms-stats">
+              <view wx:if="{{item.height}}" class="ms-stat">
+                <text class="ms-stat-val">{{item.height}}</text>
+                <text class="ms-stat-unit">cm</text>
+              </view>
+              <view wx:if="{{item.weight}}" class="ms-stat">
+                <text class="ms-stat-val">{{item.weight}}</text>
+                <text class="ms-stat-unit">kg</text>
+              </view>
+            </view>
+
+            <!-- 爱好 -->
+            <view wx:if="{{item.hobby}}" class="ms-hobby">
+              <text class="ms-hobby-icon">❤️</text>
+              <text>{{item.hobby}}</text>
+            </view>
+
+            <!-- 照片 / 视频 -->
+            <view wx:if="{{item._photoList.length > 0 || item._videoUrl}}" class="ms-media">
+              <view wx:if="{{item._photoList.length > 0}}" class="ms-photo-grid">
+                <view wx:for="{{item._photoList}}" wx:for-item="photo" wx:key="*this" class="ms-photo-grid-item">
+                  <image src="{{photo}}" mode="aspectFill" class="ms-card-photo" bindtap="previewCardPhoto" data-urls="{{item._photoList}}" data-current="{{photo}}" />
+                </view>
+              </view>
+              <view wx:if="{{item._videoUrl}}" class="ms-card-video-wrap">
+                <video src="{{item._videoUrl}}" controls class="ms-card-video" enable-progress-gesture object-fit="contain" bindplay="onVideoPlay"></video>
+              </view>
+            </view>
+
+            <!-- 祝福语 -->
+            <view wx:if="{{item.momBlessing || item.dadBlessing || item.elderBlessing}}" class="ms-blessings">
+              <view wx:if="{{item.momBlessing}}" class="ms-blessing">
+                <text class="ms-blessing-label">妈妈寄语</text>
+                <text class="ms-blessing-text">{{item.momBlessing}}</text>
+              </view>
+              <view wx:if="{{item.dadBlessing}}" class="ms-blessing">
+                <text class="ms-blessing-label">爸爸寄语</text>
+                <text class="ms-blessing-text">{{item.dadBlessing}}</text>
+              </view>
+              <view wx:if="{{item.elderBlessing}}" class="ms-blessing">
+                <text class="ms-blessing-label">长辈寄语</text>
+                <text class="ms-blessing-text">{{item.elderBlessing}}</text>
+              </view>
+            </view>
+
+            <!-- 操作按钮 -->
+            <view class="ms-actions">
+              <text class="ms-act-edit" data-id="{{item.id}}" bindtap="editMilestone">编 辑</text>
+              <text class="ms-act-del" data-id="{{item.id}}" bindtap="deleteMilestone">删 除</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 空状态 -->
+        <view wx:if="{{milestones.length === 0 && !showMilestoneForm}}" class="milestone-empty">
+          <text class="milestone-empty-text">暂无成长记录</text>
+        </view>
+
+        <!-- 新增按钮 -->
+        <view wx:if="{{!showMilestoneForm}}" class="add-milestone-btn" bindtap="addMilestone">
+          <text>+ 新增记录</text>
+        </view>
+
+        <!-- 里程碑表单（上下结构，清晰大输入框） -->
+        <view wx:if="{{showMilestoneForm}}" class="ms-form">
+          <!-- 类型 -->
+          <view class="ms-form-group">
+            <text class="ms-form-label">类型</text>
+            <picker mode="selector" range="{{MILESTONE_TYPES}}" value="{{milestoneTypeIndex}}" bindchange="onMilestoneTypeChange" class="ms-form-picker">
+              <view class="ms-form-picker-box {{milestoneFormData.type ? '' : 'ms-form-ph'}}">
+                <text>{{milestoneFormData.type || '请选择类型'}}</text>
+                <text class="ms-form-arrow">›</text>
+              </view>
+            </picker>
+          </view>
+          <!-- 日期 -->
+          <view class="ms-form-group">
+            <text class="ms-form-label">日期</text>
+            <picker mode="date" value="{{milestoneFormData.recordDate}}" bindchange="onMilestoneDateChange" class="ms-form-picker">
+              <view class="ms-form-picker-box {{milestoneFormData.recordDate ? '' : 'ms-form-ph'}}">
+                <text>{{milestoneFormData.recordDate || '选择日期'}}</text>
+                <text class="ms-form-arrow">›</text>
+              </view>
+            </picker>
+          </view>
+          <!-- 身高 -->
+          <view class="ms-form-group">
+            <text class="ms-form-label">身高（cm）</text>
+            <input class="ms-form-input" type="number" placeholder="例如 65.5" placeholder-class="ms-form-ph" value="{{milestoneFormData.height}}" data-field="height" bindinput="onMilestoneFormInput" />
+          </view>
+          <!-- 体重 -->
+          <view class="ms-form-group">
+            <text class="ms-form-label">体重（kg）</text>
+            <input class="ms-form-input" type="number" placeholder="例如 7.2" placeholder-class="ms-form-ph" value="{{milestoneFormData.weight}}" data-field="weight" bindinput="onMilestoneFormInput" />
+          </view>
+          <!-- 爱好 -->
+          <view class="ms-form-group">
+            <text class="ms-form-label">爱好</text>
+            <input class="ms-form-input" placeholder="宝宝喜欢做什么？" placeholder-class="ms-form-ph" value="{{milestoneFormData.hobby}}" data-field="hobby" bindinput="onMilestoneFormInput" />
+          </view>
+          <!-- 照片 -->
+          <view class="ms-form-group">
+            <text class="ms-form-label">照片（最多 10 张，每张不超过 1MB）</text>
+            <view wx:if="{{quota}}" class="ms-quota-text">
+              <text>📷 {{quota.photoRemaining}}次/年 🎬 {{quota.videoRemaining}}次/年 💎 {{quota.pointsBalance || 0}}积分</text>
+            </view>
+            <view wx:if="{{photoList.length > 0}}" class="ms-photo-grid">
+              <view wx:for="{{photoList}}" wx:for-item="photo" wx:for-index="idx" wx:key="*this" class="ms-photo-grid-item">
+                <image src="{{photo}}" mode="aspectFill" class="ms-photo-img" bindtap="previewMilestonePhoto" data-src="{{photo}}" />
+                <view class="ms-photo-remove" bindtap="removeMilestonePhoto" data-index="{{idx}}">
+                  <text>✕</text>
+                </view>
+              </view>
+            </view>
+            <view class="ms-form-upload-row">
+              <view class="ms-form-upload-btn" bindtap="chooseMilestonePhotos">
+                <text>📷 上传照片</text>
+              </view>
+              <view wx:if="{{!videoUrl}}" class="ms-form-upload-btn ms-form-upload-btn-video" bindtap="chooseMilestoneVideo">
+                <text>🎬 上传视频</text>
+              </view>
+            </view>
+          </view>
+          <!-- 视频 -->
+          <view wx:if="{{videoUrl}}" class="ms-form-group">
+            <text class="ms-form-label">视频</text>
+            <view class="ms-form-video-wrap">
+              <video src="{{videoUrl}}" controls class="ms-form-video-preview" enable-progress-gesture object-fit="contain" bindplay="onVideoPlay"></video>
+              <view class="ms-photo-remove ms-video-remove" bindtap="removeMilestoneVideo">
+                <text>✕</text>
+              </view>
+            </view>
+          </view>
+          <!-- 妈妈寄语 -->
+          <view class="ms-form-group">
+            <text class="ms-form-label">妈妈寄语</text>
+            <textarea class="ms-form-textarea" placeholder="写下对宝宝的祝福……" placeholder-class="ms-form-ph" value="{{milestoneFormData.momBlessing}}" data-field="momBlessing" bindinput="onMilestoneFormInput" maxlength="200" auto-height />
+          </view>
+          <!-- 爸爸寄语 -->
+          <view class="ms-form-group">
+            <text class="ms-form-label">爸爸寄语</text>
+            <textarea class="ms-form-textarea" placeholder="写下对宝宝的祝福……" placeholder-class="ms-form-ph" value="{{milestoneFormData.dadBlessing}}" data-field="dadBlessing" bindinput="onMilestoneFormInput" maxlength="200" auto-height />
+          </view>
+          <!-- 长辈寄语 -->
+          <view class="ms-form-group">
+            <text class="ms-form-label">长辈寄语</text>
+            <textarea class="ms-form-textarea" placeholder="写下对宝宝的祝福……" placeholder-class="ms-form-ph" value="{{milestoneFormData.elderBlessing}}" data-field="elderBlessing" bindinput="onMilestoneFormInput" maxlength="200" auto-height />
+          </view>
+          <!-- 按钮 -->
+          <view class="ms-form-btns">
+            <text class="ms-form-cancel" bindtap="cancelMilestoneForm">取消</text>
+            <button class="ms-form-save" disabled="{{savingMilestone}}" bindtap="saveMilestone">{{savingMilestone ? '保存中...' : '保存'}}</button>
+          </view>
         </view>
       </view>
 
       <!-- ===== 保存按钮 ===== -->
+      <block wx:if="{{!showMilestoneForm}}">
       <view class="save-wrap">
         <button
           class="save-btn {{saving ? 'save-btn-loading' : ''}}"
@@ -192,6 +402,7 @@
       </view>
 
       <view class="footer-gap"></view>
+      </block>
     </block>
   </scroll-view>
 </view>

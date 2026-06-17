@@ -268,6 +268,9 @@ export class PackagesService {
         created_at: pkg.createdAt,
         packageProducts: pkg.packageProducts || [],
         packageServices: pkg.packageServices || [],
+        groupMinCount: pkg.groupMinCount || null,
+        groupPrice: pkg.groupPrice ? Number(pkg.groupPrice) : null,
+        groupBuyDescription: pkg.groupBuyDescription || '',
       }));      return {
         code: 200,
         message: '查询成功',
@@ -581,6 +584,20 @@ export class PackagesService {
             packageProducts: pkg.packageProducts || [],
             packageServices: pkg.packageServices || [],
             created_at: pkg.createdAt,
+
+            // 促销设置
+            promotionPrice: pkg.promotionPrice ? Number(pkg.promotionPrice) : null,
+            promotionStart: pkg.promotionStart || null,
+            promotionEnd: pkg.promotionEnd || null,
+
+            // 团购设置
+            groupMinCount: pkg.groupMinCount,
+            groupPrice: pkg.groupPrice ? Number(pkg.groupPrice) : null,
+            groupBuyDescription: pkg.groupBuyDescription || '',
+            posterTitle: pkg.posterTitle || '',
+            posterContent: pkg.posterContent || '',
+            posterBackground: pkg.posterBackground || '',
+            posterImages: pkg.posterImages || [],
           };
 
           return {

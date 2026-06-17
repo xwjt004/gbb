@@ -168,6 +168,36 @@ export class CreatePackageDto {
   @Type(() => Number)
   groupPrice?: number;
 
+  @ApiProperty({ description: '团购说明（如：3人成团享8折优惠）', required: false })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  groupBuyDescription?: string;
+
+  @ApiProperty({ description: '团购海报标题', required: false })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  posterTitle?: string;
+
+  @ApiProperty({ description: '团购海报内容描述', required: false })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  posterContent?: string;
+
+  @ApiProperty({ description: '团购海报背景（颜色值或背景图URL）', required: false })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  posterBackground?: string;
+
+  @ApiProperty({ description: '团购海报宣传照片', required: false, type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  posterImages?: string[];
+
   @ApiProperty({ description: '关联商品列表（含数量）', type: [ProductItemDto], required: false })
   @IsOptional()
   @IsArray()

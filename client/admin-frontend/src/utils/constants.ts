@@ -115,7 +115,7 @@ export const STORAGE_KEYS = {
 
 // 权限常量
 export const PERMISSIONS = {
-  // 用户管理
+  // 员工管理
   USER_VIEW: 'user:view',
   USER_CREATE: 'user:create',
   USER_UPDATE: 'user:update',
@@ -158,7 +158,7 @@ export const MENU_ITEMS = [
   },
   {
     key: '/users',
-    label: '用户管理',
+    label: '员工管理',
     icon: 'UserOutlined',
     permission: PERMISSIONS.USER_VIEW,
   },

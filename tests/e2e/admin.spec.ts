@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const BASE = 'http://localhost:3001';
+const BASE = 'http://localhost:3001/admin';
 const ADMIN_USER = 'admin';
 const ADMIN_PASS = 'admin123';
 
@@ -205,10 +205,11 @@ test.describe('GBB Admin Frontend', () => {
       const menuTexts = await menu.allInnerTexts();
       const allText = menuTexts.join(' ');
       expect(allText).toContain('仪表盘');
-      expect(allText).toContain('用户');
-      expect(allText).toContain('订单');
-      expect(allText).toContain('套系');
-      expect(allText).toContain('商品');
+      expect(allText).toContain('员工管理');
+      expect(allText).toContain('客户管理');
+      expect(allText).toContain('订单管理');
+      expect(allText).toContain('套系管理');
+      expect(allText).toContain('商品管理');
       expect(allText).toContain('支付');
     });
 

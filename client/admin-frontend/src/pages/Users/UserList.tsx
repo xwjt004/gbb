@@ -76,7 +76,7 @@ const UserList: React.FC = () => {
       }
     } catch (error) {
       console.error('用户列表加载错误:', error);
-      message.error('加载用户列表失败，请检查搜索条件或稍后重试');
+      message.error('加载员工列表失败，请检查搜索条件或稍后重试');
     } finally {
       setLoading(false);
     }
@@ -113,7 +113,7 @@ const UserList: React.FC = () => {
 
   const columns: ColumnsType<User> = [
     {
-      title: '用户信息',
+      title: '员工信息',
       key: 'userInfo',
       render: (_, record) => (
         <Space>
@@ -130,8 +130,8 @@ const UserList: React.FC = () => {
       ),
     },
     {
-      title: '微信号',
-      dataIndex: 'wechatId',
+      title: '角色',
+      dataIndex: 'roleName',
       render: (text) => text || '-',
     },
     {
@@ -145,24 +145,6 @@ const UserList: React.FC = () => {
           </Tag>
         );
       },
-    },
-    {
-      title: 'VIP',
-      dataIndex: 'isVip',
-      render: (isVip: boolean, record) => (
-        <Tag color={isVip ? 'gold' : 'default'}>
-          {isVip ? `VIP${record.vipLevel || 1}` : '普通'}
-        </Tag>
-      ),
-    },
-    {
-      title: '订单数',
-      dataIndex: 'orderCount',
-    },
-    {
-      title: '消费金额',
-      dataIndex: 'totalAmount',
-      render: (amount: number | string) => `¥${Number(amount || 0).toFixed(2)}`,
     },
     {
       title: '最后登录',
@@ -181,7 +163,6 @@ const UserList: React.FC = () => {
           >
             编辑
           </Button>
-          {/* 只有禁用状态的用户才显示删除按钮 */}
           {record.status === Status.INACTIVE && (
             <Button
               type="link"
@@ -235,16 +216,14 @@ const UserList: React.FC = () => {
         ...searchParams,
         phone: keyword,
         nickname: undefined,
-        wechatId: undefined,
         fuzzy: undefined
       });
     } else {
-      // 模糊搜索昵称（支持昵称和手机号的综合搜索）
+      // 模糊搜索昵称
       setSearchParams({
         ...searchParams,
         phone: undefined,
         nickname: keyword,
-        wechatId: undefined,
         fuzzy: 'true'
       });
     }
@@ -268,7 +247,7 @@ const UserList: React.FC = () => {
   const handleDelete = (id: string) => {
     Modal.confirm({
       title: '确认删除',
-      content: '确定要删除这个用户吗？此操作不可恢复。',
+      content: '确定要删除这个员工吗？此操作不可恢复。',
       onOk: async () => {
         try {
           await userService.deleteUser(id);
@@ -291,15 +270,15 @@ const UserList: React.FC = () => {
     // 检查选中的用户是否都是禁用状态
     const selectedUsers = users.filter(u => selectedRowKeys.includes(u.id));
     const activeUsers = selectedUsers.filter(u => u.status === Status.ACTIVE);
-    
+
     if (activeUsers.length > 0) {
-      message.error(`选中的用户中有 ${activeUsers.length} 个用户状态为"正常"，只能删除状态为"禁用"的用户`);
+      message.error(`选中的员工中有 ${activeUsers.length} 个员工状态为"正常"，只能删除状态为"禁用"的员工`);
       return;
     }
 
     Modal.confirm({
       title: '批量删除',
-      content: `确定要删除选中的 ${selectedRowKeys.length} 个禁用用户吗？`,
+      content: `确定要删除选中的 ${selectedRowKeys.length} 个禁用员工吗？`,
       onOk: async () => {
         try {
           await userService.batchDeleteUsers(selectedRowKeys);
@@ -336,7 +315,7 @@ const UserList: React.FC = () => {
   const handleBackendExport = async () => {
     try {
       await exportService.exportUsers();
-      message.success('正在导出用户数据，请稍候...');
+      message.success('正在导出员工数据，请稍候...');
     } catch (error) {
       message.error('导出失败');
     }
@@ -356,22 +335,17 @@ const UserList: React.FC = () => {
       <Row gutter={16} style={{ marginBottom: 16 }}>
         <Col span={6}>
           <Card>
-            <Statistic title="总用户数" value={stats.totalUsers} />
+            <Statistic title="总员工数" value={stats.totalUsers} />
           </Card>
         </Col>
         <Col span={6}>
           <Card>
-            <Statistic title="活跃用户" value={stats.activeUsers} />
+            <Statistic title="活跃员工" value={stats.activeUsers} />
           </Card>
         </Col>
         <Col span={6}>
           <Card>
             <Statistic title="今日新增" value={stats.newUsersToday} />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic title="VIP用户" value={stats.vipUsers} />
           </Card>
         </Col>
       </Row>
@@ -381,37 +355,14 @@ const UserList: React.FC = () => {
         <Row gutter={16} style={{ marginBottom: 16 }} className="search-form">
           <Col span={6}>
             <Search
-              placeholder="搜索手机号/昵称/微信号"
+              placeholder="搜索昵称/手机号"
               onSearch={handleKeywordSearch}
               allowClear
             />
           </Col>
-          <Col span={4}>
+          <Col span={6}>
             <Search
-              placeholder="精确手机号"
-              value={searchParams.phone || ''}
-              onChange={(e) => {
-                // 实时更新输入值，但不触发搜索
-                const phone = e.target.value;
-                setSearchParams(prev => ({ ...prev, phone: phone || undefined }));
-              }}
-              onSearch={(phone) => {
-                // 只在点击搜索按钮或按回车时搜索
-                handleSearch({ 
-                  ...searchParams, 
-                  phone: phone || undefined,
-                  nickname: undefined,
-                  wechatId: undefined,
-                  fuzzy: undefined
-                });
-              }}
-              allowClear
-              enterButton={false}
-            />
-          </Col>
-          <Col span={4}>
-            <Search
-              placeholder="用户昵称"
+              placeholder="员工昵称"
               value={searchParams.nickname || ''}
               onChange={(e) => {
                 // 实时更新输入值，但不触发搜索
@@ -432,9 +383,9 @@ const UserList: React.FC = () => {
               enterButton={false}
             />
           </Col>
-          <Col span={3}>
+          <Col span={4}>
             <Select
-              placeholder="用户状态"
+              placeholder="员工状态"
               allowClear
               style={{ width: '100%' }}
               value={searchParams.status}
@@ -444,19 +395,7 @@ const UserList: React.FC = () => {
               <Option value={Status.INACTIVE}>禁用</Option>
             </Select>
           </Col>
-          <Col span={3}>
-            <Select
-              placeholder="VIP类型"
-              allowClear
-              style={{ width: '100%' }}
-              value={searchParams.isVip}
-              onChange={(value) => handleSearch({ ...searchParams, isVip: value })}
-            >
-              <Option value={true}>VIP用户</Option>
-              <Option value={false}>普通用户</Option>
-            </Select>
-          </Col>
-          <Col span={4}>
+          <Col span={6}>
             <RangePicker
               placeholder={['开始日期', '结束日期']}
               style={{ width: '100%' }}
@@ -479,7 +418,7 @@ const UserList: React.FC = () => {
               icon={<PlusOutlined />}
               onClick={() => setFormVisible(true)}
             >
-              新增用户
+              新增员工
             </Button>
             <Button
               icon={<DeleteOutlined />}
@@ -513,7 +452,7 @@ const UserList: React.FC = () => {
                 导出数据 <DownOutlined />
               </Button>
             </Dropdown>
-            {(searchParams.phone || searchParams.nickname || searchParams.wechatId || searchParams.status || searchParams.isVip !== undefined || searchParams.startDate) && (
+            {(searchParams.phone || searchParams.nickname || searchParams.status || searchParams.startDate) && (
               <Button onClick={handleClearSearch}>
                 清除筛选
               </Button>
@@ -540,8 +479,8 @@ const UserList: React.FC = () => {
                 searchParams[key as keyof UserSearchParams] !== undefined
               );
               return hasSearch 
-                ? `搜索到 ${total} 条用户，显示第 ${range[0]}-${range[1]} 条`
-                : `共 ${total} 条用户，显示第 ${range[0]}-${range[1]} 条`;
+                ? `搜索到 ${total} 条员工，显示第 ${range[0]}-${range[1]} 条`
+                : `共 ${total} 条员工，显示第 ${range[0]}-${range[1]} 条`;
             },
             onChange: (page, pageSize) => {
               setPagination({ ...pagination, current: page, pageSize });
@@ -550,7 +489,7 @@ const UserList: React.FC = () => {
         />
       </Card>
 
-      {/* 用户表单弹窗 */}
+      {/* 员工表单弹窗 */}
       <UserForm
         visible={formVisible}
         user={editingUser}

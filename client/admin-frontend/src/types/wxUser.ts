@@ -25,6 +25,7 @@ export interface WxUser extends BaseEntity {
   totalOrders: number;
   totalAmount: number;
   growthPoints: number;
+  pointsBalance?: number;
   churnStatus: string;
   lastOrderAt?: string;
   lastLoginAt?: string;
@@ -38,6 +39,7 @@ export interface WxUserSearchParams {
   keyword?: string;
   nickname?: string;
   phone?: string;
+  openid?: string;
   memberLevel?: string;
   churnStatus?: string;
   status?: string;

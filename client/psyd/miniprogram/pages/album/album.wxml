@@ -1,0 +1,46 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="loading-wrap">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view wx:elif="{{albums.length === 0}}" class="empty-wrap">
+    <text class="empty-icon">📷</text>
+    <text class="empty-text">暂无内容</text>
+  </view>
+
+  <scroll-view wx:else scroll-y class="album-scroll" enhanced show-scrollbar="{{false}}">
+    <view class="album-card" wx:for="{{albums}}" wx:key="id" wx:for-item="album">
+      <view class="album-header">
+        <text class="album-title">{{album.title}}</text>
+        <text class="album-date">{{album.createdAt.slice(0, 10)}}</text>
+      </view>
+      <view wx:if="{{album.description}}" class="album-desc">{{album.description}}</view>
+      <view class="photo-grid">
+        <view class="photo-wrapper" wx:for="{{album.photos}}" wx:key="*this" wx:for-item="photo">
+          <block wx:if="{{photo.isVideo}}">
+            <view class="video-thumb" data-current="{{photo.url}}" data-urls="{{album.photoUrls}}" bindtap="onPreviewPhoto">
+              <text class="video-play-icon">▶</text>
+            </view>
+          </block>
+          <image
+            wx:else
+            src="{{photo.url}}"
+            class="photo-item"
+            mode="aspectFill"
+            data-current="{{photo.url}}"
+            data-urls="{{album.photoUrls}}"
+            bindtap="onPreviewPhoto"
+          />
+          <view class="photo-actions">
+            <view class="photo-btn photo-btn-delete" wx:if="{{album.albumType == 'ALBUM'}}" data-album-id="{{album.id}}" data-original="{{photo.original}}" bindtap="onDeletePhoto">
+              <text class="btn-icon">✕</text>
+            </view>
+            <view class="photo-btn photo-btn-download" data-photo="{{photo.url}}" bindtap="onDownloadPhoto">
+              <text class="btn-icon">⬇</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+</view>

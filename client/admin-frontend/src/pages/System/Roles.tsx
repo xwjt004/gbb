@@ -114,7 +114,7 @@ const Roles: React.FC = () => {
       title: '类型', dataIndex: 'isSystem', width: 100,
       render: (v: boolean) => v ? <Tag color="blue">系统角色</Tag> : <Tag>自定义</Tag>,
     },
-    { title: '用户数', dataIndex: ['_count', 'users'], width: 80 },
+    { title: '员工数', dataIndex: ['_count', 'users'], width: 80 },
     {
       title: '状态', dataIndex: 'status', width: 80,
       render: (v: string) => <Tag color={v === 'ACTIVE' ? 'green' : 'red'}>{v === 'ACTIVE' ? '启用' : '禁用'}</Tag>,

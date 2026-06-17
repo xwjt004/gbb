@@ -91,7 +91,7 @@ const userSlice = createSlice({
       })
       .addCase(fetchUsers.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || '获取用户列表失败';
+        state.error = action.error.message || '获取员工列表失败';
       })
       // 获取用户统计
       .addCase(fetchUserStats.fulfilled, (state, action: PayloadAction<UserStats>) => {

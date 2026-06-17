@@ -145,7 +145,7 @@ const PackageDetail: React.FC<PackageDetailProps> = ({
       {/* 团购信息 */}
       {(pkg as any).groupMinCount && (pkg as any).groupMinCount > 0 && (
         <Card title="团购优惠" style={{ marginBottom: 16 }}>
-          <Descriptions column={2} bordered size="small">
+          <Descriptions column={1} bordered size="small">
             <Descriptions.Item label="成团人数">
               <TeamOutlined /> {(pkg as any).groupMinCount} 人
             </Descriptions.Item>
@@ -154,6 +154,45 @@ const PackageDetail: React.FC<PackageDetailProps> = ({
                 ¥{Number((pkg as any).groupPrice).toFixed(2)}
               </span>
             </Descriptions.Item>
+            {(pkg as any).groupBuyDescription && (
+              <Descriptions.Item label="团购说明" span={1}>
+                {(pkg as any).groupBuyDescription}
+              </Descriptions.Item>
+            )}
+          </Descriptions>
+        </Card>
+      )}
+
+      {/* 团购海报设置 */}
+      {((pkg as any).posterTitle || (pkg as any).posterContent || (pkg as any).posterBackground || ((pkg as any).posterImages?.length > 0)) && (
+        <Card title="团购海报设置" style={{ marginBottom: 16 }}>
+          <Descriptions column={1} bordered size="small">
+            {(pkg as any).posterTitle && (
+              <Descriptions.Item label="海报标题">{(pkg as any).posterTitle}</Descriptions.Item>
+            )}
+            {(pkg as any).posterContent && (
+              <Descriptions.Item label="海报描述">{(pkg as any).posterContent}</Descriptions.Item>
+            )}
+            {(pkg as any).posterBackground && (
+              <Descriptions.Item label="海报背景">{(pkg as any).posterBackground}</Descriptions.Item>
+            )}
+            {(pkg as any).posterImages?.length > 0 && (
+              <Descriptions.Item label="宣传照片">
+                <Image.PreviewGroup>
+                  <Space wrap>
+                    {(pkg as any).posterImages.map((url: string, index: number) => (
+                      <Image
+                        key={index}
+                        width={80}
+                        height={80}
+                        src={formatImageUrl(url)}
+                        style={{ objectFit: 'cover', borderRadius: '4px' }}
+                      />
+                    ))}
+                  </Space>
+                </Image.PreviewGroup>
+              </Descriptions.Item>
+            )}
           </Descriptions>
         </Card>
       )}

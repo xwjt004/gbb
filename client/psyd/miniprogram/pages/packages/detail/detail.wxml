@@ -146,6 +146,18 @@
       <view class="description-text">{{package.description}}</view>
     </view>
 
+    <!-- 拼团入口 -->
+    <view wx:if="{{package.groupMinCount && package.groupPrice}}" class="group-buy-section" bindtap="onStartGroupBuy">
+      <view class="group-buy-left">
+        <text class="group-buy-title">🔥 拼团优惠</text>
+        <text class="group-buy-desc">{{package.groupMinCount}}人成团，享专属团购价</text>
+      </view>
+      <view class="group-buy-right">
+        <text class="group-buy-price">¥{{package.groupPrice}}</text>
+        <text class="group-buy-arrow">›</text>
+      </view>
+    </view>
+
     <!-- 温馨提示 -->
     <view class="tips-section">
       <view class="section-title">
@@ -174,6 +186,10 @@
       <view class="action-btn" bindtap="toggleFavorite">
         <text class="action-icon">{{isFavorited ? '❤️' : '🤍'}}</text>
         <text class="action-text">{{isFavorited ? '已收藏' : '收藏'}}</text>
+      </view>
+      <view wx:if="{{package.groupMinCount && package.groupPrice}}" class="action-btn" bindtap="onStartGroupBuy">
+        <text class="action-icon">🔥</text>
+        <text class="action-text">拼团</text>
       </view>
     </view>
     

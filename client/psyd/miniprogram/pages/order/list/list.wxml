@@ -35,7 +35,12 @@
 
     <!-- 订单列表 -->
     <view wx:elif="{{orders.length > 0}}" class="orders-wrapper">
-      <view 
+      <!-- 清空所有订单 -->
+      <view class="clear-all-bar">
+        <text class="clear-all-hint">共 {{orders.length}} 条订单</text>
+        <button class="clear-all-btn" size="mini" catchtap="onClearAllOrders">清空全部</button>
+      </view>
+      <view
         wx:for="{{orders}}" 
         wx:key="id" 
         class="order-card"
@@ -128,21 +133,41 @@
               </button>
             </block>
             
-            <!-- 进行中/已完成：联系客服 -->
-            <block wx:elif="{{item.orderStatus === 'IN_PROGRESS' || item.orderStatus === 'COMPLETED'}}">
-              <button 
-                class="action-btn" 
+            <!-- 进行中：联系客服 -->
+            <block wx:elif="{{item.orderStatus === 'IN_PROGRESS'}}">
+              <button
+                class="action-btn"
                 size="mini"
                 catchtap="onContactService"
               >
                 联系客服
               </button>
             </block>
-            
-            <!-- 已取消：删除订单 -->
-            <block wx:elif="{{item.orderStatus === 'CANCELLED'}}">
-              <button 
-                class="action-btn delete-btn" 
+
+            <!-- 已完成：联系客服 + 删除 -->
+            <block wx:elif="{{item.orderStatus === 'COMPLETED'}}">
+              <button
+                class="action-btn"
+                size="mini"
+                catchtap="onContactService"
+              >
+                联系客服
+              </button>
+              <button
+                class="action-btn delete-btn"
+                size="mini"
+                catchtap="onDeleteOrder"
+                data-id="{{item.id}}"
+                data-orderno="{{item.orderNo}}"
+              >
+                删除订单
+              </button>
+            </block>
+
+            <!-- 已取消/已退款：删除订单 -->
+            <block wx:elif="{{item.orderStatus === 'CANCELLED' || item.orderStatus === 'REFUNDED'}}">
+              <button
+                class="action-btn delete-btn"
                 size="mini"
                 catchtap="onDeleteOrder"
                 data-id="{{item.id}}"

@@ -7,6 +7,7 @@ export interface User extends BaseEntity {
   wechatId?: string;
   avatar?: string;
   status: Status;
+  roleName?: string;
   lastLoginAt?: string;
   orderCount: number;
   totalAmount: number;

@@ -1,0 +1,51 @@
+<view class="container">
+  <view wx:if="{{loading}}" class="loading-wrap">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view wx:elif="{{list.length === 0}}" class="empty-wrap">
+    <view class="empty-icon">🛍️</view>
+    <text class="empty-text">暂无团购记录</text>
+    <view class="empty-btn" bindtap="goStartGroupBuy">去开团</view>
+  </view>
+
+  <view wx:else class="list-wrap">
+    <view wx:for="{{list}}" wx:key="id" class="card" data-id="{{item.id}}" bindtap="goDetail">
+      <!-- 顶部状态栏 -->
+      <view class="card-top status-{{item.status}}">
+        <view class="card-top-left">
+          <text class="card-status-text">
+            <text wx:if="{{item.status === 'ACTIVE'}}">⏳ 进行中</text>
+            <text wx:elif="{{item.status === 'SUCCESS'}}">🎉 已成团</text>
+            <text wx:else>😢 已结束</text>
+          </text>
+          <text class="card-count">{{item._count.participants}}/{{item.minCount}}人</text>
+        </view>
+        <text class="card-arrow">›</text>
+      </view>
+
+      <!-- 套餐信息 -->
+      <view class="card-body">
+        <image class="card-img" src="{{item._coverImg}}" mode="aspectFill" />
+        <view class="card-info">
+          <text class="card-name">{{item.package.name}}</text>
+          <view class="card-price-row">
+            <text class="card-price-label">团购价</text>
+            <text class="card-price">¥{{item.package.groupPrice || item.package.price}}</text>
+          </view>
+          <text class="card-time">创建于 {{formatTime(item.createdAt)}}</text>
+        </view>
+      </view>
+
+      <!-- 底部操作 -->
+      <view class="card-bottom">
+        <view class="card-bottom-left">
+          <text wx:if="{{item.creatorUserId === myUserId}}" class="tag-creator">团长</text>
+          <text class="tag-joined">已参团</text>
+        </view>
+        <view wx:if="{{item.status === 'ACTIVE' && item.creatorUserId !== myUserId}}" class="card-leave-btn" bindtap="onLeave" data-id="{{item.id}}" catchtap="noop">退团</view>
+      </view>
+    </view>
+  </view>
+</view>

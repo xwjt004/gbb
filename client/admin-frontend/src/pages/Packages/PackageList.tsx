@@ -192,6 +192,24 @@ const PackageList: React.FC = () => {
       ),
     },
     {
+      title: '团购设置',
+      key: 'groupBuy',
+      width: 140,
+      render: (_, record) =>
+        record.groupPrice ? (
+          <div>
+            <Tag color="red" style={{ marginBottom: 2 }}>
+              团购 ¥{record.groupPrice}
+            </Tag>
+            <div style={{ fontSize: 12, color: '#666' }}>
+              成团 {record.groupMinCount || 2} 人
+            </div>
+          </div>
+        ) : (
+          <span style={{ color: '#ccc' }}>-</span>
+        ),
+    },
+    {
       title: '服务时长',
       dataIndex: 'duration',
       width: 100,

@@ -60,8 +60,10 @@ import { SmartMarketingModule } from './modules/smart-marketing/smart-marketing.
 import { WxUserModule } from './modules/wx-user/wx-user.module';
 import { WxFavoriteModule } from './modules/wx-favorite/wx-favorite.module';
 import { PhotoAlbumModule } from './modules/photo-albums/photo-album.module';
+import { GroupBuyModule } from './modules/group-buy/group-buy.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { OperationLogInterceptor } from './shared/interceptors/operation-log.interceptor';
+import { GroupBuyScheduler } from './shared/schedulers/group-buy.scheduler';
 
 @Module({
   imports: [
@@ -160,6 +162,7 @@ import { OperationLogInterceptor } from './shared/interceptors/operation-log.int
     WxUserModule,
     WxFavoriteModule,
     PhotoAlbumModule,
+    GroupBuyModule,
   ],
   controllers: [AppController],
   providers: [
@@ -179,6 +182,7 @@ import { OperationLogInterceptor } from './shared/interceptors/operation-log.int
     AppointmentReminderScheduler,
     PhotoPickReminderScheduler,
     DailyReportScheduler,
+    GroupBuyScheduler,
   ],
 })
 export class AppModule { }

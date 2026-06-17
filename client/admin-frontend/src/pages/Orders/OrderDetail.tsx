@@ -13,6 +13,7 @@ import {
   RollbackOutlined,
   ExclamationCircleOutlined,
   SwapOutlined,
+  TeamOutlined,
 } from "@ant-design/icons";
 import { Order, OrderStatus, OrderTimeline } from "@/types/order";
 import OrderForm from "./OrderForm";
@@ -1445,6 +1446,18 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
             <Descriptions.Item label="套餐价格">
               ¥{Number(order.package?.price || 0).toFixed(2)}
             </Descriptions.Item>
+            {order.groupBuyActivityId && (
+              <Descriptions.Item label="团购信息">
+                <Tag color="red" style={{ fontSize: 13, padding: '2px 8px' }}>
+                  <TeamOutlined /> {order.groupBuyActivity?.status === 'SUCCESS' ? '已成团' : order.groupBuyActivity?.status === 'ACTIVE' ? '进行中' : '已结束'}
+                </Tag>
+                {order.groupBuyActivity && (
+                  <span style={{ fontSize: 12, color: '#666', marginLeft: 6 }}>
+                    需 {order.groupBuyActivity.minCount} 人
+                  </span>
+                )}
+              </Descriptions.Item>
+            )}
             <Descriptions.Item label="服务内容" span={2}>
               {order.package?.includes && order.package.includes.length > 0 ? (
                 <Space wrap>

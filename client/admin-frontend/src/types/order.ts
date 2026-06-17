@@ -26,6 +26,12 @@ export interface Order extends BaseEntity {
   customerPhone?: string;
   notes?: string;
   childrenCount: number;
+  groupBuyActivityId?: string;
+  groupBuyActivity?: {
+    id: string;
+    status: 'ACTIVE' | 'SUCCESS' | 'FAILED';
+    minCount: number;
+  };
   user: {
     id: number;
     openid: string;
@@ -118,10 +124,13 @@ export interface OrderFormData {
 
 export interface OrderStats {
   totalOrders: number;
+  paidOrders: number;
   pendingOrders: number;
   confirmedOrders: number;
   completedOrders: number;
   cancelledOrders: number;
+  paidPendingOrders: number;
+  unpaidPendingOrders: number;
   totalRevenue: number;
   todayOrders: number;
   conversionRate: number;

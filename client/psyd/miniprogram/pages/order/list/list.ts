@@ -424,38 +424,77 @@ Page({
    */
   async onDeleteOrder(e: { currentTarget: { dataset: { id: string, orderno: string } } }) {
     const { id, orderno } = e.currentTarget.dataset;
-    
+
     const res = await wx.showModal({
       title: '确认删除',
       content: `确定要删除订单 ${orderno} 吗？删除后不可恢复。`,
     });
-    
+
     if (!res.confirm) return;
-    
+
     wx.showLoading({ title: '删除中...' });
-    
+
     try {
       await request({
         url: `/wx-order/${id}`,
         method: 'DELETE',
         needAuth: true,
       });
-      
+
       wx.hideLoading();
       wx.showToast({
         title: '订单已删除',
         icon: 'success',
       });
-      
+
       // 刷新列表
       setTimeout(() => {
         this.refreshOrders();
       }, 1500);
-      
+
     } catch (error: any) {
       wx.hideLoading();
       wx.showToast({
         title: error.message || '删除失败',
+        icon: 'none',
+      });
+    }
+  },
+
+  /**
+   * 清空所有订单
+   */
+  async onClearAllOrders() {
+    const count = this.data.orders.length;
+    if (count === 0) return;
+
+    const res = await wx.showModal({
+      title: '清空全部订单',
+      content: `确定要清空全部 ${count} 条订单吗？删除后不可恢复。`,
+    });
+
+    if (!res.confirm) return;
+
+    wx.showLoading({ title: '清空中...' });
+
+    try {
+      await request({
+        url: '/wx-order/clear/all',
+        method: 'DELETE',
+        needAuth: true,
+      });
+
+      wx.hideLoading();
+      wx.showToast({
+        title: '已清空全部订单',
+        icon: 'success',
+      });
+
+      this.setData({ orders: [], isEmpty: true });
+    } catch (error: any) {
+      wx.hideLoading();
+      wx.showToast({
+        title: error.message || '清空失败',
         icon: 'none',
       });
     }

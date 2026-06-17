@@ -87,6 +87,10 @@ const Login: React.FC = () => {
               登录
             </Button>
           </Form.Item>
+
+          <div style={{ textAlign: 'right', marginTop: -8, marginBottom: 4 }}>
+            <a href="/admin/forgot-password" style={{ fontSize: 13, color: '#999' }}>忘记密码？</a>
+          </div>
         </Form>
 
         <div className="login-footer">

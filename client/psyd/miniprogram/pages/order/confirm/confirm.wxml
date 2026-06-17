@@ -91,29 +91,16 @@
       </view>
     </view>
 
-    <!-- 配送方式 -->
+    <!-- 配送方式（仅上门自提） -->
     <view class="delivery-section">
       <view class="section-title">配送方式</view>
-      <view class="delivery-list">
-        <view
-          wx:for="{{deliveryMethods}}"
-          wx:key="value"
-          class="delivery-item {{deliveryMethod === item.value ? 'active' : ''}}"
-          data-value="{{item.value}}"
-          bindtap="onSelectDelivery"
-        >
-          <view class="delivery-radio">
-            <icon
-              class="radio-icon"
-              type="{{deliveryMethod === item.value ? 'success' : 'circle'}}"
-              size="20"
-            ></icon>
-          </view>
-          <view class="delivery-info">
-            <text class="delivery-label">{{item.label}}</text>
-            <text class="delivery-fee" wx:if="{{item.fee > 0}}">¥{{item.fee}}</text>
-            <text class="delivery-fee free" wx:else>免费</text>
-          </view>
+      <view class="delivery-item pickup-only">
+        <view class="delivery-radio">
+          <icon class="radio-icon" type="success" size="20"></icon>
+        </view>
+        <view class="delivery-info">
+          <text class="delivery-label">上门自提</text>
+          <text class="delivery-fee free">免费</text>
         </view>
       </view>
     </view>

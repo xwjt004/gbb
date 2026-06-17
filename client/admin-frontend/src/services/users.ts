@@ -5,12 +5,13 @@ import * as XLSX from 'xlsx';
 
 // 后端返回的用户基本结构 (根据当前 Nest 用户列表 select 字段)
 interface BackendUserItem {
-  id: number;  // 添加数字ID字段
+  id: number;
   openid: string;
   nickname?: string | null;
   avatar?: string | null;
   phone?: string | null;
-  status?: string | null; // 后端: 'ACTIVE' | 'INACTIVE'
+  status?: string | null;
+  role?: { id: number; name: string } | null;
   createdAt: string;
   updatedAt?: string;
   _count?: { orders: number };
@@ -31,7 +32,7 @@ function mapUser(u: BackendUserItem): User {
   const isVipUser = orderCount >= 3; // VIP判断逻辑：订单数量>=3
   
   return {
-    id: String(u.id),  // 使用后端返回的数字ID并转换为字符串
+    id: String(u.id),
     openid: u.openid,
     createdAt: u.createdAt,
     updatedAt: u.updatedAt || u.createdAt,
@@ -39,6 +40,7 @@ function mapUser(u: BackendUserItem): User {
     nickname: u.nickname || undefined,
     avatar: u.avatar || undefined,
     status: statusMap[backendStatus] || 'active',
+    roleName: u.role?.name || '-',
     lastLoginAt: undefined,
     orderCount: orderCount,
     totalAmount: 0,
@@ -187,7 +189,7 @@ export const userService = {
         // 创建工作簿
         const ws = XLSX.utils.json_to_sheet(processedData);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, '用户数据');
+        XLSX.utils.book_append_sheet(wb, ws, '员工数据');
 
         // 设置列宽
         const headers = Object.keys(processedData[0] || {});
@@ -195,7 +197,7 @@ export const userService = {
         ws['!cols'] = colWidths;
 
         // 生成Excel文件
-        const fileName = `用户数据_${new Date().toISOString().split('T')[0]}.xlsx`;
+        const fileName = `员工数据_${new Date().toISOString().split('T')[0]}.xlsx`;
         XLSX.writeFile(wb, fileName);
         
       } else {

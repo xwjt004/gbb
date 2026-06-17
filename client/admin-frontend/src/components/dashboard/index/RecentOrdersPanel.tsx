@@ -205,13 +205,13 @@ const RecentOrdersPanel: React.FC<RecentOrdersPanelProps> = ({ recentOrders, loa
       ),
     },
     {
-      title: '用户',
+      title: '客户',
       dataIndex: ['user', 'phone'],
       width: 120,
       render: (phone: string, record: Order) => (
         <Space size="small">
           <Avatar size="small" icon={<UserOutlined />} />
-          <span>{phone || record.user?.nickname || '未知用户'}</span>
+          <span>{phone || record.user?.nickname || '未知客户'}</span>
         </Space>
       ),
     },

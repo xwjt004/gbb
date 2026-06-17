@@ -145,6 +145,29 @@
   color: #C8BCC2;
 }
 
+/* ===== 日期时间选择器 ===== */
+.form-datetime {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12rpx;
+}
+
+.form-datetime .form-picker {
+  display: inline-block;
+}
+
+.form-time {
+  color: #9E8E96;
+  font-size: 26rpx;
+  min-width: 100rpx;
+  text-align: center;
+  background: #F5F0F2;
+  border-radius: 8rpx;
+  padding: 4rpx 12rpx;
+}
+
 /* ===== 保存按钮 ===== */
 .save-wrap {
   padding: 48rpx 24rpx;
@@ -184,4 +207,430 @@
 
 .footer-gap {
   height: 48rpx;
+}
+
+/* ===== 成长里程碑 ===== */
+
+/* --- 展示卡片 --- */
+.ms-list {
+  padding: 0 24rpx 16rpx;
+}
+
+.ms-card {
+  background: #FFF5F7;
+  border-radius: 20rpx;
+  margin-bottom: 16rpx;
+  border: 1rpx solid #FFE8ED;
+  overflow: hidden;
+}
+
+.ms-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 24rpx 0;
+}
+
+.ms-badge {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #E8738A;
+  background: #FFE8ED;
+  padding: 6rpx 24rpx;
+  border-radius: 10rpx;
+}
+
+.ms-date {
+  font-size: 26rpx;
+  color: #B8ADB2;
+}
+
+/* 身体数据 */
+.ms-stats {
+  display: flex;
+  gap: 20rpx;
+  padding: 16rpx 24rpx 0;
+}
+
+.ms-stat {
+  background: #FFF0F5;
+  border-radius: 14rpx;
+  padding: 12rpx 24rpx;
+  display: flex;
+  align-items: baseline;
+  gap: 4rpx;
+}
+
+.ms-stat-val {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #E8738A;
+}
+
+.ms-stat-unit {
+  font-size: 24rpx;
+  color: #C8A0B0;
+}
+
+/* 爱好 */
+.ms-hobby {
+  padding: 12rpx 24rpx 0;
+  font-size: 26rpx;
+  color: #6A4C5A;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.ms-hobby-icon {
+  font-size: 24rpx;
+}
+
+/* 媒体 */
+.ms-media {
+  padding: 12rpx 24rpx 0;
+}
+
+.ms-photo {
+  width: 100%;
+  height: 360rpx;
+  border-radius: 14rpx;
+  display: block;
+}
+
+.ms-video {
+  width: 100%;
+  height: 360rpx;
+  border-radius: 14rpx;
+  background: #1A1A2E;
+}
+
+/* 祝福语 */
+.ms-blessings {
+  padding: 12rpx 24rpx 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.ms-blessing {
+  background: #FFFAFB;
+  border-radius: 12rpx;
+  padding: 16rpx;
+  border-left: 6rpx solid #FBC2EB;
+}
+
+.ms-blessing-label {
+  font-size: 22rpx;
+  color: #E8738A;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 6rpx;
+}
+
+.ms-blessing-text {
+  font-size: 26rpx;
+  color: #5A3C4A;
+  line-height: 1.5;
+}
+
+/* 操作按钮 */
+.ms-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12rpx;
+  padding: 16rpx 24rpx;
+  margin-top: 12rpx;
+  border-top: 1rpx solid #FFE8ED;
+}
+
+.ms-act-edit {
+  font-size: 26rpx;
+  color: #E8738A;
+  background: #FFE8ED;
+  padding: 8rpx 32rpx;
+  border-radius: 30rpx;
+  font-weight: 500;
+}
+
+.ms-act-del {
+  font-size: 26rpx;
+  color: #FF6B6B;
+  background: #FFE8ED;
+  padding: 8rpx 32rpx;
+  border-radius: 30rpx;
+  font-weight: 500;
+}
+
+/* --- 空状态 & 新增按钮 --- */
+.milestone-empty {
+  padding: 48rpx 0;
+  text-align: center;
+}
+
+.milestone-empty-text {
+  font-size: 26rpx;
+  color: #C8BCC2;
+}
+
+.add-milestone-btn {
+  text-align: center;
+  padding: 20rpx 0 28rpx;
+  font-size: 30rpx;
+  color: #E8738A;
+  font-weight: 500;
+}
+
+/* --- 表单（上下结构，大输入框） --- */
+.ms-form {
+  padding: 0 28rpx 28rpx;
+  border-top: 1rpx solid #F5F0F2;
+}
+
+.ms-form-group {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #F5F0F2;
+}
+
+.ms-form-group:last-of-type {
+  border-bottom: none;
+}
+
+.ms-form-label {
+  display: block;
+  font-size: 26rpx;
+  color: #B8ADB2;
+  margin-bottom: 12rpx;
+  font-weight: 500;
+}
+
+.ms-form-input {
+  display: block;
+  width: 100%;
+  font-size: 30rpx;
+  color: #3D2C33;
+  min-height: 56rpx;
+  background: transparent;
+  border: none;
+  padding: 0;
+  text-align: left;
+}
+
+.ms-form-textarea {
+  display: block;
+  width: 100%;
+  font-size: 30rpx;
+  color: #3D2C33;
+  min-height: 88rpx;
+  background: #F8F6F7;
+  border: none;
+  border-radius: 12rpx;
+  padding: 16rpx;
+  text-align: left;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+/* 选择器 */
+.ms-form-picker {
+  display: block;
+}
+
+.ms-form-picker-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #F8F6F7;
+  border-radius: 12rpx;
+  padding: 16rpx 20rpx;
+  font-size: 30rpx;
+  color: #3D2C33;
+  min-height: 56rpx;
+  box-sizing: border-box;
+}
+
+.ms-form-arrow {
+  font-size: 36rpx;
+  color: #C8BCC2;
+}
+
+/* 照片上传 */
+.ms-form-photo-row {
+  display: flex;
+  gap: 12rpx;
+  align-items: center;
+}
+
+.ms-form-photo-input {
+  flex: 1;
+}
+
+.ms-form-upload-btn {
+  font-size: 26rpx;
+  color: #fff;
+  background: #E8738A;
+  padding: 12rpx 28rpx;
+  border-radius: 10rpx;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.ms-form-photo-preview {
+  margin-top: 12rpx;
+}
+
+.ms-form-img-preview {
+  width: 100%;
+  height: 300rpx;
+  border-radius: 12rpx;
+  display: block;
+}
+
+.ms-form-video-preview {
+  width: 100%;
+  height: 300rpx;
+  border-radius: 12rpx;
+  background: #1A1A2E;
+}
+
+/* ===== 配额提示 ===== */
+.ms-quota-text {
+  font-size: 22rpx;
+  color: #C8A0B0;
+  margin-bottom: 12rpx;
+  padding: 6rpx 12rpx;
+  background: #FFF5F7;
+  border-radius: 8rpx;
+  display: inline-block;
+}
+
+/* ===== 照片网格 ===== */
+.ms-photo-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.ms-photo-grid-item {
+  position: relative;
+  width: calc((100% - 24rpx) / 3);
+  aspect-ratio: 1;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.ms-photo-img,
+.ms-card-photo {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 12rpx;
+}
+
+.ms-photo-remove {
+  position: absolute;
+  top: 4rpx;
+  right: 4rpx;
+  width: 36rpx;
+  height: 36rpx;
+  background: rgba(255, 77, 79, 0.85);
+  color: #fff;
+  font-size: 22rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+/* ===== 上传按钮行（双按钮） ===== */
+.ms-form-upload-row {
+  display: flex;
+  gap: 16rpx;
+}
+
+.ms-form-upload-btn {
+  flex: 1;
+  font-size: 26rpx;
+  color: #fff;
+  background: #E8738A;
+  padding: 20rpx 0;
+  border-radius: 12rpx;
+  text-align: center;
+  font-weight: 500;
+}
+
+.ms-form-upload-btn:active {
+  opacity: 0.8;
+}
+
+.ms-form-upload-btn-video {
+  background: #B08FC7;
+}
+
+/* ===== 视频容器（含删除按钮） ===== */
+.ms-form-video-wrap {
+  position: relative;
+}
+
+.ms-video-remove {
+  top: 8rpx;
+  right: 8rpx;
+  width: 44rpx;
+  height: 44rpx;
+  font-size: 26rpx;
+}
+
+/* ===== 卡片内视频 ===== */
+.ms-card-video-wrap {
+  width: 100%;
+}
+
+.ms-card-video {
+  width: 100%;
+  height: 360rpx;
+  border-radius: 14rpx;
+  background: #1A1A2E;
+}
+
+/* 按钮 */
+.ms-form-btns {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 20rpx;
+  padding: 28rpx 0 8rpx;
+}
+
+.ms-form-cancel {
+  font-size: 28rpx;
+  color: #B8ADB2;
+  padding: 16rpx 28rpx;
+}
+
+.ms-form-save {
+  font-size: 30rpx;
+  color: #fff;
+  background: linear-gradient(135deg, #FF9A9E, #FBC2EB);
+  border: none;
+  border-radius: 44rpx;
+  padding: 20rpx 52rpx;
+  font-weight: 500;
+  line-height: 1.4;
+  box-shadow: 0 4rpx 16rpx rgba(255,154,158,0.25);
+}
+
+.ms-form-save:active {
+  opacity: 0.8;
+}
+
+.ms-form-save[disabled] {
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+.ms-form-ph {
+  font-size: 28rpx;
+  color: #C8BCC2;
 }

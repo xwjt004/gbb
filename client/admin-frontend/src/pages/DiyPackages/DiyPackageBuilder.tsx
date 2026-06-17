@@ -300,7 +300,7 @@ const DiyPackageBuilder: React.FC = () => {
       setUsers(response.data.list || []);
     } catch (error) {
       console.error('加载用户列表失败:', error);
-      message.error('加载用户列表失败');
+      message.error('加载员工列表失败');
       setUsers([]);
     } finally {
       setLoadingUsers(false);
@@ -715,11 +715,11 @@ const DiyPackageBuilder: React.FC = () => {
         <Form form={orderForm} onFinish={createOrderFromPackage} layout="vertical">
           <Form.Item
             name="userOpenid"
-            label="选择用户"
-            rules={[{ required: true, message: '请选择用户' }]}
+            label="选择员工"
+            rules={[{ required: true, message: '请选择员工' }]}
           >
             <Select
-              placeholder="请选择用户"
+              placeholder="请选择员工"
               showSearch
               loading={loadingUsers}
               filterOption={(input, option) => {

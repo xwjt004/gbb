@@ -36,7 +36,11 @@
     "pages/about/about",
     "pages/profile/edit/edit",
     "pages/member/benefits/benefits",
-    "pages/member/points/points"
+    "pages/member/points/points",
+    "pages/album/album",
+    "pages/group-buy/start/start",
+    "pages/group-buy/detail/detail",
+    "pages/group-buy/list/list"
   ],
   "window": {
     "navigationBarTextStyle": "black",
@@ -69,5 +73,10 @@
   },
   "style": "v2",
   "componentFramework": "glass-easel",
-  "lazyCodeLoading": "requiredComponents"
+  "lazyCodeLoading": "requiredComponents",
+  "permission": {
+    "scope.writePhotosAlbum": {
+      "desc": "保存照片到您的相册"
+    }
+  }
 }

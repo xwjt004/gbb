@@ -42,7 +42,7 @@ const UserForm: React.FC<UserFormProps> = ({
     if (visible) {
       if (user) {
         form.setFieldsValue({
-          openid: user.id,
+          openid: user.openid,
           phone: user.phone,
           nickname: user.nickname,
           wechatId: user.wechatId,
@@ -141,7 +141,7 @@ const UserForm: React.FC<UserFormProps> = ({
           vipLevel: 1,
         }}
       >
-        <Form.Item name="openid" label="用户ID">
+        <Form.Item name="openid" label="员工ID">
           <Input placeholder="可选，留空则自动生成" />
         </Form.Item>
 

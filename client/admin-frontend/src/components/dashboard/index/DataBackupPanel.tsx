@@ -12,7 +12,7 @@ const DataBackupPanel: React.FC = () => {
 
         <Row gutter={[8, 8]}>
           <Col span={12}><Button type="primary" block icon={<DownloadOutlined />} onClick={() => { message.loading('正在导出订单数据...', 2); setTimeout(() => message.success('订单数据导出成功'), 2000); }}>导出订单</Button></Col>
-          <Col span={12}><Button block icon={<DownloadOutlined />} onClick={() => { message.loading('正在导出用户数据...', 2); setTimeout(() => message.success('用户数据导出成功'), 2000); }}>导出用户</Button></Col>
+          <Col span={12}><Button block icon={<DownloadOutlined />} onClick={() => { message.loading('正在导出员工数据...', 2); setTimeout(() => message.success('员工数据导出成功'), 2000); }}>导出员工</Button></Col>
           <Col span={12}><Button block icon={<DownloadOutlined />} onClick={() => { message.loading('正在导出财务数据...', 2); setTimeout(() => message.success('财务数据导出成功'), 2000); }}>导出财务</Button></Col>
           <Col span={12}><Button block icon={<DownloadOutlined />} onClick={() => { message.loading('正在生成完整备份...', 3); setTimeout(() => message.success('完整备份生成成功'), 3000); }}>完整备份</Button></Col>
         </Row>

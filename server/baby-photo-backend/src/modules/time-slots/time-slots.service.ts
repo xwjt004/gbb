@@ -796,9 +796,9 @@ export class TimeSlotsService {
         orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
       });
 
-      // 过滤出有剩余容量的时间槽
+      // 过滤出有剩余容量的时间槽（使用 bookedCount 而非 _count.orders，防止未支付订单占位）
       const availableSlots = allSlots.filter(slot => {
-        const currentBookedCount = slot._count?.orders;
+        const currentBookedCount = slot.bookedCount || 0;
         return currentBookedCount < slot.capacity;
       });
 

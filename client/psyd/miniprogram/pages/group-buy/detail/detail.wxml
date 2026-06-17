@@ -1,0 +1,140 @@
+<view class="container">
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="loading-container">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view wx:else class="content">
+    <!-- 顶部导航 -->
+    <view class="top-nav">
+      <view class="nav-home" bindtap="goHome">
+        <text class="nav-home-icon">🏠</text>
+        <text class="nav-home-text">首页</text>
+      </view>
+    </view>
+
+    <!-- 状态卡片 -->
+    <view class="status-card status-{{activity.status}}">
+      <view class="status-card-inner">
+        <text class="status-icon">{{statusIcon}}</text>
+        <text wx:if="{{pkgDescription}}" class="status-desc">{{pkgDescription}}</text>
+        <text wx:else class="status-text">{{statusText}}</text>
+        <view wx:if="{{activity.status === 'ACTIVE'}}" class="countdown-wrap">
+          <text class="countdown-label">剩余时间</text>
+          <text class="countdown-time">{{countdown}}</text>
+        </view>
+      </view>
+      <view class="status-shine"></view>
+    </view>
+
+    <!-- 套餐信息（大幅样片展示） -->
+    <view class="package-section">
+      <image class="package-img" src="{{pkgCover}}" mode="aspectFill" />
+      <view class="package-img-badge">{{pkgName}}</view>
+      <view class="package-price-bar">
+        <text class="price-label">团购价</text>
+        <text class="price-value">¥{{pkgPrice}}</text>
+      </view>
+    </view>
+
+    <!-- 参团进度 -->
+    <view class="progress-section">
+      <view class="progress-header">
+        <text class="section-title">参团进度</text>
+        <text class="progress-count">{{participantCount}}/{{activity.minCount}} 人</text>
+      </view>
+      <view class="progress-bar-bg">
+        <view class="progress-bar-fill" style="width: {{progressPercent}}%"></view>
+      </view>
+      <view class="progress-tip" wx:if="{{activity.status === 'ACTIVE'}}">
+        <text>还差 {{activity.minCount - participantCount}} 人成团</text>
+      </view>
+    </view>
+
+    <!-- 参团者列表 -->
+    <view class="participants-section" wx:if="{{hasParticipants}}">
+      <view class="section-header">
+        <text class="section-title">参团成员</text>
+        <text class="section-count">{{participantCount}}人</text>
+      </view>
+      <view class="participant-list">
+        <view wx:for="{{activity.participants}}" wx:key="id" class="participant-item">
+          <view class="avatar-wrap">
+            <image wx:if="{{item.userAvatar}}" class="avatar-img" src="{{item.userAvatar}}" mode="aspectFill" />
+            <view wx:else class="avatar-placeholder">{{item.userInitial}}</view>
+          </view>
+          <text class="nickname">{{item.userNickname}}</text>
+          <text wx:if="{{item.userId === activity.creatorUserId}}" class="creator-tag">团长</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空参团者提示 -->
+    <view wx:else class="empty-section">
+      <view class="empty-icon">👥</view>
+      <text class="empty-text">暂无成员，快邀请好友参团吧！</text>
+    </view>
+  </view>
+
+  <!-- 隐藏 Canvas（用于生成海报） -->
+  <canvas type="2d" id="posterCanvas" class="poster-canvas"></canvas>
+
+  <!-- 分享门控弹窗 -->
+  <view wx:if="{{showShareGate}}" class="share-gate-mask" bindtap="handleCloseShareGate">
+    <view class="share-gate-modal" catchtap="noop">
+      <view class="share-gate-handle"></view>
+      <view class="share-gate-close" bindtap="handleCloseShareGate">✕</view>
+      <text class="share-gate-title">🔓 分享到朋友圈</text>
+      <text class="share-gate-desc">解锁团购优惠价格，邀请好友一起参团</text>
+
+      <view class="share-gate-actions">
+        <view class="share-gate-btn share-gate-btn-timeline" bindtap="handleShareToTimeline">
+          <view class="share-gate-btn-circle">
+            <text class="share-gate-btn-icon">📱</text>
+          </view>
+          <text class="share-gate-btn-text">分享到朋友圈</text>
+          <text class="share-gate-btn-hint">一键分享，快捷方便</text>
+        </view>
+        <view class="share-gate-btn share-gate-btn-poster" bindtap="handleSavePosterAndJoin">
+          <view class="share-gate-btn-circle">
+            <text class="share-gate-btn-icon">🖼️</text>
+          </view>
+          <text class="share-gate-btn-text">保存海报发朋友圈</text>
+          <text class="share-gate-btn-hint">生成精美海报分享</text>
+        </view>
+      </view>
+
+      <view class="share-gate-confirm" bindtap="handleConfirmJoin">
+        <text>我已分享，立即参团</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view wx:if="{{!loading}}" class="bottom-bar">
+    <view wx:if="{{activity.status === 'ACTIVE'}}" class="bottom-actions">
+      <button open-type="share" class="invite-btn">邀请好友</button>
+      <view wx:if="{{!joined}}" class="join-btn" bindtap="onJoin">
+        <text>立即参团</text>
+      </view>
+      <view wx:else class="book-btn" bindtap="onGoBooking">
+        <text>去付款</text>
+      </view>
+      <view class="poster-btn" bindtap="onSavePoster">
+        <text>海报</text>
+      </view>
+    </view>
+    <view wx:elif="{{activity.status === 'SUCCESS'}}" class="bottom-actions">
+      <view class="book-btn" bindtap="onGoBooking">
+        <text>立即预约</text>
+      </view>
+      <view class="poster-btn" bindtap="onSavePoster">
+        <text>保存海报</text>
+      </view>
+    </view>
+    <view wx:elif="{{activity.status === 'FAILED'}}" class="bottom-actions">
+      <view class="fail-tip">该团购已结束，看看其他活动吧</view>
+    </view>
+  </view>
+</view>

@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { CreateWxOrderDto, QueryMyOrdersDto } from './dto/create-wx-order.dto';
@@ -10,6 +11,7 @@ import { OrderStatus, PaymentStatus } from '../../shared/enums/status.enum';
 
 @Injectable()
 export class WxOrderService {
+  private readonly logger = new Logger(WxOrderService.name);
   constructor(private readonly prisma: PrismaService) {}
 
   /**
@@ -182,7 +184,29 @@ export class WxOrderService {
       return newOrder;
     });
 
-    // 9. 返回订单详情
+    // 9. 关联团购活动（如果用户在团购中，自动关联到订单）
+    try {
+      const pkgItem = orderItems.find(item => item.itemType === 'PACKAGE' && item.packageId);
+      if (pkgItem) {
+        const groupBuyActivity = await this.prisma.groupBuyActivity.findFirst({
+          where: {
+            packageId: pkgItem.packageId,
+            status: { in: ['ACTIVE', 'SUCCESS'] },
+            participants: { some: { userId: wxUserId } },
+          },
+        });
+        if (groupBuyActivity) {
+          await this.prisma.order.update({
+            where: { id: order.id },
+            data: { groupBuyActivityId: groupBuyActivity.id },
+          });
+        }
+      }
+    } catch (err) {
+      this.logger.warn('关联团购活动失败（不影响订单创建）', err);
+    }
+
+    // 10. 返回订单详情
     return this.getOrderDetail(wxUserId, order.id);
   }
 
@@ -251,6 +275,9 @@ export class WxOrderService {
             },
           },
           timeSlot: true,
+          groupBuyActivity: {
+            select: { id: true, status: true, minCount: true },
+          },
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
@@ -312,6 +339,9 @@ export class WxOrderService {
         payments: {
           orderBy: { createdAt: 'desc' },
         },
+        groupBuyActivity: {
+          select: { id: true, status: true, minCount: true },
+        },
       },
     });
 
@@ -346,6 +376,9 @@ export class WxOrderService {
           timeSlot: true,
           payments: {
             orderBy: { createdAt: 'desc' },
+          },
+          groupBuyActivity: {
+            select: { id: true, status: true, minCount: true },
           },
         },
       });

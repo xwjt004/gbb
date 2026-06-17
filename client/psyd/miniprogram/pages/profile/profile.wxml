@@ -23,6 +23,10 @@
     <!-- ===== 快捷入口网格 ===== -->
     <view class="grid-card">
       <view class="grid-row">
+        <view class="grid-item" bindtap="goToGroupBuy">
+          <view class="grid-icon icon-group-buy">🎯</view>
+          <text class="grid-label">我的团购</text>
+        </view>
         <view class="grid-item" bindtap="goToFavorite">
           <view class="grid-icon icon-fav">❤️</view>
           <text class="grid-label">我的收藏</text>
@@ -87,17 +91,41 @@
       </view>
     </view>
 
+    <!-- ===== 宝宝幸福空间 ===== -->
+    <view class="happiness-card" bindtap="goToMilestones">
+      <view class="happiness-left">
+        <view class="happiness-icon">🌟</view>
+        <view class="happiness-info">
+          <text class="happiness-title">宝宝幸福空间</text>
+          <text class="happiness-desc">记录宝宝成长的每一个珍贵瞬间</text>
+        </view>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+
     <!-- ===== 常用工具 ===== -->
     <view class="card">
       <view class="card-header">
         <text class="card-title">常用工具</text>
       </view>
       <view class="tools-grid">
-        <view class="tool-item" bindtap="goToAppointment">
-          <view class="tool-icon" style="background:#FFF0F0;">
-            <text>📅</text>
+        <view class="tool-item" bindtap="goToSamples">
+          <view class="tool-icon" style="background:#E8F5E9;">
+            <text>🖼️</text>
           </view>
-          <text class="tool-label">预约记录</text>
+          <text class="tool-label">样片展示</text>
+        </view>
+        <view class="tool-item" bindtap="goToAlbum">
+          <view class="tool-icon" style="background:#FFF8E1;">
+            <text>📷</text>
+          </view>
+          <text class="tool-label">电子相册</text>
+        </view>
+        <view class="tool-item" bindtap="goToPoints">
+          <view class="tool-icon" style="background:#F3E8FF;">
+            <text>💎</text>
+          </view>
+          <text class="tool-label">我的积分</text>
         </view>
         <!-- 第二阶段开放：会员中心 -->
         <!-- <view class="tool-item" bindtap="goToVip">

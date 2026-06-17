@@ -265,6 +265,60 @@
   color: #6B5B62;
 }
 
+/* ===== 宝宝幸福空间 ===== */
+.happiness-card {
+  margin: 20rpx 24rpx;
+  background: linear-gradient(135deg, #FFF0F5, #FFE8ED);
+  border-radius: 24rpx;
+  padding: 32rpx 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4rpx 20rpx rgba(255,154,158,0.12);
+  border: 1rpx solid #FFDDE5;
+}
+
+.happiness-card:active {
+  opacity: 0.8;
+  transform: scale(0.98);
+}
+
+.happiness-left {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  flex: 1;
+}
+
+.happiness-icon {
+  width: 80rpx;
+  height: 80rpx;
+  background: linear-gradient(135deg, #FF9A9E, #FBC2EB);
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  flex-shrink: 0;
+}
+
+.happiness-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.happiness-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #4A2C3A;
+}
+
+.happiness-desc {
+  font-size: 24rpx;
+  color: #B89FAB;
+}
+
 /* ===== 常用工具 ===== */
 .tools-grid {
   display: flex;

@@ -16,6 +16,7 @@ import Dashboard from '@/pages/Dashboard';
 
 const UserList = React.lazy(() => import('@/pages/Users/UserList'));
 const OrderList = React.lazy(() => import('@/pages/Orders/OrderList'));
+const OrderGroupBuyList = React.lazy(() => import('@/pages/Orders/OrderGroupBuyList'));
 const OrderDetailPage = React.lazy(() => import('@/pages/Orders/OrderDetailPage'));
 const OrderEditPage = React.lazy(() => import('@/pages/Orders/OrderEditPage'));
 const PackageList = React.lazy(() => import('@/pages/Packages/PackageList'));
@@ -43,11 +44,15 @@ const SystemStatus = React.lazy(() => import('@/pages/System/Status'));
 const SystemSettings = React.lazy(() => import('@/pages/System/Settings'));
 const OperationLogs = React.lazy(() => import('@/pages/System/OperationLogs'));
 const Roles = React.lazy(() => import('@/pages/System/Roles'));
+const ChangePassword = React.lazy(() => import('@/pages/System/ChangePassword'));
+const ForgotPassword = React.lazy(() => import('@/pages/System/ForgotPassword'));
+const ResetPassword = React.lazy(() => import('@/pages/System/ResetPassword'));
 const CustomerProfile = React.lazy(() => import('@/pages/CRM/CustomerProfile'));
 const ComplaintList = React.lazy(() => import('@/pages/CRM/ComplaintList'));
 const MemberLevels = React.lazy(() => import('@/pages/CRM/MemberLevels'));
 const SystemBackup = React.lazy(() => import('@/pages/System/Backup'));
 const SystemRestore = React.lazy(() => import('@/pages/System/Restore'));
+const PointsConfig = React.lazy(() => import('@/pages/System/PointsConfig'));
 const ThemeSettings = React.lazy(() => import('@/pages/System/ThemeSettings'));
 const ShopInfoSettings = React.lazy(() => import('@/pages/Settings/ShopInfoSettings'));
 const PrintSettingsPage = React.lazy(() => import('@/pages/Settings/PrintSettingsPage'));
@@ -66,6 +71,7 @@ const ServiceItemList = React.lazy(() => import('@/pages/ServiceItems/ServiceIte
 const DiscountRulesList = React.lazy(() => import('@/pages/DiyPackages/DiscountRulesList'));
 const DiyPackageBuilder = React.lazy(() => import('@/pages/DiyPackages/DiyPackageBuilder'));
 const DiyPackageList = React.lazy(() => import('@/pages/DiyPackages/DiyPackageList'));
+const CustomerPointsList = React.lazy(() => import('@/pages/Marketing/CustomerPointsList'));
 const CouponList = React.lazy(() => import('@/pages/Marketing/CouponList'));
 const CouponForm = React.lazy(() => import('@/pages/Marketing/CouponForm'));
 const SegmentList = React.lazy(() => import('@/pages/Marketing/SegmentList'));
@@ -161,6 +167,8 @@ const ThemedApp: React.FC = () => {
         <Router basename="/admin" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route
               path="/*"
               element={
@@ -211,8 +219,11 @@ const ThemedApp: React.FC = () => {
                       <Route path="/system/status" element={<SystemStatus />} />
                       <Route path="/system/operation-logs" element={<OperationLogs />} />
                       <Route path="/system/roles" element={<Roles />} />
+                      <Route path="/system/change-password" element={<ChangePassword />} />
                       <Route path="/system/settings" element={<SystemSettings />} />
                       <Route path="/system/theme" element={<ThemeSettings />} />
+                      <Route path="/marketing/points-config" element={<PointsConfig />} />
+                      <Route path="/marketing/points-transactions" element={<CustomerPointsList />} />
                       <Route path="/system/backup" element={<SystemBackup />} />
                       <Route path="/system/restore" element={<SystemRestore />} />
                       <Route path="/marketing/coupons" element={<CouponList />} />
@@ -226,6 +237,7 @@ const ThemedApp: React.FC = () => {
                       <Route path="/marketing/campaigns/new" element={<CampaignForm />} />
                       <Route path="/marketing/campaigns/edit/:id" element={<CampaignForm />} />
                       <Route path="/marketing/campaigns/funnel/:id" element={<CampaignFunnel />} />
+                      <Route path="/marketing/group-buy" element={<OrderGroupBuyList />} />
                       <Route path="/analytics" element={<AnalyticsCenter />} />
                       <Route path="/wx-users" element={<WxUserList />} />
                       <Route path="/wx-users/:id" element={<WxUserDetail />} />

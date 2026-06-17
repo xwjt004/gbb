@@ -24,7 +24,7 @@ const ExportAll: React.FC = () => {
 
   const sheets = [
     { key: 'orders', label: '订单数据', desc: '所有订单信息，含用户、套餐、金额、状态' },
-    { key: 'users', label: '用户数据', desc: '所有注册用户基本信息' },
+    { key: 'users', label: '员工数据', desc: '所有注册员工基本信息' },
     { key: 'payments', label: '财务数据', desc: '所有支付记录含金额和状态' },
   ];
 
@@ -33,7 +33,7 @@ const ExportAll: React.FC = () => {
       <Card title="完整数据导出" variant="borderless">
         <Alert
           message="功能说明"
-          description="导出系统中的全部核心数据，生成包含多个 Sheet 的 Excel 文件（订单数据、用户数据、财务数据）。适合全量备份和离线分析。"
+          description="导出系统中的全部核心数据，生成包含多个 Sheet 的 Excel 文件（订单数据、员工数据、财务数据）。适合全量备份和离线分析。"
           type="info"
           showIcon
           style={{ marginBottom: 24 }}

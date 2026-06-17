@@ -88,7 +88,7 @@ const GlobalSearch: React.FC = () => {
   const cacheRef = useRef<Map<string, { time: number; data: SearchResults; meta?: any }>>(new Map());
   const [searchHistory, setSearchHistory] = useState<SearchHistory[]>([]);
   const [hotKeywords] = useState<string[]>([
-    '套餐', '用户', '订单', '支付', '退款', 'VIP'
+    '套餐', '员工', '订单', '支付', '退款', 'VIP'
   ]);
 
   const navigate = useNavigate();

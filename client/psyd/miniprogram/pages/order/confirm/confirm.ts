@@ -64,10 +64,9 @@ Page({
     selectedTimeSlot: null as TimeSlot | null,  // 选中的时间槽
     availableTimeSlots: [] as TimeSlot[],  // 可用时间槽列表
 
-    // 配送方式
-    deliveryMethod: 'express' as 'express' | 'pickup',
+    // 配送方式（仅支持上门自提）
+    deliveryMethod: 'pickup' as 'pickup',
     deliveryMethods: [
-      { value: 'express', label: '快递配送', fee: 10 },
       { value: 'pickup', label: '上门自提', fee: 0 }
     ],
 
@@ -80,7 +79,7 @@ Page({
 
     // 价格信息
     goodsAmount: 0,
-    shippingFee: 10,
+    shippingFee: 0,
     discountAmount: 0,
     totalAmount: 0,
 

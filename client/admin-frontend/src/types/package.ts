@@ -58,6 +58,13 @@ export interface Package extends BaseEntity {
   maxBookings: number; // 最大预订数量
   packageProducts?: PackageProductItem[];
   packageServices?: PackageServiceItem[];
+  groupMinCount?: number;
+  groupPrice?: number;
+  groupBuyDescription?: string;
+  posterTitle?: string;
+  posterContent?: string;
+  posterBackground?: string;
+  posterImages?: string[];
 }
 
 export interface PackageSearchParams {
@@ -83,6 +90,13 @@ export interface PackageFormData {
   tags: string[];
   category: string;
   maxBookings: number;
+  groupMinCount?: number;
+  groupPrice?: number;
+  groupBuyDescription?: string;
+  posterTitle?: string;
+  posterContent?: string;
+  posterBackground?: string;
+  posterImages?: string[];
 }
 
 export interface PackageStats {
