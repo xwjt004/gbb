@@ -4,7 +4,10 @@ import { PaymentStatus } from '../../shared/enums/status.enum';
 import { StartGroupBuyDto } from './dto/start-group-buy.dto';
 import { AdminCreateGroupBuyDto } from './dto/admin-create-group-buy.dto';
 import { UpdateGroupBuyDto } from './dto/update-group-buy.dto';
+import { CreateGroupBuyTierDto, UpdateGroupBuyTierDto } from './dto/group-buy-tier.dto';
 import { QueryGroupBuyDto } from './dto/query-group-buy.dto';
+import { PaymentsService } from '../payments/payments.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class GroupBuyService {
@@ -12,12 +15,26 @@ export class GroupBuyService {
   // 团购有效期：48小时
   private readonly GROUP_BUY_EXPIRY_HOURS = 48;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly paymentsService: PaymentsService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   /** 开团 */
   async start(wxUserId: string, dto: StartGroupBuyDto) {
-    const pkg = await this.prisma.package.findUnique({ where: { id: dto.packageId } });
-    if (!pkg) throw new NotFoundException('套餐不存在');
+    if (!dto.packageId && !dto.productId) {
+      throw new BadRequestException('请指定套餐或商品');
+    }
+
+    if (dto.packageId) {
+      const pkg = await this.prisma.package.findUnique({ where: { id: dto.packageId } });
+      if (!pkg) throw new NotFoundException('套餐不存在');
+    }
+    if (dto.productId) {
+      const prod = await this.prisma.product.findUnique({ where: { id: dto.productId } });
+      if (!prod) throw new NotFoundException('商品不存在');
+    }
 
     // 检查该用户是否有进行中的团购
     const active = await this.prisma.groupBuyActivity.findFirst({
@@ -31,7 +48,8 @@ export class GroupBuyService {
     // 创建团购活动 + 开团人自动成为第一个参团者
     const activity = await this.prisma.groupBuyActivity.create({
       data: {
-        packageId: dto.packageId,
+        packageId: dto.packageId || null,
+        productId: dto.productId || null,
         creatorUserId: wxUserId,
         minCount,
         expiredAt,
@@ -41,6 +59,7 @@ export class GroupBuyService {
       },
       include: {
         package: true,
+        product: true,
         participants: { include: { user: { select: { id: true, nickname: true, avatar: true } } } },
       },
     });
@@ -65,13 +84,18 @@ export class GroupBuyService {
     const alreadyJoined = activity.participants.some((p) => p.userId === wxUserId);
     if (alreadyJoined) throw new BadRequestException('您已参与该团购');
 
+    // 检查参团人数上限
+    if (activity.maxCount && activity.participants.length >= activity.maxCount) {
+      throw new BadRequestException('该团购已达到参团人数上限');
+    }
+
     // 参团：已成团的直接设为 SUCCESS 状态，未成团的设为 JOINED
     const participantStatus = activity.status === 'SUCCESS' ? 'SUCCESS' : 'JOINED';
     await this.prisma.groupBuyParticipant.create({
       data: { activityId, userId: wxUserId, status: participantStatus },
     });
 
-    // 未成团时检查是否达到成团条件（2人即可成团）
+    // 未成团时检查是否达到成团条件
     if (activity.status === 'ACTIVE') {
       const updatedCount = await this.prisma.groupBuyParticipant.count({ where: { activityId } });
       if (updatedCount >= activity.minCount) {
@@ -79,7 +103,10 @@ export class GroupBuyService {
       }
     }
 
-    return { code: 200, message: '参团成功' };
+    // 获取当前阶梯价格
+    const tierPrice = await this.getCurrentTierPrice(activityId);
+
+    return { code: 200, message: '参团成功', data: { tierPrice } };
   }
 
   /** 成团逻辑 */
@@ -105,16 +132,18 @@ export class GroupBuyService {
       data: { status: 'SUCCESS' },
     });
 
-    // 为每位参团者生成9折优惠券
-    const pkg = await this.prisma.package.findUnique({ where: { id: activity.packageId } });
-    if (!pkg) return;
+    // 为每位参团者生成9折优惠券（仅套餐团购）
+    if (!activity.packageId) return;
+
+    const pkg = await this.prisma.package.findUnique({ where: { id: activity.packageId! } });
 
     // 查找或创建团购9折券模板
     let coupon = await this.prisma.coupon.findFirst({
-      where: { couponType: 'GROUP_BUY', applicableIds: { has: activity.packageId } },
+      where: { couponType: 'GROUP_BUY', applicableIds: { has: activity.packageId! } },
     });
 
     if (!coupon) {
+      if (!pkg) return;
       coupon = await this.prisma.coupon.create({
         data: {
           couponCode: `GROUP_${activity.packageId}_${Date.now()}`,
@@ -128,7 +157,7 @@ export class GroupBuyService {
           usedCount: 0,
           perUserLimit: 1,
           applicableType: 'PACKAGE',
-          applicableIds: [activity.packageId],
+          applicableIds: [activity.packageId!],
           startTime: new Date(),
           endTime: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30天有效期
           status: 'ACTIVE',
@@ -154,7 +183,54 @@ export class GroupBuyService {
       }
     }
 
+    // 发送开团成功通知（给团长）
+    try {
+      await this.notificationsService.create({
+        type: 'WECHAT',
+        title: '开团成功通知',
+        content: JSON.stringify({
+          templateId: 'GROUP_BUY_SUCCESS',
+          data: {
+            thing1: { value: pkg!.name },
+            number2: { value: String(activity.participants.length) },
+            thing3: { value: '您的团购已成功，优惠券已发放到账户' },
+          },
+          page: `pages/group-buy/detail/detail?id=${activityId}`,
+        }),
+        recipient: activity.creatorUserId,
+      });
+    } catch {
+      // 通知失败不影响成团流程
+    }
+
     this.logger.log(`团购 ${activityId} 已成团，已发放 ${activity.participants.length} 张优惠券`);
+  }
+  async getCurrentTierPrice(activityId: string): Promise<number | null> {
+    const activity = await this.prisma.groupBuyActivity.findUnique({
+      where: { id: activityId },
+      select: { packageId: true, productId: true },
+    });
+    if (!activity) return null;
+
+    const participantCount = await this.prisma.groupBuyParticipant.count({
+      where: { activityId },
+    });
+
+    const tierWhere = activity.packageId
+      ? { packageId: activity.packageId }
+      : { productId: activity.productId! };
+    const tiers = await this.prisma.groupBuyTier.findMany({
+      where: tierWhere,
+      orderBy: { minCount: 'desc' },
+    });
+
+    // 找到当前人数可用的最高阶梯（人数最多的满足条件的阶梯）
+    for (const tier of tiers) {
+      if (participantCount >= tier.minCount) {
+        return Number(tier.price);
+      }
+    }
+    return null;
   }
 
   /** 获取团购详情（含参团者） */
@@ -163,6 +239,7 @@ export class GroupBuyService {
       where: { id: activityId },
       include: {
         package: true,
+        product: true,
         creator: { select: { id: true, nickname: true, avatar: true } },
         participants: {
           include: { user: { select: { id: true, nickname: true, avatar: true } } },
@@ -181,12 +258,22 @@ export class GroupBuyService {
     const limit = query.limit || 20;
     const where: any = {};
     if (query.status) where.status = query.status;
+    if (query.startDate) {
+      where.createdAt = { ...where.createdAt, gte: new Date(query.startDate) };
+    }
+    if (query.endDate) {
+      where.createdAt = { ...where.createdAt, lte: new Date(`${query.endDate}T23:59:59.999Z`) };
+    }
+    if (query.keyword) {
+      where.package = { name: { contains: query.keyword } };
+    }
 
     const [items, total] = await Promise.all([
       this.prisma.groupBuyActivity.findMany({
         where,
         include: {
           package: { select: { id: true, name: true, price: true, groupPrice: true, images: true } },
+          product: { select: { id: true, name: true, salePrice: true, images: true } },
           creator: { select: { id: true, nickname: true, avatar: true, phone: true } },
           orders: {
             select: { paymentStatus: true },
@@ -212,6 +299,91 @@ export class GroupBuyService {
     });
 
     return { code: 200, message: '查询成功', data: { items: enrichedItems, pagination: { page, limit, total } } };
+  }
+
+  // ==================== 阶梯价格管理 ====================
+
+  /** 获取阶梯价列表（按套餐或商品） */
+  async getTiers(targetType: 'package' | 'product', targetId: number) {
+    const where = targetType === 'package' ? { packageId: targetId } : { productId: targetId };
+    const tiers = await this.prisma.groupBuyTier.findMany({
+      where,
+      orderBy: { minCount: 'asc' },
+    });
+    return { code: 200, data: tiers };
+  }
+
+  /** 添加阶梯价 */
+  async addTier(targetType: 'package' | 'product', targetId: number, dto: CreateGroupBuyTierDto) {
+    if (targetType === 'package') {
+      const pkg = await this.prisma.package.findUnique({ where: { id: targetId } });
+      if (!pkg) throw new NotFoundException('套餐不存在');
+    } else {
+      const prod = await this.prisma.product.findUnique({ where: { id: targetId } });
+      if (!prod) throw new NotFoundException('商品不存在');
+    }
+
+    const where = targetType === 'package' ? { packageId: targetId } : { productId: targetId };
+
+    // 检查 minCount 是否已存在
+    const existing = await this.prisma.groupBuyTier.findFirst({
+      where: { ...where, minCount: dto.minCount },
+    });
+    if (existing) throw new BadRequestException('该人数阶梯已存在');
+
+    const data = targetType === 'package'
+      ? { packageId: targetId, minCount: dto.minCount, price: dto.price }
+      : { productId: targetId, minCount: dto.minCount, price: dto.price };
+
+    const tier = await this.prisma.groupBuyTier.create({ data });
+    return { code: 200, message: '添加成功', data: tier };
+  }
+
+  /** 更新阶梯价 */
+  async updateTier(tierId: number, dto: UpdateGroupBuyTierDto) {
+    const tier = await this.prisma.groupBuyTier.findUnique({ where: { id: tierId } });
+    if (!tier) throw new NotFoundException('阶梯不存在');
+
+    const data: any = {};
+    if (dto.minCount !== undefined) data.minCount = dto.minCount;
+    if (dto.price !== undefined) data.price = dto.price;
+
+    const updated = await this.prisma.groupBuyTier.update({
+      where: { id: tierId },
+      data,
+    });
+    return { code: 200, message: '已更新', data: updated };
+  }
+
+  /** 删除阶梯价 */
+  async deleteTier(tierId: number) {
+    const tier = await this.prisma.groupBuyTier.findUnique({ where: { id: tierId } });
+    if (!tier) throw new NotFoundException('阶梯不存在');
+
+    await this.prisma.groupBuyTier.delete({ where: { id: tierId } });
+    return { code: 200, message: '已删除' };
+  }
+
+  /** 团购数据统计 */
+  async getStats() {
+    const [total, active, success, failed, totalParticipants] = await Promise.all([
+      this.prisma.groupBuyActivity.count(),
+      this.prisma.groupBuyActivity.count({ where: { status: 'ACTIVE' } }),
+      this.prisma.groupBuyActivity.count({ where: { status: 'SUCCESS' } }),
+      this.prisma.groupBuyActivity.count({ where: { status: 'FAILED' } }),
+      this.prisma.groupBuyParticipant.count(),
+    ]);
+
+    const successRate = total > 0 ? Number(((success / total) * 100).toFixed(1)) : 0;
+    const avgParticipants = success > 0
+      ? Number((totalParticipants / total).toFixed(1))
+      : 0;
+
+    return {
+      code: 200,
+      message: '查询成功',
+      data: { total, active, success, failed, successRate, avgParticipants, totalParticipants },
+    };
   }
 
   /** 退团（小程序端，仅限非团长在活动进行中退出） */
@@ -247,6 +419,7 @@ export class GroupBuyService {
       },
       include: {
         package: { select: { id: true, name: true, images: true, price: true, groupPrice: true } },
+        product: { select: { id: true, name: true, images: true, salePrice: true } },
         creator: { select: { id: true, nickname: true, avatar: true } },
         _count: { select: { participants: true } },
       },
@@ -284,8 +457,18 @@ export class GroupBuyService {
 
   /** 后台手动创建团购 */
   async adminCreate(dto: AdminCreateGroupBuyDto) {
-    const pkg = await this.prisma.package.findUnique({ where: { id: dto.packageId } });
-    if (!pkg) throw new NotFoundException('套餐不存在');
+    if (!dto.packageId && !dto.productId) {
+      throw new BadRequestException('请指定套餐或商品');
+    }
+
+    if (dto.packageId) {
+      const pkg = await this.prisma.package.findUnique({ where: { id: dto.packageId } });
+      if (!pkg) throw new NotFoundException('套餐不存在');
+    }
+    if (dto.productId) {
+      const prod = await this.prisma.product.findUnique({ where: { id: dto.productId } });
+      if (!prod) throw new NotFoundException('商品不存在');
+    }
 
     const user = await this.prisma.wxUser.findUnique({ where: { id: dto.creatorUserId } });
     if (!user) throw new NotFoundException('用户不存在');
@@ -295,12 +478,14 @@ export class GroupBuyService {
 
     const activity = await this.prisma.groupBuyActivity.create({
       data: {
-        packageId: dto.packageId,
+        packageId: dto.packageId || null,
+        productId: dto.productId || null,
         creatorUserId: dto.creatorUserId,
         minCount,
+        maxCount: dto.maxCount,
         expiredAt,
       },
-      include: { package: true },
+      include: { package: true, product: true },
     });
 
     return { code: 200, message: '创建成功', data: activity };
@@ -329,6 +514,7 @@ export class GroupBuyService {
 
     const data: any = {};
     if (dto.minCount !== undefined) data.minCount = dto.minCount;
+    if (dto.maxCount !== undefined) data.maxCount = dto.maxCount;
     if (dto.expiredAt !== undefined) data.expiredAt = new Date(dto.expiredAt);
 
     await this.prisma.groupBuyActivity.update({
@@ -338,17 +524,36 @@ export class GroupBuyService {
     return { code: 200, message: '已更新' };
   }
 
-  /** 定时检查过期团购 */
+  /** 定时检查过期团购 + 自动退款 */
   async expireStaleActivities() {
-    const result = await this.prisma.groupBuyActivity.updateMany({
-      where: {
-        status: 'ACTIVE',
-        expiredAt: { lte: new Date() },
-      },
+    const expired = await this.prisma.groupBuyActivity.findMany({
+      where: { status: 'ACTIVE', expiredAt: { lte: new Date() } },
+    });
+
+    if (expired.length === 0) return;
+
+    const expiredIds = expired.map(a => a.id);
+
+    // 标记为 FAILED
+    await this.prisma.groupBuyActivity.updateMany({
+      where: { id: { in: expiredIds } },
       data: { status: 'FAILED' },
     });
-    if (result.count > 0) {
-      this.logger.log(`已过期 ${result.count} 个未成团团购`);
+
+    this.logger.log(`已过期 ${expired.length} 个未成团团购，开始自动退款...`);
+
+    // 对已支付订单自动退款
+    const paidPayments = await this.prisma.payment.findMany({
+      where: { order: { groupBuyActivityId: { in: expiredIds } }, status: 'FULLY_PAID' },
+    });
+
+    for (const payment of paidPayments) {
+      try {
+        await this.paymentsService.processRefund(payment.id, '团购过期自动退款');
+        this.logger.log(`自动退款成功: 支付 ${payment.id}`);
+      } catch (err: any) {
+        this.logger.error(`自动退款失败: 支付 ${payment.id}`, err.message || err);
+      }
     }
   }
 }

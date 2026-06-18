@@ -222,6 +222,7 @@ Page({
           depositAmount: pkg.depositAmount || 0,
           duration_minutes: pkg.duration_minutes || 0,
           coverImage: this.data.pkgCover,
+          activityId: this.data.activityId,
         };
         wx.navigateTo({
           url: '/pages/booking/date/date?packageId=' + pkg.id + '&packageInfo=' + encodeURIComponent(JSON.stringify(packageInfo)),
@@ -295,6 +296,7 @@ Page({
       depositAmount: pkg.depositAmount || 0,
       duration_minutes: pkg.duration_minutes || 0,
       coverImage: this.data.pkgCover,
+      activityId: this.data.activityId,
     };
     wx.navigateTo({
       url: '/pages/booking/date/date?packageId=' + pkg.id + '&packageInfo=' + encodeURIComponent(JSON.stringify(packageInfo)),

@@ -21,4 +21,19 @@ export class QueryGroupBuyDto {
   @IsOptional()
   @IsString()
   status?: string;
+
+  @ApiPropertyOptional({ description: '创建时间-开始 (YYYY-MM-DD)' })
+  @IsOptional()
+  @IsString()
+  startDate?: string;
+
+  @ApiPropertyOptional({ description: '创建时间-结束 (YYYY-MM-DD)' })
+  @IsOptional()
+  @IsString()
+  endDate?: string;
+
+  @ApiPropertyOptional({ description: '套餐名称关键词' })
+  @IsOptional()
+  @IsString()
+  keyword?: string;
 }

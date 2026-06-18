@@ -121,4 +121,9 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   wxUserId?: string;
+
+  @ApiProperty({ description: '团购活动ID（来自团购参团流程）', required: false })
+  @IsOptional()
+  @IsString()
+  groupBuyActivityId?: string;
 }

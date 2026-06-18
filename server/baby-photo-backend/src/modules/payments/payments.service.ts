@@ -853,6 +853,33 @@ export class PaymentsService {
           refundedAt: new Date(),
         },
       });
+
+      // v1.2.4+5: 团购退款处理 — 全款退款时更新参团状态并回收优惠券
+      if (payment.order.groupBuyActivityId && payment.order.wxUserId && Number(refundAmount) >= Number(payment.amount)) {
+        await tx.groupBuyParticipant.updateMany({
+          where: { activityId: payment.order.groupBuyActivityId, userId: payment.order.wxUserId },
+          data: { status: 'REFUNDED' },
+        });
+        this.logger.log(`团购参团状态已更新 REFUNDED: activity=${payment.order.groupBuyActivityId}, user=${payment.order.wxUserId}`);
+
+        const act = await tx.groupBuyActivity.findUnique({
+          where: { id: payment.order.groupBuyActivityId },
+          select: { packageId: true },
+        });
+        if (act) {
+          const gbCoupons = await tx.coupon.findMany({
+            where: { couponType: 'GROUP_BUY', applicableIds: { has: act.packageId } },
+            select: { id: true },
+          });
+          if (gbCoupons.length > 0) {
+            const r = await tx.userCoupon.updateMany({
+              where: { wxUserId: payment.order.wxUserId, couponId: { in: gbCoupons.map(c => c.id) }, status: 'UNUSED' },
+              data: { status: 'EXPIRED' },
+            });
+            if (r.count > 0) this.logger.log(`团购优惠券已回收: ${r.count} 张`);
+          }
+        }
+      }
     });
 
     return this.prisma.payment.findUnique({
@@ -2118,6 +2145,33 @@ export class PaymentsService {
 
       // 5. 记录退款日志
       this.logger.log(`退款处理完成: 支付ID=${paymentId}, 金额=${payment.amount}, 原因=${reason || '无'}`);
+
+      // v1.2.4+5: 团购退款处理 — 全款退款时更新参团状态并回收优惠券
+      if (payment.order.groupBuyActivityId && payment.order.wxUserId && newPaidAmount === 0) {
+        await tx.groupBuyParticipant.updateMany({
+          where: { activityId: payment.order.groupBuyActivityId, userId: payment.order.wxUserId },
+          data: { status: 'REFUNDED' },
+        });
+        this.logger.log(`团购参团状态已更新 REFUNDED: activity=${payment.order.groupBuyActivityId}, user=${payment.order.wxUserId}`);
+
+        const act = await tx.groupBuyActivity.findUnique({
+          where: { id: payment.order.groupBuyActivityId },
+          select: { packageId: true },
+        });
+        if (act) {
+          const gbCoupons = await tx.coupon.findMany({
+            where: { couponType: 'GROUP_BUY', applicableIds: { has: act.packageId } },
+            select: { id: true },
+          });
+          if (gbCoupons.length > 0) {
+            const r = await tx.userCoupon.updateMany({
+              where: { wxUserId: payment.order.wxUserId, couponId: { in: gbCoupons.map(c => c.id) }, status: 'UNUSED' },
+              data: { status: 'EXPIRED' },
+            });
+            if (r.count > 0) this.logger.log(`团购优惠券已回收: ${r.count} 张`);
+          }
+        }
+      }
 
       return {
         code: 200,

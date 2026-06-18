@@ -13,6 +13,7 @@ import { UserStats } from '@/types/user';
 import { PackageStats } from '@/types/package';
 import { orderService } from '@/services/orders';
 import { userService } from '@/services/users';
+import { groupBuyService } from '@/services/groupBuy';
 import './Dashboard.css';
 
 interface CashFlowTrendData {
@@ -76,6 +77,10 @@ const Dashboard: React.FC = () => {
   ]);
   const [time, setTime] = useState(dayjs().format('YYYY-MM-DD HH:mm:ss'));
 
+  const [groupBuyStats, setGroupBuyStats] = useState({
+    total: 0, active: 0, success: 0, failed: 0, successRate: 0, avgParticipants: 0, totalParticipants: 0,
+  });
+
   const [data, setData] = useState<DashboardData>({
     userStats: {
       totalUsers: 0, activeUsers: 0, newUsersToday: 0, vipUsers: 0, growthRate: 0,
@@ -113,7 +118,7 @@ const Dashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [userStats, orderStats, cashFlowTrends, recentOrders] = await Promise.all([
+      const [userStats, orderStats, cashFlowTrends, recentOrders, gbStats] = await Promise.all([
         userService.getUserStats(),
         orderService.getOrderStats(),
         orderService.getCashFlowTrendsByDateRange(
@@ -121,6 +126,7 @@ const Dashboard: React.FC = () => {
           cashFlowDateRange[1].format('YYYY-MM-DD'),
         ),
         orderService.getOrders({ page: 1, pageSize: 10 }),
+        groupBuyService.getStats().catch(() => null),
       ]);
       const totalUsers = userStats.data?.totalUsers || 0;
       const totalRevenue = orderStats.data?.totalRevenue || 0;
@@ -156,6 +162,9 @@ const Dashboard: React.FC = () => {
           revenue: Math.min(100, Math.round(totalRevenue / 1000)),
         },
       });
+      if (gbStats) {
+        setGroupBuyStats(gbStats);
+      }
     } catch (error) {
       console.error('加载仪表盘数据失败:', error);
       message.error('加载仪表盘数据失败');
@@ -389,6 +398,36 @@ const Dashboard: React.FC = () => {
 
       {/* ── Row 1: Stat Cards ── */}
       <StatCards userStats={data.userStats} orderStats={data.orderStats} />
+      <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Col span={6}>
+          <Card size="small" title="团购总数">
+            <div style={{ textAlign: 'center', fontSize: 28, fontWeight: 700, color: '#1677ff' }}>
+              {groupBuyStats.total}
+            </div>
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card size="small" title="进行中">
+            <div style={{ textAlign: 'center', fontSize: 28, fontWeight: 700, color: '#1677ff' }}>
+              {groupBuyStats.active}
+            </div>
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card size="small" title="已成团">
+            <div style={{ textAlign: 'center', fontSize: 28, fontWeight: 700, color: '#52c41a' }}>
+              {groupBuyStats.success}
+            </div>
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card size="small" title="成团率">
+            <div style={{ textAlign: 'center', fontSize: 28, fontWeight: 700, color: '#ee0a24' }}>
+              {groupBuyStats.successRate}%
+            </div>
+          </Card>
+        </Col>
+      </Row>
 
       {/* ── Row 2: Chart + Sidebar ── */}
       <Row gutter={[24, 24]} style={{ marginBottom: 16 }}>

@@ -1,10 +1,19 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsInt, IsOptional, Min } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class StartGroupBuyDto {
-  @ApiProperty({ description: '套餐ID' })
+  @ApiPropertyOptional({ description: '套餐ID（与商品ID二选一）' })
+  @IsOptional()
   @IsInt()
-  packageId: number;
+  @Type(() => Number)
+  packageId?: number;
+
+  @ApiPropertyOptional({ description: '商品ID（与套餐ID二选一）' })
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  productId?: number;
 
   @ApiProperty({ description: '成团人数', required: false, default: 3 })
   @IsOptional()

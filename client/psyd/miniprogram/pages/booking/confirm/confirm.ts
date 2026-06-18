@@ -234,6 +234,9 @@ Page({
         }
       }
 
+      // 获取团购活动ID（如果有）
+      const activityId = (bookingData.packageInfo as any).activityId;
+
       // 调用创建订单接口
       const orderData = {
         userOpenid: userOpenid,
@@ -246,7 +249,8 @@ Page({
         customerName: bookingData.contactName,
         customerPhone: bookingData.contactPhone,
         notes: bookingData.notes || '',
-        paymentType: paymentType === 'deposit' ? 'DEPOSIT' : 'FULL'
+        paymentType: paymentType === 'deposit' ? 'DEPOSIT' : 'FULL',
+        groupBuyActivityId: activityId || undefined,
       };
 
       console.log('📝 创建订单数据:', orderData);

@@ -7,6 +7,7 @@ import { StartGroupBuyDto } from './dto/start-group-buy.dto';
 import { AdminCreateGroupBuyDto } from './dto/admin-create-group-buy.dto';
 import { UpdateGroupBuyDto } from './dto/update-group-buy.dto';
 import { QueryGroupBuyDto } from './dto/query-group-buy.dto';
+import { CreateGroupBuyTierDto, UpdateGroupBuyTierDto } from './dto/group-buy-tier.dto';
 import { WxJwtAuthGuard } from '../wx-auth/guards/wx-jwt-auth.guard';
 import { WxAuthService } from '../wx-auth/wx-auth.service';
 
@@ -97,6 +98,12 @@ export class GroupBuyController {
     return this.groupBuyService.getList(query);
   }
 
+  @Get('admin/stats')
+  @ApiOperation({ summary: '团购数据统计（后台管理）' })
+  async getStats() {
+    return this.groupBuyService.getStats();
+  }
+
   @Patch('admin/:id/cancel')
   @ApiOperation({ summary: '取消/过期团购活动（后台管理）' })
   async cancel(@Param('id') id: string) {
@@ -125,5 +132,43 @@ export class GroupBuyController {
   @ApiOperation({ summary: '手动创建团购（后台管理）' })
   async adminCreate(@Body() dto: AdminCreateGroupBuyDto) {
     return this.groupBuyService.adminCreate(dto);
+  }
+
+  // ==================== 阶梯价格管理 ====================
+
+  @Get('admin/tiers/package/:packageId')
+  @ApiOperation({ summary: '获取套餐阶梯团购价列表（后台管理）' })
+  async getPackageTiers(@Param('packageId') packageId: string) {
+    return this.groupBuyService.getTiers('package', Number(packageId));
+  }
+
+  @Post('admin/tiers/package/:packageId')
+  @ApiOperation({ summary: '添加套餐阶梯团购价（后台管理）' })
+  async addPackageTier(@Param('packageId') packageId: string, @Body() dto: CreateGroupBuyTierDto) {
+    return this.groupBuyService.addTier('package', Number(packageId), dto);
+  }
+
+  @Get('admin/tiers/product/:productId')
+  @ApiOperation({ summary: '获取商品阶梯团购价列表（后台管理）' })
+  async getProductTiers(@Param('productId') productId: string) {
+    return this.groupBuyService.getTiers('product', Number(productId));
+  }
+
+  @Post('admin/tiers/product/:productId')
+  @ApiOperation({ summary: '添加商品阶梯团购价（后台管理）' })
+  async addProductTier(@Param('productId') productId: string, @Body() dto: CreateGroupBuyTierDto) {
+    return this.groupBuyService.addTier('product', Number(productId), dto);
+  }
+
+  @Patch('admin/tiers/:tierId')
+  @ApiOperation({ summary: '更新阶梯团购价（后台管理）' })
+  async updateTier(@Param('tierId') tierId: string, @Body() dto: UpdateGroupBuyTierDto) {
+    return this.groupBuyService.updateTier(Number(tierId), dto);
+  }
+
+  @Delete('admin/tiers/:tierId')
+  @ApiOperation({ summary: '删除阶梯团购价（后台管理）' })
+  async deleteTier(@Param('tierId') tierId: string) {
+    return this.groupBuyService.deleteTier(Number(tierId));
   }
 }

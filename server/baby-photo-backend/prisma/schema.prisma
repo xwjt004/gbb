@@ -136,6 +136,7 @@ model Package {
   packageCategory   PackageCategory? @relation(fields: [categoryId], references: [id])
   favorites         UserFavorite[]
   groupBuyActivities GroupBuyActivity[]
+  groupBuyTiers      GroupBuyTier[]
 
   @@index([categoryId])
   @@index([packageType])
@@ -475,6 +476,8 @@ model Product {
   transactions    StockTransaction[]
   transfers       StockTransfer[]
   favorites       UserFavorite[]
+  groupBuyActivities GroupBuyActivity[]
+  groupBuyTiers      GroupBuyTier[]
 
   @@index([categoryId])
   @@index([productNo])
@@ -1432,18 +1435,22 @@ model UserCoupon {
 // 团购活动
 model GroupBuyActivity {
   id            String   @id @default(uuid())
-  packageId     Int      @map("package_id")
+  packageId     Int?     @map("package_id")
+  productId     Int?     @map("product_id")
   creatorUserId String   @map("creator_user_id")
   minCount      Int      @default(3) @map("min_count")
+  maxCount      Int?     @map("max_count")       // 参团人数上限（null=不限制）
   status        String   @default("ACTIVE") @db.VarChar(20) // ACTIVE / SUCCESS / FAILED
   createdAt     DateTime @default(now()) @map("created_at")
   expiredAt     DateTime @map("expired_at")
-  package       Package  @relation(fields: [packageId], references: [id])
+  package       Package?  @relation(fields: [packageId], references: [id])
+  product       Product?  @relation(fields: [productId], references: [id])
   creator       WxUser   @relation(fields: [creatorUserId], references: [id])
   participants  GroupBuyParticipant[]
   orders        Order[]
 
   @@index([packageId])
+  @@index([productId])
   @@index([creatorUserId])
   @@index([status])
   @@map("group_buy_activities")
@@ -1462,6 +1469,22 @@ model GroupBuyParticipant {
   @@index([activityId])
   @@index([userId])
   @@map("group_buy_participants")
+}
+
+// 团购阶梯价格
+model GroupBuyTier {
+  id        Int      @id @default(autoincrement())
+  packageId Int?     @map("package_id")
+  productId Int?     @map("product_id")
+  minCount  Int      @map("min_count")       // 达到该人数时适用此价格
+  price     Decimal  @db.Decimal(10, 2)      // 阶梯价
+  createdAt DateTime @default(now()) @map("created_at")
+  package   Package?  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  product   Product?  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([packageId, minCount])
+  @@index([productId, minCount])
+  @@map("group_buy_tiers")
 }
 
 model AutomationRule {

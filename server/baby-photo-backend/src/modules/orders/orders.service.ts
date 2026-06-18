@@ -136,9 +136,27 @@ export class OrdersService {
       }
     }
 
-    // 优先使用客户端传入的总额（管理员可自定义价格），否则使用定价引擎计算结果
-    // 定价引擎结果仍保存在 paymentSummary 中用于参考
-    const finalTotalAmount = createOrderDto.totalAmount || (pricingInfo?.finalPrice ?? 0);
+    // 处理团购活动关联
+    let finalGroupBuyActivityId: string | undefined;
+    let finalTotalAmount = createOrderDto.totalAmount || (pricingInfo?.finalPrice ?? 0);
+    let finalDepositAmount = createOrderDto.depositAmount || finalTotalAmount * 0.3;
+
+    if (createOrderDto.groupBuyActivityId && packageId) {
+      const activity = await this.prisma.groupBuyActivity.findUnique({
+        where: { id: createOrderDto.groupBuyActivityId },
+        include: { package: { select: { groupPrice: true, price: true } } },
+      });
+      if (activity && activity.status !== 'FAILED' && activity.packageId === packageId) {
+        finalGroupBuyActivityId = activity.id;
+        // 如果团购价存在，使用团购价覆盖
+        if (activity.package?.groupPrice && Number(activity.package.groupPrice) > 0) {
+          const groupPrice = Number(activity.package.groupPrice);
+          console.log(`团购价应用(booking): 套系#${packageId} ¥${finalTotalAmount} → ¥${groupPrice}`);
+          finalTotalAmount = groupPrice;
+          finalDepositAmount = groupPrice * 0.3;
+        }
+      }
+    }
 
     // 准备订单数据 - 修正字段映射
     const orderData: any = {
@@ -148,7 +166,7 @@ export class OrdersService {
       packageId: packageId || null,
       diyPackageId: diyPackageId || null,
       totalAmount: finalTotalAmount,
-      depositAmount: createOrderDto.depositAmount || 0,
+      depositAmount: finalDepositAmount,
       paidAmount: 0,
       paymentStatus: PaymentStatus.PENDING_PAYMENT,
       orderStatus: OrderStatus.PENDING,
@@ -159,6 +177,7 @@ export class OrdersService {
       couponId: createOrderDto.couponId || null,
       discountAmount: 0,
       wxUserId: createOrderDto.wxUserId || null,
+      groupBuyActivityId: finalGroupBuyActivityId || null,
       // 将用户的协议同意信息保存到独立列（已新增于 prisma schema）以及兼容地写入 paymentSummary
       agreementAccepted: !!createOrderDto.agreementAccepted,
       agreementVersion: createOrderDto.agreementVersion || null,

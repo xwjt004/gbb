@@ -17,7 +17,7 @@ import {
   Space,
   Image,
 } from 'antd';
-import { PlusOutlined, ThunderboltOutlined, TeamOutlined, PictureOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, ThunderboltOutlined, TeamOutlined, PictureOutlined, DeleteOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import { Resizable } from 'react-resizable';
 import 'react-resizable/css/styles.css';
 import type { UploadFile } from 'antd/es/upload/interface';
@@ -28,7 +28,7 @@ import packageCategoryService, { type PackageCategory } from '@/services/package
 import productService from '@/services/products';
 import type { Product, ServiceItem } from '@/types/product';
 import serviceItemService from '@/services/serviceItems';
-import api from '@/services/api';
+import api, { simple } from '@/services/api';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -101,6 +101,13 @@ const PackageForm: React.FC<PackageFormProps> = ({
   const [products, setProducts] = useState<Product[]>([]);
   const [serviceItems, setServiceItems] = useState<ServiceItem[]>([]);
 
+  // 阶梯团购价
+  interface GroupBuyTierItem { id?: number; minCount: number; price: number; }
+  const [tiers, setTiers] = useState<GroupBuyTierItem[]>([]);
+  const [tierModalOpen, setTierModalOpen] = useState(false);
+  const [newTierMinCount, setNewTierMinCount] = useState(3);
+  const [newTierPrice, setNewTierPrice] = useState(0);
+
   // 已选的商品行（可编辑）
   const [customProductRows, setCustomProductRows] = useState<CustomProductRow[]>([]);
   // 已选的服务行（可编辑）
@@ -169,6 +176,42 @@ const PackageForm: React.FC<PackageFormProps> = ({
       setServiceItems(data.list || []);
     } catch (error: any) {
       console.error('加载服务项目列表失败:', error);
+    }
+  };
+
+  // ==================== 阶梯团购价管理 ====================
+
+  const loadTiers = async (packageId: number | string) => {
+    try {
+      const res: any = await simple.get(`/group-buy/admin/tiers/package/${packageId}`);
+      const data = res?.data || res || [];
+      setTiers(Array.isArray(data) ? data : []);
+    } catch {
+      setTiers([]);
+    }
+  };
+
+  const addTier = async () => {
+    if (!pkg?.id) return;
+    try {
+      await simple.post(`/group-buy/admin/tiers/package/${pkg.id}`, {
+        minCount: newTierMinCount,
+        price: newTierPrice,
+      });
+      setTierModalOpen(false);
+      loadTiers(Number(pkg.id));
+    } catch (err: any) {
+      message.error('添加失败: ' + (err.message || ''));
+    }
+  };
+
+  const deleteTier = async (tierId: number) => {
+    if (!pkg?.id) return;
+    try {
+      await simple.delete(`/group-buy/admin/tiers/${tierId}`);
+      loadTiers(Number(pkg.id));
+    } catch (err: any) {
+      message.error('删除失败: ' + (err.message || ''));
     }
   };
 
@@ -249,12 +292,15 @@ const PackageForm: React.FC<PackageFormProps> = ({
               .map((url: string, index: number) => ({ uid: `poster-${index}`, name: `poster-${index}`, status: 'done', url }))
           );
         }
+        // 加载阶梯价格
+        if (pkg.id) loadTiers(Number(pkg.id));
       } else {
         form.resetFields();
         setFileList([]);
         setPosterFileList([]);
         setCustomProductRows([]);
         setServiceRows([]);
+        setTiers([]);
       }
     }
   }, [visible, pkg, form]);
@@ -820,6 +866,58 @@ const PackageForm: React.FC<PackageFormProps> = ({
       <Form.Item name="groupBuyDescription" label="团购说明">
         <TextArea rows={3} placeholder="例：3人成团享8折优惠，2人成团赠送精修照片5张" maxLength={500} showCount />
       </Form.Item>
+
+      <div style={{ marginTop: 16, marginBottom: 8 }}>
+        <Space style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span style={{ fontWeight: 500 }}>阶梯团购价</span>
+          <Button size="small" type="dashed" icon={<PlusOutlined />} onClick={() => { setNewTierMinCount(3); setNewTierPrice(0); setTierModalOpen(true); }}>
+            添加阶梯
+          </Button>
+        </Space>
+        {tiers.length > 0 ? (
+          <Table
+            dataSource={tiers}
+            rowKey={(r) => r.id ?? String(r.minCount)}
+            pagination={false}
+            size="small"
+            style={{ marginTop: 8 }}
+            columns={[
+              { title: '成团人数', dataIndex: 'minCount', width: 120, render: (v: number) => `${v} 人` },
+              { title: '阶梯价格', dataIndex: 'price', width: 150, render: (v: number) => `¥${Number(v).toFixed(2)}` },
+              {
+                title: '操作', width: 80,
+                render: (_: any, record: any) => (
+                  <Button type="link" danger icon={<MinusCircleOutlined />} onClick={() => record.id != null && deleteTier(Number(record.id))} />
+                ),
+              },
+            ]}
+          />
+        ) : (
+          <div style={{ color: '#999', fontSize: 13, marginTop: 8 }}>暂未设置阶梯价格，将使用上方团购价</div>
+        )}
+      </div>
+
+      {/* 添加阶梯弹窗 */}
+      <Modal
+        title="添加阶梯价格"
+        open={tierModalOpen}
+        onOk={addTier}
+        onCancel={() => setTierModalOpen(false)}
+        okText="添加"
+        width={360}
+        destroyOnClose
+      >
+        <Space direction="vertical" style={{ width: '100%' }} size="middle">
+          <div>
+            <div style={{ marginBottom: 4, color: '#666', fontSize: 13 }}>成团人数</div>
+            <InputNumber min={2} max={100} value={newTierMinCount} onChange={(v) => setNewTierMinCount(v || 3)} style={{ width: '100%' }} addonAfter="人" />
+          </div>
+          <div>
+            <div style={{ marginBottom: 4, color: '#666', fontSize: 13 }}>阶梯价格</div>
+            <InputNumber min={0} precision={2} value={newTierPrice} onChange={(v) => setNewTierPrice(v || 0)} style={{ width: '100%' }} addonBefore="¥" />
+          </div>
+        </Space>
+      </Modal>
 
       <Divider orientation="left"><PictureOutlined /> 团购海报设置</Divider>
       <Form.Item name="posterTitle" label="海报标题">

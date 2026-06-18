@@ -271,6 +271,10 @@ export class PackagesService {
         groupMinCount: pkg.groupMinCount || null,
         groupPrice: pkg.groupPrice ? Number(pkg.groupPrice) : null,
         groupBuyDescription: pkg.groupBuyDescription || '',
+        posterTitle: pkg.posterTitle || '',
+        posterContent: pkg.posterContent || '',
+        posterBackground: pkg.posterBackground || '',
+        posterImages: pkg.posterImages || [],
       }));      return {
         code: 200,
         message: '查询成功',

@@ -71,7 +71,59 @@ export class WxOrderService {
       throw new NotFoundException('时间段不存在');
     }
 
-    // 4. 计算订单金额
+    // 4. 处理团购价（如有团购活动，将套餐价格替换为团购价）
+    let groupBuyActivityId: string | null = null;
+
+    for (const item of orderItems) {
+      if (item.itemType === 'PACKAGE' && item.packageId) {
+        const activity = await this.prisma.groupBuyActivity.findFirst({
+          where: {
+            packageId: item.packageId,
+            status: { in: ['ACTIVE', 'SUCCESS'] },
+            participants: { some: { userId: wxUserId } },
+          },
+          select: {
+            id: true,
+            package: { select: { groupPrice: true, price: true } },
+          },
+        });
+
+        if (activity) {
+          groupBuyActivityId = activity.id;
+
+          // 先查阶梯价，取最优价格
+          const participantCount = await this.prisma.groupBuyParticipant.count({
+            where: { activityId: activity.id },
+          });
+          const tiers = await this.prisma.groupBuyTier.findMany({
+            where: { packageId: item.packageId },
+            orderBy: { minCount: 'desc' },
+          });
+          let bestPrice: number | null = null;
+          for (const tier of tiers) {
+            if (participantCount >= tier.minCount) {
+              bestPrice = Number(tier.price);
+              break;
+            }
+          }
+
+          // 降级到团购价
+          if (!bestPrice && activity.package?.groupPrice) {
+            bestPrice = Number(activity.package.groupPrice);
+          }
+
+          if (bestPrice && bestPrice > 0 && bestPrice < item.unitPrice) {
+            this.logger.log(
+              `团购价应用: 套系#${item.packageId} ¥${item.unitPrice} → ¥${bestPrice}`,
+            );
+            item.unitPrice = bestPrice;
+            item.totalPrice = bestPrice * item.quantity;
+          }
+        }
+      }
+    }
+
+    // 5. 计算订单金额
     let totalAmount = 0;
     for (const item of orderItems) {
       totalAmount += item.totalPrice;
@@ -184,26 +236,16 @@ export class WxOrderService {
       return newOrder;
     });
 
-    // 9. 关联团购活动（如果用户在团购中，自动关联到订单）
-    try {
-      const pkgItem = orderItems.find(item => item.itemType === 'PACKAGE' && item.packageId);
-      if (pkgItem) {
-        const groupBuyActivity = await this.prisma.groupBuyActivity.findFirst({
-          where: {
-            packageId: pkgItem.packageId,
-            status: { in: ['ACTIVE', 'SUCCESS'] },
-            participants: { some: { userId: wxUserId } },
-          },
+    // 9. 关联团购活动（如果用户在团购中，订单已使用团购价）
+    if (groupBuyActivityId) {
+      try {
+        await this.prisma.order.update({
+          where: { id: order.id },
+          data: { groupBuyActivityId },
         });
-        if (groupBuyActivity) {
-          await this.prisma.order.update({
-            where: { id: order.id },
-            data: { groupBuyActivityId: groupBuyActivity.id },
-          });
-        }
+      } catch (err) {
+        this.logger.warn('关联团购活动失败（不影响订单创建）', err);
       }
-    } catch (err) {
-      this.logger.warn('关联团购活动失败（不影响订单创建）', err);
     }
 
     // 10. 返回订单详情

@@ -15,6 +15,13 @@ export class UpdateGroupBuyDto {
   @IsDateString()
   expiredAt?: string;
 
+  @ApiPropertyOptional({ description: '参团人数上限' })
+  @IsOptional()
+  @IsInt()
+  @Min(2)
+  @Type(() => Number)
+  maxCount?: number;
+
   @ApiPropertyOptional({ description: '团购价（仅在套餐编辑中修改）' })
   @IsOptional()
   @IsNumber()
