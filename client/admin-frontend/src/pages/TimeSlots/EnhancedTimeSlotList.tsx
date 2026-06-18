@@ -136,7 +136,7 @@ const TimeSlotList: React.FC = () => {
               const date = new Date(timeStr);
               if (!isNaN(date.getTime())) {
                 // 使用 UTC 时间来避免时区转换问题
-                const hours = date.getUTCHours().toString().padStart(2, '0');
+                const hours = ((date.getUTCHours() + 8) % 24).toString().padStart(2, '0');
                 const minutes = date.getUTCMinutes().toString().padStart(2, '0');
                 return `${hours}:${minutes}`;
               }
@@ -299,7 +299,7 @@ const TimeSlotList: React.FC = () => {
           const date = new Date(timeStr);
           if (!isNaN(date.getTime())) {
             // 使用 UTC 时间来避免时区转换问题
-            const hours = date.getUTCHours().toString().padStart(2, '0');
+            const hours = ((date.getUTCHours() + 8) % 24).toString().padStart(2, '0');
             const minutes = date.getUTCMinutes().toString().padStart(2, '0');
             return `${hours}:${minutes}`;
           }

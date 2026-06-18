@@ -45,8 +45,8 @@ const TimeSlotForm: React.FC<TimeSlotFormProps> = ({
         // 如果是 ISO 格式的完整日期时间字符串
         if (timeStr.includes('T')) {
           const date = new Date(timeStr);
-          // 使用 UTC 时间来避免时区问题
-          const hours = date.getUTCHours();
+          // 使用 UTC 时间 +8 转换为北京时间
+          const hours = (date.getUTCHours() + 8) % 24;
           const minutes = date.getUTCMinutes();
           const result = dayjs().hour(hours).minute(minutes).second(0);
           console.log('ISO格式解析结果:', result.format('HH:mm'));

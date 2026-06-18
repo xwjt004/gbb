@@ -814,11 +814,25 @@ export class PaymentsService {
       throw new NotFoundException(`Payment with id ${id} not found`);
     }
 
-    // 调用退款接口，使用退款金额和原因
     const { refundAmount, refundReason } = refundPaymentDto;
+    const refundNo = this.generateRefundNo();
 
-    // TODO: 实现实际的退款API调用
-    this.logger.log(`申请退款: 金额=${refundAmount}, 原因=${refundReason}`);
+    // 调用微信退款API
+    let transactionId: string;
+    try {
+      const result = await this.wechatPayService.refund({
+        outTradeNo: payment.order.orderNo,
+        outRefundNo: refundNo,
+        totalFee: Math.round(Number(payment.amount) * 100),
+        refundFee: Math.round(Number(refundAmount) * 100),
+        refundDesc: refundReason || '管理员退款',
+      });
+      transactionId = result.refundId;
+      this.logger.log(`微信退款成功: transactionId=${result.refundId}`);
+    } catch (error) {
+      this.logger.error(`微信退款API调用失败: ${error.message}`);
+      throw new BadRequestException(`微信退款失败: ${error.message}`);
+    }
 
     // 更新支付状态为 REFUNDED，同时更新订单的累计退款金额并创建退款记录
     await this.prisma.$transaction(async (tx) => {
@@ -840,11 +854,12 @@ export class PaymentsService {
         data: {
           orderId: payment.orderId,
           orderNo: payment.order.orderNo,
-          refundNo: this.generateRefundNo(),
+          refundNo: refundNo,
           refundType: RefundType.PARTIAL,
           refundAmount: refundAmount,
           refundReason: refundReason || '管理员退款',
           refundMethod: RefundMethod.ORIGINAL,
+          transactionId: transactionId,
           applicantType: 'ADMIN',
           status: RefundStatus.COMPLETED,
           approvedBy: 'SYSTEM',
@@ -2564,15 +2579,25 @@ export class PaymentsService {
         let transactionId = processDto.transactionId;
 
         if (refundRequest.refundMethod === RefundMethod.ORIGINAL) {
-          // 原路退回 - 调用微信退款API
+          // 原路退回 - 调用微信退款APIv3
           if (order.payments && order.payments.length > 0) {
             const latestPayment = order.payments[0];
-            
-            // TODO: 调用微信退款API
-            this.logger.log(`调用微信退款API: 支付ID=${latestPayment.id}, 金额=${refundRequest.refundAmount}`);
-            
-            // 模拟退款成功，实际应调用 wxPayService.refund()
-            transactionId = `WX_REFUND_${Date.now()}`;
+
+            try {
+              const result = await this.wechatPayService.refund({
+                outTradeNo: order.orderNo,
+                outRefundNo: refundRequest.refundNo,
+                totalFee: Math.round(Number(latestPayment.amount) * 100),
+                refundFee: Math.round(Number(refundRequest.refundAmount) * 100),
+                refundDesc: refundRequest.refundReason || '订单退款',
+              });
+
+              transactionId = result.refundId;
+              this.logger.log(`微信退款成功: transactionId=${result.refundId}, 金额=${refundRequest.refundAmount}`);
+            } catch (error) {
+              this.logger.error(`微信退款API调用失败: ${error.message}`);
+              throw new BadRequestException(`微信退款失败: ${error.message}`);
+            }
           }
         } else {
           // 现金或银行转账退款 - 手动记录

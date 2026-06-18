@@ -246,7 +246,14 @@ const ScheduleBoard: React.FC = () => {
               ) : (
                 scheduleData.map((group: any) => {
                   const ts = group.timeSlot;
-                  const fmtTime = (v: any) => typeof v === 'string' ? v.slice(11, 16) : v?.toISOString?.()?.slice(11, 16) || '--';
+                  const fmtTime = (v: any) => {
+                    if (v == null) return '--';
+                    const d = typeof v === 'string' ? new Date(v) : v;
+                    if (isNaN(d.getTime())) return '--';
+                    const h = String((d.getUTCHours() + 8) % 24).padStart(2, '0');
+                    const m = String(d.getUTCMinutes()).padStart(2, '0');
+                    return `${h}:${m}`;
+                  };
                   const timeLabel = ts
                     ? `${fmtTime(ts.startTime)} - ${fmtTime(ts.endTime)}`
                     : '未分配时间';
