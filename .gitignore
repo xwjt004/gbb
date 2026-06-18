@@ -1,90 +1,72 @@
-# Dependencies
-node_modules/
-*/node_modules/
 
+!server/uploads/.gitkeep
 # Build output
-dist/
-build/
-*.tgz
-
+# Claude local settings
+# Coverage reports
+# Database
+# Dependencies
+# E2E screenshots & reports
+# Environment variables
+# IDE
+# Large backup/build archives (exceed GitHub 100MB limit)
 # Logs
-logs
+# OS
+# Package manager lock files — committed for reproducible builds
+# Scripts output
+# Server backups
+# Server build artifacts
+# SSL certificates (generated per-server)
+# Temp files
+# Upload files
+# Uploaded files (dynamic data)
+# WeChat miniprogram npm dependencies
+**/e2e-screenshots/
+**/miniprogram_npm/
+**/test-results/
+*.db
 *.log
+*.sqlite
+*.swo
+*.swp
+*.temp
+*.tgz
+*.tmp
+*/node_modules/
+.claude/
+.DS_Store
+.env
+.env.development.local
+.env.local
+.env.production.local
+.env.test.local
+.idea/
+.vscode/settings.json
+backend-dist.tar.gz
+backup/
+backups/
+build/
+client/ps-frontend/dist.tar.gz
+coverage/
+dist/
+lerna-debug.log*
+logs
+node_modules/
 npm-debug.log*
+playwright-report/
+pnpm-debug.log*
+scripts/*.log
+scripts/*.txt
+server/baby-photo-backend/*.tar.gz
+server/baby-photo-backend/coverage/
+server/baby-photo-backend/dist/
+server/baby-photo-backend/uploads/*
+server/uploads/*
+ssl/*.crt
+ssl/*.key
+ssl/*.pem
+test-results/
+Thumbs.db
+uploads/
+www-dist/
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# IDE
-.vscode/settings.json
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Database
-*.db
-*.sqlite
-
-# Upload files
-server/uploads/*
-!server/uploads/.gitkeep
-
-# Scripts output
-scripts/*.txt
-scripts/*.log
-
-# Temp files
-*.tmp
-*.temp
-
-# Package manager lock files — committed for reproducible builds
-
-# Claude local settings
-.claude/
-
-# Uploaded files (dynamic data)
-server/baby-photo-backend/uploads/*
-!server/uploads/.gitkeep
-uploads/
-
-# Coverage reports
-server/baby-photo-backend/coverage/
-coverage/
-
-# E2E screenshots & reports
-playwright-report/
-test-results/
-**/e2e-screenshots/
-**/test-results/
-
-# Server backups
-backups/
-
-# Server build artifacts
-server/baby-photo-backend/dist/
-
-# Large backup/build archives (exceed GitHub 100MB limit)
-backup/
-www-dist/
-server/baby-photo-backend/*.tar.gz
-client/ps-frontend/dist.tar.gz
-
-# SSL certificates (generated per-server)
-ssl/*.pem
-ssl/*.key
-ssl/*.crt
-
-# WeChat miniprogram npm dependencies
-**/miniprogram_npm/

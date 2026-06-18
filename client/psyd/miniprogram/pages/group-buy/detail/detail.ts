@@ -52,8 +52,21 @@ Page({
   },
 
   onLoad(options) {
-    if (options.id) {
-      this.setData({ activityId: options.id });
+    let activityId = options.id;
+
+    // 从小程序码/二维码扫码进入时，scene 参数包含 activityId
+    if (!activityId && options.scene) {
+      const scene = decodeURIComponent(options.scene);
+      // 从 wxacode 生成的 scene 是 32 位 UUID（去横线），还原为标准 UUID 格式
+      if (/^[0-9a-f]{32}$/i.test(scene)) {
+        activityId = scene.replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, '$1-$2-$3-$4-$5');
+      } else {
+        activityId = scene;
+      }
+    }
+
+    if (activityId) {
+      this.setData({ activityId });
       this.loadDetail();
     }
   },
@@ -162,7 +175,11 @@ Page({
       }
     } catch (err) {
       console.error('加载团购详情失败', err);
-      wx.showToast({ title: '加载失败', icon: 'none' });
+      wx.showToast({ title: '活动已失效，即将返回首页', icon: 'none', duration: 2000 });
+      setTimeout(function () {
+        wx.switchTab({ url: '/pages/packages/list/list' });
+      }, 2000);
+      return;
     } finally {
       this.setData({ loading: false });
     }
