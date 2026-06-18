@@ -40,6 +40,24 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
+// 递归过滤菜单项（基于权限），无权限配置时原样通过
+const filterMenuItems = (items: MenuProps['items'], pathPermissionMap: Record<string, string>, user: any): MenuProps['items'] => {
+  return items?.map((item) => {
+    if (!item) return null;
+    const itemAny = item as any;
+    if (itemAny.children && Array.isArray(itemAny.children)) {
+      const filteredChildren = filterMenuItems(itemAny.children, pathPermissionMap, user);
+      if (!filteredChildren || filteredChildren.length === 0) return null;
+      return { ...item, children: filteredChildren } as any;
+    }
+    const perm = pathPermissionMap[String(itemAny.key)] || null;
+    if (!perm) return item;
+    if (user?.isAdmin) return item;
+    const perms: string[] = user?.permissions || [];
+    return perms.includes(perm) ? item : null;
+  }).filter(Boolean) as MenuProps['items'];
+};
+
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [calculatorVisible, setCalculatorVisible] = useState(false);
@@ -63,11 +81,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // 路径 -> 权限 映射，不在 Menu item 上添加自定义字段以避免类型冲突
-  // 注意：在途商品已从权限控制中移除，改为与采购订单、入库管理一致，所有用户可见
-  const pathPermissionMap: Record<string, string> = {
-    // '/in-transit': PERMISSIONS.IN_TRANSIT_VIEW,  // 已移除权限限制
-  };
+  // 路径 -> 权限 映射（保留扩展用，当前无实际权限限制）
+  const pathPermissionMap: Record<string, string> = {};
 
   const menuItems: MenuProps['items'] = [
     {
@@ -79,13 +94,34 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         { key: '/dashboard/data', label: '数据看板' },
       ],
     },
-
     {
-      key: 'users-menu',
-      icon: <UserOutlined />,
-      label: '员工管理',
+      key: 'products-center',
+      icon: <GiftOutlined />,
+      label: '产品中心',
       children: [
-        { key: '/users', label: '员工列表' },
+        { key: '/packages/list', label: '套系列表' },
+        { key: '/packages/categories', label: '套系分类' },
+        {
+          key: 'diy-sub',
+          label: 'DIY套系',
+          children: [
+            { key: '/diy-packages/list', label: 'DIY套系列表' },
+            { key: '/diy-packages/builder', label: 'DIY套系构建器' },
+            { key: '/diy-packages/discount-rules', label: 'DIY折扣规则' },
+          ],
+        },
+        { key: '/products', label: '商品列表' },
+        { key: '/products/categories', label: '商品分类' },
+        { key: '/service-items', label: '服务项目' },
+      ],
+    },
+    {
+      key: 'orders-group',
+      icon: <ShoppingCartOutlined />,
+      label: '订单管理',
+      children: [
+        { key: '/orders', label: '订单列表' },
+        { key: '/marketing/group-buy', label: '团购订单' },
       ],
     },
     {
@@ -96,117 +132,28 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         { key: '/wx-users', label: '客户信息' },
         { key: '/crm/member-levels', label: '会员等级' },
         { key: '/crm/complaints', label: '客诉管理' },
-        { key: 'customer-orders', label: '客户订单' },
       ],
     },
     {
-      key: '/orders',
-      icon: <ShoppingCartOutlined />,
-      label: '订单管理',
-    },
-    {
-      key: '/packages',
-      icon: <GiftOutlined />,
-      label: '套系管理',
-      children: [
-        {
-          key: '/packages/list',
-          label: '套系列表',
-        },
-        {
-          key: '/packages/categories',
-          label: '套系分类',
-        },
-      ],
-    },
-    {
-      key: 'products-menu',
-      icon: <ShopOutlined />,
-      label: '商品管理',
-      children: [
-        {
-          key: '/products',
-          label: '商品列表',
-        },
-        {
-          key: '/products/categories',
-          label: '商品分类',
-        },
-      ],
-    },
-    {
-      key: '/service-items',
-      icon: <TagsOutlined />,
-      label: '服务项目',
-    },
-    {
-      key: 'diy-packages-menu',
-      icon: <BuildOutlined />,
-      label: 'DIY套系',
-      children: [
-        {
-          key: '/diy-packages/list',
-          label: 'DIY套系列表',
-        },
-        {
-          key: '/diy-packages/builder',
-          label: 'DIY套系构建器',
-        },
-        {
-          key: '/diy-packages/discount-rules',
-          label: 'DIY折扣规则',
-        },
-      ],
-    },
-    {
-      key: 'payments-menu',
-      icon: <CreditCardOutlined />,
-      label: '支付管理',
-      children: [
-        {
-          key: '/payments',
-          label: '支付列表',
-        },
-        {
-          key: '/payments/suspicious',
-          label: '可疑支付检测',
-        },
-      ],
-    },
-    {
-      key: '/reconciliation',
-      icon: <ReconciliationOutlined />,
-      label: '对账管理',
-    },
-    {
-      key: '/refunds',
-      icon: <RollbackOutlined />,
-      label: '退款管理',
-      children: [
-        {
-          key: '/refunds/approval',
-          label: '退款审批',
-        },
-        {
-          key: '/refunds/records',
-          label: '退款记录',
-        },
-      ],
-    },
-    {
-      key: '/time-slots',
-      icon: <ClockCircleOutlined />,
-      label: '时间槽管理',
-    },
-    {
-      key: '/schedule-board',
+      key: 'shooting-menu',
       icon: <CalendarOutlined />,
-      label: '拍摄日程',
+      label: '拍摄管理',
+      children: [
+        { key: '/time-slots', label: '时间槽管理' },
+        { key: '/schedule-board', label: '拍摄日程' },
+      ],
     },
     {
-      key: '/search',
-      icon: <SearchOutlined />,
-      label: '查找功能',
+      key: 'finance-menu',
+      icon: <CreditCardOutlined />,
+      label: '财务管理',
+      children: [
+        { key: '/payments', label: '支付列表' },
+        { key: '/payments/suspicious', label: '可疑支付检测' },
+        { key: '/reconciliation', label: '对账管理' },
+        { key: '/refunds/approval', label: '退款审批' },
+        { key: '/refunds/records', label: '退款记录' },
+      ],
     },
     {
       key: 'marketing-menu',
@@ -214,42 +161,83 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       label: '营销管理',
       children: [
         { key: '/marketing/coupons', label: '优惠券管理' },
-        { key: '/marketing/segments', label: '客户分群' },
-        { key: '/marketing/campaigns', label: '营销活动' },
         { key: '/marketing/points-config', label: '积分配置' },
         { key: '/marketing/points-transactions', label: '积分明细' },
-        { key: '/marketing/group-buy', label: '团购管理' },
+        { key: '/marketing/segments', label: '客户分群' },
+        { key: '/marketing/campaigns', label: '营销活动' },
+        { key: '/analytics', label: '数据分析' },
       ],
     },
     {
-      key: '/analytics',
-      icon: <BarChartOutlined />,
-      label: '数据分析',
-    },
-    {
-      key: 'purchase-menu',
+      key: 'supply-chain',
       icon: <ShopOutlined />,
-      label: '采购管理',
+      label: '供应链管理',
       children: [
         { key: '/suppliers', label: '供应商列表' },
         { key: '/suppliers/blacklist', label: '黑名单供应商' },
         { key: '/purchase-orders', label: '采购订单' },
-            { key: '/purchase-orders/approvals', label: '采购审批' },
+        { key: '/purchase-orders/approvals', label: '采购审批' },
         { key: '/in-transit', label: '在途商品' },
         { key: '/inbound', label: '入库管理' },
-        { key: '/stock/auto-purchase', label: '自动采购建议' },
+        {
+          key: 'inventory-sub',
+          icon: <LineChartOutlined />,
+          label: '库存智能',
+          children: [
+            { key: '/stock/prediction', label: '销量预测' },
+            { key: '/stock/safety-stock', label: '安全库存' },
+            { key: '/stock/restock-suggestions', label: '补货建议' },
+            { key: '/stock/slow-moving', label: '呆滞预警' },
+            { key: '/stock/turnover-analysis', label: '周转分析' },
+          ],
+        },
       ],
     },
     {
-      key: 'inventory-intelligence-menu',
-      icon: <LineChartOutlined />,
-      label: '库存智能',
+      key: 'system-menu',
+      icon: <SettingOutlined />,
+      label: '系统管理',
       children: [
-        { key: '/stock/prediction', label: '销量预测' },
-        { key: '/stock/safety-stock', label: '安全库存' },
-        { key: '/stock/restock-suggestions', label: '补货建议' },
-        { key: '/stock/slow-moving', label: '呆滞预警' },
-        { key: '/stock/turnover-analysis', label: '周转分析' },
+        { key: '/users', label: '员工列表' },
+        { key: '/system/roles', label: '角色管理' },
+        { key: '/system/settings', label: '系统设置' },
+        { key: '/settings/shop-info', label: '店铺信息' },
+        { key: '/settings/print-settings', label: '打印设置' },
+        { key: '/settings/automation-rules', label: '自动化规则' },
+        { key: '/system/operation-logs', label: '操作日志' },
+        { key: '/system/status', label: '系统状态' },
+        { key: '/system/backup', label: '数据库备份' },
+        { key: '/system/restore', label: '数据库恢复' },
+        { key: '/system/theme', label: '更改主题', icon: <BgColorsOutlined /> },
+      ],
+    },
+    {
+      key: 'tools-menu',
+      icon: <SearchOutlined />,
+      label: '工具',
+      children: [
+        { key: '/search', label: '全局搜索' },
+        {
+          key: 'export-sub',
+          label: '导出中心',
+          children: [
+            { key: '/export/orders', label: '订单导出' },
+            { key: '/export/users', label: '员工导出' },
+            { key: '/export/finance', label: '财务导出' },
+            { key: '/export/all', label: '全部导出' },
+          ],
+        },
+        {
+          key: 'notify-sub',
+          label: '通知管理',
+          children: [
+            { key: '/notify/push', label: '消息推送' },
+            { key: '/notify/email', label: '邮件发送' },
+            { key: '/notify/system', label: '系统通知' },
+            { key: '/notify/stock', label: '库存报警' },
+            { key: '/notify/templates', label: '通知模板' },
+          ],
+        },
       ],
     },
   ];
@@ -280,10 +268,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   ];
 
   const handleMenuClick = ({ key }: { key: string }) => {
-    const routeMap: Record<string, string> = {
-      'customer-orders': '/orders',
-    };
-    navigate(routeMap[key] || key);
+    navigate(key);
     if (isMobile) setMobileMenuOpen(false);
   };
 
@@ -305,52 +290,46 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   };
 
-  // 顶部快捷下拉菜单配置（功能 / 导出 / 通知 / 系统）
-  const featuresMenu: MenuProps['items'] = [
-    { key: '/orders', label: '订单管理' },
-    { key: '/packages', label: '套系管理' },
-    { key: '/time-slots', label: '时间槽管理' },
-    { key: '/payments', label: '支付管理' },
-    { key: '/reconciliation', label: '对账管理' },
-    { key: '/users', label: '员工管理' },
+  // 顶部快捷下拉菜单
+  const quickMenu: MenuProps['items'] = [
+    { key: '/orders', label: '订单列表' },
+    { key: '/wx-users', label: '客户信息' },
+    { key: '/schedule-board', label: '拍摄日程' },
+    { key: '/packages/list', label: '套系列表' },
+    { key: '/marketing/group-buy', label: '新建团购' },
   ];
 
-  const exportMenu: MenuProps['items'] = [
-    { key: '/export/orders', label: '订单导出' },
-    { key: '/export/users', label: '员工导出' },
-    { key: '/export/finance', label: '财务导出' },
-    { key: '/export/all', label: '全部导出' },
-  ];
-
-  const notifyMenu: MenuProps['items'] = [
-    { key: '/notify/push', label: '消息推送' },
-    { key: '/notify/email', label: '邮件发送' },
-    { key: '/notify/system', label: '系统通知' },
-    { key: '/notify/stock', label: '库存报警' },
-    { key: '/notify/templates', label: '通知模板' },
-  ];
-
-  const systemMenu: MenuProps['items'] = [
-    { key: '/system/status', label: '系统状态' },
-    { key: '/system/operation-logs', label: '操作日志' },
-    { key: '/system/roles', label: '角色管理' },
-    { key: '/system/settings', label: '系统设置' },
-    { key: '/settings/shop-info', label: '店铺信息设置' },
-    { key: '/settings/print-settings', label: '打印设置' },
-    { key: '/settings/automation-rules', label: '自动化规则' },
-    { key: '/system/theme', label: '更改主题', icon: <BgColorsOutlined /> },
+  const toolsMenu: MenuProps['items'] = [
+    {
+      key: 'export-group',
+      label: '导出中心',
+      children: [
+        { key: '/export/orders', label: '订单导出' },
+        { key: '/export/users', label: '员工导出' },
+        { key: '/export/finance', label: '财务导出' },
+        { key: '/export/all', label: '全部导出' },
+      ],
+    },
+    {
+      key: 'notify-group',
+      label: '通知管理',
+      children: [
+        { key: '/notify/push', label: '消息推送' },
+        { key: '/notify/email', label: '邮件发送' },
+        { key: '/notify/system', label: '系统通知' },
+        { key: '/notify/stock', label: '库存报警' },
+        { key: '/notify/templates', label: '通知模板' },
+      ],
+    },
+    { key: '/search', label: '全局搜索' },
     { key: 'calculator', label: '计算器', icon: <CalculatorOutlined /> },
-    { key: '/system/backup', label: '数据库备份' },
-    { key: '/system/restore', label: '数据库恢复' },
   ];
 
   const handleTopMenuClick = ({ key }: { key: string }) => {
-    // 如果是计算器，显示计算器
     if (key === 'calculator') {
       setCalculatorVisible(true);
       return;
     }
-    // 其他路由跳转
     navigate(key);
   };
 
@@ -360,38 +339,40 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       if (pathname.startsWith('/dashboard/data')) return '数据看板';
       return '仪表盘';
     }
-    if (pathname.startsWith('/users')) return '员工管理';
-    if (pathname.startsWith('/wx-users')) return '客户管理';
+    if (pathname.startsWith('/packages') || pathname.startsWith('/products') || pathname.startsWith('/service-items') || pathname.startsWith('/diy-packages')) return '产品中心';
     if (pathname.startsWith('/orders')) return '订单管理';
-    if (pathname.startsWith('/packages')) return '套系管理';
-    if (pathname.startsWith('/products')) return '商品管理';
-    if (pathname.startsWith('/service-items')) return '服务项目';
-    if (pathname.startsWith('/payments')) return '支付管理';
-    if (pathname.startsWith('/reconciliation')) return '对账管理';
-    if (pathname.startsWith('/time-slots')) return '时间槽管理';
-    if (pathname.startsWith('/schedule-board')) return '拍摄日程';
-    if (pathname.startsWith('/search')) return '查找功能';
-    if (pathname.startsWith('/export')) return '导出';
-    if (pathname.startsWith('/notify')) return '通知';
-    if (pathname.startsWith('/system')) return '系统';
-    if (pathname.startsWith('/suppliers')) return '供应商管理';
-    if (pathname.startsWith('/purchase-orders')) return '采购订单管理';
-    if (pathname.startsWith('/in-transit')) return '在途商品管理';
-    if (pathname.startsWith('/inbound')) return '入库管理';
-    if (pathname.startsWith('/stock/prediction')) return '销量预测';
-    if (pathname.startsWith('/stock/safety-stock')) return '安全库存';
-    if (pathname.startsWith('/stock/restock-suggestions')) return '补货建议';
-    if (pathname.startsWith('/stock/slow-moving')) return '呆滞预警';
-    if (pathname.startsWith('/stock/turnover-analysis')) return '库存周转分析';
-    if (pathname.startsWith('/marketing/points-config')) return '积分配置';
-    if (pathname.startsWith('/marketing/points-transactions')) return '积分明细';
-    if (pathname.startsWith('/marketing/segments')) return '客户分群';
-    if (pathname.startsWith('/marketing/campaigns')) return '营销活动';
-    if (pathname.startsWith('/marketing/group-buy')) return '团购管理';
-    if (pathname.startsWith('/marketing')) return '营销管理';
-    if (pathname.startsWith('/analytics')) return '数据分析';
+    if (pathname.startsWith('/wx-users') || pathname.startsWith('/crm')) return '客户管理';
+    if (pathname.startsWith('/time-slots') || pathname.startsWith('/schedule-board')) return '拍摄管理';
+    if (pathname.startsWith('/payments') || pathname.startsWith('/reconciliation') || pathname.startsWith('/refunds')) return '财务管理';
+    if (pathname.startsWith('/marketing') || pathname.startsWith('/analytics')) return '营销管理';
+    if (pathname.startsWith('/suppliers') || pathname.startsWith('/purchase-orders') || pathname.startsWith('/in-transit') || pathname.startsWith('/inbound') || pathname.startsWith('/stock')) return '供应链管理';
+    if (pathname.startsWith('/users') || pathname.startsWith('/system') || pathname.startsWith('/settings')) return '系统管理';
+    if (pathname.startsWith('/search') || pathname.startsWith('/export') || pathname.startsWith('/notify')) return '工具';
     return '管理后台';
   };
+
+  // 处理菜单选中态：将部分非菜单路径映射到对应菜单项
+  const menuKeyMap: Record<string, string> = {
+    '/packages': '/packages/list',
+  };
+  const selectedKey = menuKeyMap[location.pathname] || location.pathname;
+
+  const renderMenu = (items: MenuProps['items']) => (
+    <Menu
+      style={{
+        background: 'transparent',
+        color: theme.siderTextColor,
+        fontSize: 18,
+        paddingBottom: 48,
+      }}
+      className="custom-menu"
+      mode="inline"
+      selectedKeys={[selectedKey]}
+      items={filterMenuItems(items, pathPermissionMap, user)}
+      onClick={handleMenuClick}
+      theme={theme.siderBg.includes('#fff') || theme.siderBg.includes('#fafafa') || theme.siderBg.includes('gradient(180deg, #d1fae5') ? 'light' : 'dark'}
+    />
+  );
 
   return (
     <AntLayout style={{ height: '100vh', overflow: 'hidden' }}>
@@ -423,41 +404,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           >
             {collapsed ? theme.systemTitleShort : theme.systemTitle}
           </div>
-          <Menu
-            style={{
-              background: 'transparent',
-              color: theme.siderTextColor,
-              fontSize: 18,
-              paddingBottom: 48,
-            }}
-            className="custom-menu"
-            mode="inline"
-            selectedKeys={[location.pathname]}
-            items={menuItems
-              .map((mi) => {
-                if (!mi) return null;
-                const children = (mi as any).children as MenuProps['items'] | undefined;
-                if (children && Array.isArray(children)) {
-                  const filteredChildren = children.filter((child: any) => {
-                    const perm = pathPermissionMap[String(child?.key)] || null;
-                    if (!perm) return true;
-                    if (user?.isAdmin) return true;
-                    const perms: string[] = (user as any)?.permissions || [];
-                    return perms.includes(perm);
-                  });
-                  if (filteredChildren.length === 0) return null;
-                  return { ...mi, children: filteredChildren } as any;
-                }
-                const perm = pathPermissionMap[String((mi as any).key)] || null;
-                if (!perm) return mi;
-                if (user?.isAdmin) return mi;
-                const perms: string[] = (user as any)?.permissions || [];
-                return perms.includes(perm) ? mi : null;
-              })
-              .filter(Boolean) as MenuProps['items']}
-            onClick={handleMenuClick}
-            theme={theme.siderBg.includes('#fff') || theme.siderBg.includes('#fafafa') || theme.siderBg.includes('gradient(180deg, #d1fae5') ? 'light' : 'dark'}
-          />
+          {renderMenu(menuItems)}
         </Sider>
       )}
       <Drawer
@@ -485,41 +432,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         >
           {theme.systemTitle}
         </div>
-        <Menu
-          style={{
-            background: 'transparent',
-            color: theme.siderTextColor,
-            fontSize: 18,
-            paddingBottom: 48,
-          }}
-          className="custom-menu"
-          mode="inline"
-          selectedKeys={[location.pathname]}
-          items={menuItems
-            .map((mi) => {
-              if (!mi) return null;
-              const children = (mi as any).children as MenuProps['items'] | undefined;
-              if (children && Array.isArray(children)) {
-                const filteredChildren = children.filter((child: any) => {
-                  const perm = pathPermissionMap[String(child?.key)] || null;
-                  if (!perm) return true;
-                  if (user?.isAdmin) return true;
-                  const perms: string[] = (user as any)?.permissions || [];
-                  return perms.includes(perm);
-                });
-                if (filteredChildren.length === 0) return null;
-                return { ...mi, children: filteredChildren } as any;
-              }
-              const perm = pathPermissionMap[String((mi as any).key)] || null;
-              if (!perm) return mi;
-              if (user?.isAdmin) return mi;
-              const perms: string[] = (user as any)?.permissions || [];
-              return perms.includes(perm) ? mi : null;
-            })
-            .filter(Boolean) as MenuProps['items']}
-          onClick={handleMenuClick}
-          theme={theme.siderBg.includes('#fff') || theme.siderBg.includes('#fafafa') || theme.siderBg.includes('gradient(180deg, #d1fae5') ? 'light' : 'dark'}
-        />
+        {renderMenu(menuItems)}
       </Drawer>
 
       <AntLayout style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
@@ -551,17 +464,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <Space size="middle">
             {!isMobile && (
               <>
-                <Dropdown menu={{ items: featuresMenu, onClick: handleTopMenuClick }} placement="bottomRight">
-                  <Button type="text" style={{ color: theme.headerTextColor }}>功能</Button>
+                <Dropdown menu={{ items: quickMenu, onClick: handleTopMenuClick }} placement="bottomRight">
+                  <Button type="text" style={{ color: theme.headerTextColor }}>快捷</Button>
                 </Dropdown>
-                <Dropdown menu={{ items: exportMenu, onClick: handleTopMenuClick }} placement="bottomRight">
-                  <Button type="text" style={{ color: theme.headerTextColor }}>导出</Button>
-                </Dropdown>
-                <Dropdown menu={{ items: notifyMenu, onClick: handleTopMenuClick }} placement="bottomRight">
-                  <Button type="text" style={{ color: theme.headerTextColor }}>通知</Button>
-                </Dropdown>
-                <Dropdown menu={{ items: systemMenu, onClick: handleTopMenuClick }} placement="bottomRight">
-                  <Button type="text" style={{ color: theme.headerTextColor }}>系统</Button>
+                <Dropdown menu={{ items: toolsMenu, onClick: handleTopMenuClick }} placement="bottomRight">
+                  <Button type="text" style={{ color: theme.headerTextColor }}>工具</Button>
                 </Dropdown>
               </>
             )}
