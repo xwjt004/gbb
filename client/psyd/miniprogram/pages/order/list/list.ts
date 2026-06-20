@@ -535,11 +535,11 @@ Page({
   },
 
   /**
-   * 去逛逛（跳转到商城首页）
+   * 去逛逛（跳转到预约页）
    */
   goShopping() {
     wx.switchTab({
-      url: '/pages/product/list',
+      url: '/pages/packages/list/list',
     });
   },
 });

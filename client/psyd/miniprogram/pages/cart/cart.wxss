@@ -335,6 +335,28 @@
   flex: 1;
 }
 
+.home-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 24rpx;
+  padding: 8rpx 16rpx;
+  background: linear-gradient(135deg, #FFE5F0 0%, #FFF0F5 100%);
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 12rpx rgba(255, 107, 157, 0.1);
+}
+
+.home-icon {
+  font-size: 36rpx;
+}
+
+.home-text {
+  font-size: 20rpx;
+  color: #FF6B9D;
+  font-weight: 600;
+  margin-top: 4rpx;
+}
+
 .footer-left .select-all {
   margin-right: 30rpx;
 }

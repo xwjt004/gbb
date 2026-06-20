@@ -99,6 +99,10 @@
   <!-- 底部结算栏 -->
   <view wx:if="{{cartItems.length > 0}}" class="footer-bar">
     <view class="footer-left">
+      <view class="home-btn" bindtap="goHome">
+        <text class="home-icon">🏠</text>
+        <text class="home-text">首页</text>
+      </view>
       <view class="select-all" bindtap="onSelectAll">
         <icon class="checkbox" type="{{allSelected ? 'success' : 'circle'}}" size="20"></icon>
         <text class="select-text">全选</text>

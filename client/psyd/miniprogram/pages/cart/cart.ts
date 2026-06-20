@@ -542,6 +542,15 @@ Page({
   },
 
   /**
+   * 首页 - 跳转到商品页
+   */
+  goHome() {
+    wx.switchTab({
+      url: '/pages/product/list',
+    });
+  },
+
+  /**
    * 格式化价格
    */
   formatPrice(price: number): string {
