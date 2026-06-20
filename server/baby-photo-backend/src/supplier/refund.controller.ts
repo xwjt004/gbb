@@ -6,7 +6,10 @@ import {
   Patch,
   Param,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../modules/auth/guards/admin-jwt-auth.guard';
 import { RefundService } from './refund.service';
 import {
   CreateRefundDto,
@@ -16,6 +19,9 @@ import {
   QueryRefundDto,
 } from './dto/create-refund.dto';
 
+@ApiTags('采购退款')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('refund')
 export class RefundController {
   constructor(private readonly refundService: RefundService) {}

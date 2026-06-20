@@ -9,15 +9,20 @@ import {
   Delete,
   Query,
   Logger,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserSearchDto } from './dto/user-search.dto';
 import { AdminLoginDto } from './dto/admin-login.dto';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
+import { Public } from '../../shared/decorators/public.decorator';
 
 @ApiTags('用户')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('users')
 export class UsersController {
   private readonly logger = new Logger(UsersController.name);
@@ -176,6 +181,7 @@ export class UsersController {
   /**
    * 管理员登录
    */
+  @Public()
   @Post('admin-login')
   @ApiOperation({ summary: '管理员登录' })
   @ApiResponse({ status: 201, description: '登录成功' })

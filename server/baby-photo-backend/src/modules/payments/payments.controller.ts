@@ -10,8 +10,11 @@ import {
   Headers,
   Logger,
   Put,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
+import { Public } from '../../shared/decorators/public.decorator';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentDto, PaymentChannel } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
@@ -29,6 +32,8 @@ import { QuerySuspiciousPaymentsDto } from './dto/query-suspicious-payments.dto'
 import { ReconciliationTask } from './tasks/reconciliation.task';
 
 @ApiTags('支付管理')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('payments')
 export class PaymentsController {
   private readonly logger = new Logger(PaymentsController.name);
@@ -81,6 +86,7 @@ export class PaymentsController {
   /**
    * 微信支付回调
    */
+  @Public()
   @Post('wx-notify')
   async wxPayNotify(
     @Body() body: any,

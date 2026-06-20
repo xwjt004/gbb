@@ -1,4 +1,6 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { SmartMarketingService } from './smart-marketing.service';
 import { CreateSegmentDto, UpdateSegmentDto } from './dto/create-segment.dto';
 import { QuerySegmentDto } from './dto/query-segment.dto';
@@ -6,6 +8,9 @@ import { CreateCampaignDto, UpdateCampaignDto } from './dto/create-campaign.dto'
 import { QueryCampaignDto } from './dto/query-campaign.dto';
 import { TrackEventDto } from './dto/track-event.dto';
 
+@ApiTags('智能营销')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('smart-marketing')
 export class SmartMarketingController {
   constructor(private readonly service: SmartMarketingService) {}

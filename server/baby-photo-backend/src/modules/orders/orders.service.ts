@@ -766,10 +766,11 @@ export class OrdersService {
       });
 
       // 获取各种状态的订单数量
-      const [pendingOrders, cancelledOrders, completedOrders] = await Promise.all([
+      const [pendingOrders, cancelledOrders, completedOrders, refundedOrders] = await Promise.all([
         this.prisma.order.count({ where: { orderStatus: OrderStatus.PENDING } }),
         this.prisma.order.count({ where: { orderStatus: OrderStatus.CANCELLED } }),
         this.prisma.order.count({ where: { orderStatus: OrderStatus.COMPLETED } }),
+        this.prisma.order.count({ where: { paymentStatus: PaymentStatus.REFUNDED } }),
       ]);
 
       // 待处理细分：已付款待处理 vs 未付款待处理
@@ -825,6 +826,7 @@ export class OrdersService {
         confirmedOrders: paidOrders,
         completedOrders,
         cancelledOrders,
+        refundedOrders,
         paidPendingOrders,       // 已付款待处理
         unpaidPendingOrders,     // 未付款待处理
         totalRevenue: totalRevenue._sum?.totalAmount || 0,
@@ -1133,12 +1135,26 @@ export class OrdersService {
         }
       }
 
+      // 计算取消时正确的支付状态
+      // - 已支付且已全额退款 → REFUNDED
+      // - 已支付但未退款 → 保持 FULLY_PAID（支付本身不取消）
+      // - 未支付/部分支付 → CANCELLED
+      const currentPmtStatus = existingOrder.paymentStatus as string;
+      let newPaymentStatus: PaymentStatus;
+      if (currentPmtStatus === 'FULLY_PAID' || currentPmtStatus === 'PAID') {
+        const paidAmt = Number(existingOrder.paidAmount || 0);
+        const refundedAmt = Number(existingOrder.refundedAmount || 0);
+        newPaymentStatus = paidAmt <= refundedAmt ? PaymentStatus.REFUNDED : PaymentStatus.FULLY_PAID;
+      } else {
+        newPaymentStatus = PaymentStatus.CANCELLED;
+      }
+
       // 更新订单状态
       const cancelledOrder = await prisma.order.update({
         where: { id },
-        data: { 
+        data: {
           orderStatus: OrderStatus.CANCELLED,
-          paymentStatus: PaymentStatus.CANCELLED,
+          paymentStatus: newPaymentStatus,
           notes: reason ? `${existingOrder.notes || ''}\n取消原因: ${reason}`.trim() : existingOrder.notes
         },
         include: {
@@ -1162,6 +1178,9 @@ export class OrdersService {
     // 检查订单是否可以确认
     if (existingOrder.orderStatus !== 'PENDING') {
       throw new BadRequestException('只有待确认的订单才能确认');
+    }
+    if (existingOrder.paymentStatus === 'REFUNDED' || existingOrder.paymentStatus === 'REFUNDING') {
+      throw new BadRequestException('已退款的订单不能确认');
     }
 
     // 更新订单状态

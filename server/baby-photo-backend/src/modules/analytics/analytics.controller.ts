@@ -1,8 +1,11 @@
-import { Controller, Get, Query, Logger } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Query, Logger, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { AnalyticsService } from './analytics.service';
 
 @ApiTags('数据分析')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('analytics')
 export class AnalyticsController {
   private readonly logger = new Logger(AnalyticsController.name);

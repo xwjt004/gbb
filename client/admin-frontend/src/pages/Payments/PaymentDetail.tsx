@@ -42,6 +42,7 @@ const PaymentDetail: React.FC<PaymentDetailProps> = ({
     [PaymentStatus.CANCELLED]: { color: 'default', text: '已取消', icon: <CloseCircleOutlined /> },
     [PaymentStatus.REFUNDING]: { color: 'orange', text: '退款中', icon: <SyncOutlined spin /> },
     [PaymentStatus.REFUNDED]: { color: 'purple', text: '已退款', icon: <UndoOutlined /> },
+    [PaymentStatus.PARTIAL_REFUNDED]: { color: 'purple', text: '部分退款', icon: <UndoOutlined /> },
   };
 
   const methodConfig: Record<string, string> = {
@@ -323,6 +324,7 @@ const PaymentDetail: React.FC<PaymentDetailProps> = ({
         case PaymentStatus.CANCELLED:
           return 'status-failed';
         case PaymentStatus.REFUNDED:
+        case PaymentStatus.PARTIAL_REFUNDED:
         case PaymentStatus.REFUNDING:
           return 'status-refunded';
         default:

@@ -1,11 +1,14 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, ParseIntPipe } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { SeasonalPricesService } from './seasonal-prices.service';
 import { CreateSeasonalPriceDto } from './dto/create-seasonal-price.dto';
 import { UpdateSeasonalPriceDto } from './dto/update-seasonal-price.dto';
 import { QuerySeasonalPriceDto } from './dto/query-seasonal-price.dto';
 
 @ApiTags('季节性价格')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('seasonal-prices')
 export class SeasonalPricesController {
   constructor(private readonly service: SeasonalPricesService) {}

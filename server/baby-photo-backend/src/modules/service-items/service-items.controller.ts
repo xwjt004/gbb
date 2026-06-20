@@ -9,14 +9,18 @@ import {
   Query,
   ParseIntPipe,
   Logger,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { ServiceItemsService } from './service-items.service';
 import { CreateServiceItemDto } from './dto/create-service-item.dto';
 import { UpdateServiceItemDto } from './dto/update-service-item.dto';
 import { QueryServiceItemDto } from './dto/query-service-item.dto';
 
 @ApiTags('service-items')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('service-items')
 export class ServiceItemsController {
   private readonly logger = new Logger(ServiceItemsController.name);

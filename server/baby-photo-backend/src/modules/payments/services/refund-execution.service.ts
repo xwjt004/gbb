@@ -305,7 +305,7 @@ export class RefundExecutionService {
    * 更新订单退款金�?
    */
   private async updateOrderRefundAmount(orderId: string, refundAmount: Decimal): Promise<void> {
-    await this.prisma.order.update({
+    const order = await this.prisma.order.update({
       where: { id: orderId },
       data: {
         refundedAmount: {
@@ -315,7 +315,18 @@ export class RefundExecutionService {
       },
     });
 
-    this.logger.log(`更新订单退款金�? orderId=${orderId}, amount=${refundAmount.toString()}`);
+    // 如果累计退款金额 >= 已支付金额，将支付状态设为 REFUNDED
+    const totalRefunded = Number(order.refundedAmount || 0);
+    const paidAmount = Number(order.paidAmount || 0);
+    if (totalRefunded >= paidAmount && paidAmount > 0 && order.paymentStatus !== 'REFUNDED') {
+      await this.prisma.order.update({
+        where: { id: orderId },
+        data: { paymentStatus: 'REFUNDED' },
+      });
+      this.logger.log(`订单支付状态更新为 REFUNDED: orderId=${orderId}`);
+    }
+
+    this.logger.log(`更新订单退款金额: orderId=${orderId}, amount=${refundAmount.toString()}`);
   }
 
   /**

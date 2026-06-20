@@ -9,8 +9,10 @@ import {
   Query,
   ParseIntPipe,
   Logger,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { ProductCategoriesService } from './product-categories.service';
 import { CreateProductCategoryDto } from './dto/create-product-category.dto';
 import { UpdateProductCategoryDto } from './dto/update-product-category.dto';
@@ -18,6 +20,8 @@ import { QueryProductCategoryDto } from './dto/query-product-category.dto';
 import { UpdateSortOrderDto } from './dto/update-sort-order.dto';
 
 @ApiTags('product-categories')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('product-categories')
 export class ProductCategoriesController {
   private readonly logger = new Logger(ProductCategoriesController.name);

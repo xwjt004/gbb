@@ -9,14 +9,18 @@ import {
   Query,
   ParseIntPipe,
   Logger,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { PackageCategoriesService } from './package-categories.service';
 import { CreatePackageCategoryDto } from './dto/create-package-category.dto';
 import { UpdatePackageCategoryDto } from './dto/update-package-category.dto';
 import { PackageCategoryQueryDto } from './dto/package-category-query.dto';
 
 @ApiTags('package-categories')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('package-categories')
 export class PackageCategoriesController {
   private readonly logger = new Logger(PackageCategoriesController.name);

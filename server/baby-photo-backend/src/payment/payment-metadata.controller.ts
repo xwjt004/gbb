@@ -1,13 +1,16 @@
 /**
  * 支付元数据Controller - 提供枚举配置API
  */
-import { Controller, Get } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse as ApiDoc } from '@nestjs/swagger';
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse as ApiDoc, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../modules/auth/guards/admin-jwt-auth.guard';
 
 // 枚举配置版本号（每次枚举变更时更新）
 const METADATA_VERSION = '1.0.0';
 
 @ApiTags('支付元数据')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('payments/metadata')
 export class PaymentMetadataController {
   /**

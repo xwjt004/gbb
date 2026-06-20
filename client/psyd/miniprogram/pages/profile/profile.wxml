@@ -23,6 +23,10 @@
     <!-- ===== 快捷入口网格 ===== -->
     <view class="grid-card">
       <view class="grid-row">
+        <view class="grid-item" bindtap="goToStoreNav">
+          <view class="grid-icon icon-store-nav">🗺️</view>
+          <text class="grid-label">导航到店</text>
+        </view>
         <view class="grid-item" bindtap="goToGroupBuy">
           <view class="grid-icon icon-group-buy">🎯</view>
           <text class="grid-label">我的团购</text>

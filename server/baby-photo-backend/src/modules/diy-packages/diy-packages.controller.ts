@@ -9,14 +9,18 @@ import {
   Query,
   Logger,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { DiyPackagesService } from './diy-packages.service';
 import { CreateDiyPackageDto } from './dto/create-diy-package.dto';
 import { UpdateDiyPackageDto } from './dto/update-diy-package.dto';
 import { QueryDiyPackageDto } from './dto/query-diy-package.dto';
 
 @ApiTags('DIY套系管理')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('diy-packages')
 export class DiyPackagesController {
   private readonly logger = new Logger(DiyPackagesController.name);

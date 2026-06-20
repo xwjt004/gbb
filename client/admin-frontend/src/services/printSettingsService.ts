@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
+import api from './api';
 
 // 打印设置接口
 export interface PrintSettings {
@@ -37,7 +35,7 @@ export interface UpdatePrintSettingsDto {
  * 获取打印设置
  */
 export const getPrintSettings = async (): Promise<PrintSettings> => {
-  const response = await axios.get(`${API_BASE_URL}/print-settings`);
+  const response = await api.get('/print-settings');
   return response.data.data;
 };
 
@@ -45,6 +43,6 @@ export const getPrintSettings = async (): Promise<PrintSettings> => {
  * 更新打印设置
  */
 export const updatePrintSettings = async (data: UpdatePrintSettingsDto): Promise<PrintSettings> => {
-  const response = await axios.put(`${API_BASE_URL}/print-settings`, data);
+  const response = await api.put('/print-settings', data);
   return response.data.data;
 };

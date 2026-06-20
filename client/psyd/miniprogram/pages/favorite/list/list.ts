@@ -93,6 +93,12 @@ Page({
     }
   },
 
+  goToPackages() {
+    wx.switchTab({
+      url: '/pages/packages/list/list'
+    });
+  },
+
   goToDetail(e: any) {
     const item = e.currentTarget.dataset.item;
     if (!item) return;

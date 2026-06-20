@@ -1,8 +1,11 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { StatusMonitoringService } from './status-monitoring.service';
 
 @ApiTags('状态监控')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('status-monitoring')
 export class StatusMonitoringController {
   constructor(

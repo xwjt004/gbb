@@ -9,6 +9,8 @@ import { UpdateGroupBuyDto } from './dto/update-group-buy.dto';
 import { QueryGroupBuyDto } from './dto/query-group-buy.dto';
 import { CreateGroupBuyTierDto, UpdateGroupBuyTierDto } from './dto/group-buy-tier.dto';
 import { WxJwtAuthGuard } from '../wx-auth/guards/wx-jwt-auth.guard';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
+import { Public } from '../../shared/decorators/public.decorator';
 import { WxAuthService } from '../wx-auth/wx-auth.service';
 
 @ApiTags('团购管理')
@@ -39,6 +41,7 @@ export class GroupBuyController {
     return this.groupBuyService.join(id, wxUserId);
   }
 
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: '获取团购详情（无需登录）' })
   async getDetail(@Param('id') id: string) {
@@ -63,6 +66,7 @@ export class GroupBuyController {
     return this.groupBuyService.leave(id, wxUserId);
   }
 
+  @Public()
   @Get(':id/qrcode')
   @ApiOperation({ summary: '获取团购小程序码（扫码跳转团购详情）' })
   async getQrCode(@Param('id') id: string, @Res() res: Response) {
@@ -74,6 +78,7 @@ export class GroupBuyController {
     res.send(imageBuffer);
   }
 
+  @Public()
   @Get(':id/qrcode/standard')
   @ApiOperation({ summary: '获取团购标准二维码（微信扫码跳转）' })
   async getStandardQrCode(@Param('id') id: string, @Res() res: Response) {
@@ -92,42 +97,56 @@ export class GroupBuyController {
 
   // ==================== 后台管理 ====================
 
+  @UseGuards(AdminJwtAuthGuard)
+  @ApiBearerAuth()
   @Get('admin/list')
   @ApiOperation({ summary: '团购活动列表（后台管理）' })
   async getList(@Query() query: QueryGroupBuyDto) {
     return this.groupBuyService.getList(query);
   }
 
+  @UseGuards(AdminJwtAuthGuard)
+  @ApiBearerAuth()
   @Get('admin/stats')
   @ApiOperation({ summary: '团购数据统计（后台管理）' })
   async getStats() {
     return this.groupBuyService.getStats();
   }
 
+  @UseGuards(AdminJwtAuthGuard)
+  @ApiBearerAuth()
   @Patch('admin/:id/cancel')
   @ApiOperation({ summary: '取消/过期团购活动（后台管理）' })
   async cancel(@Param('id') id: string) {
     return this.groupBuyService.cancel(id);
   }
 
+  @UseGuards(AdminJwtAuthGuard)
+  @ApiBearerAuth()
   @Patch('admin/:id/restore')
   @ApiOperation({ summary: '恢复已撤销的团购（后台管理）' })
   async restore(@Param('id') id: string) {
     return this.groupBuyService.adminRestore(id);
   }
 
+  @UseGuards(AdminJwtAuthGuard)
+  @ApiBearerAuth()
   @Delete('admin/:id')
   @ApiOperation({ summary: '删除团购活动（后台管理）' })
   async delete(@Param('id') id: string) {
     return this.groupBuyService.adminDelete(id);
   }
 
+  @UseGuards(AdminJwtAuthGuard)
+  @ApiBearerAuth()
   @Patch('admin/:id')
   @ApiOperation({ summary: '编辑团购（后台管理）' })
   async update(@Param('id') id: string, @Body() dto: UpdateGroupBuyDto) {
     return this.groupBuyService.adminUpdate(id, dto);
   }
 
+  @UseGuards(AdminJwtAuthGuard)
+  @ApiBearerAuth()
   @Post('admin/create')
   @ApiOperation({ summary: '手动创建团购（后台管理）' })
   async adminCreate(@Body() dto: AdminCreateGroupBuyDto) {
@@ -136,36 +155,48 @@ export class GroupBuyController {
 
   // ==================== 阶梯价格管理 ====================
 
+  @UseGuards(AdminJwtAuthGuard)
+  @ApiBearerAuth()
   @Get('admin/tiers/package/:packageId')
   @ApiOperation({ summary: '获取套餐阶梯团购价列表（后台管理）' })
   async getPackageTiers(@Param('packageId') packageId: string) {
     return this.groupBuyService.getTiers('package', Number(packageId));
   }
 
+  @UseGuards(AdminJwtAuthGuard)
+  @ApiBearerAuth()
   @Post('admin/tiers/package/:packageId')
   @ApiOperation({ summary: '添加套餐阶梯团购价（后台管理）' })
   async addPackageTier(@Param('packageId') packageId: string, @Body() dto: CreateGroupBuyTierDto) {
     return this.groupBuyService.addTier('package', Number(packageId), dto);
   }
 
+  @UseGuards(AdminJwtAuthGuard)
+  @ApiBearerAuth()
   @Get('admin/tiers/product/:productId')
   @ApiOperation({ summary: '获取商品阶梯团购价列表（后台管理）' })
   async getProductTiers(@Param('productId') productId: string) {
     return this.groupBuyService.getTiers('product', Number(productId));
   }
 
+  @UseGuards(AdminJwtAuthGuard)
+  @ApiBearerAuth()
   @Post('admin/tiers/product/:productId')
   @ApiOperation({ summary: '添加商品阶梯团购价（后台管理）' })
   async addProductTier(@Param('productId') productId: string, @Body() dto: CreateGroupBuyTierDto) {
     return this.groupBuyService.addTier('product', Number(productId), dto);
   }
 
+  @UseGuards(AdminJwtAuthGuard)
+  @ApiBearerAuth()
   @Patch('admin/tiers/:tierId')
   @ApiOperation({ summary: '更新阶梯团购价（后台管理）' })
   async updateTier(@Param('tierId') tierId: string, @Body() dto: UpdateGroupBuyTierDto) {
     return this.groupBuyService.updateTier(Number(tierId), dto);
   }
 
+  @UseGuards(AdminJwtAuthGuard)
+  @ApiBearerAuth()
   @Delete('admin/tiers/:tierId')
   @ApiOperation({ summary: '删除阶梯团购价（后台管理）' })
   async deleteTier(@Param('tierId') tierId: string) {

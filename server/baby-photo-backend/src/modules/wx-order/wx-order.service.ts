@@ -820,8 +820,32 @@ export class WxOrderService {
    * 取消订单（微信用户端）
    */
   async cancelOrder(wxUserId: string, orderId: string) {
+    // 使用与 getMyOrders / deleteOrder 相同的查询逻辑查找订单
+    const wxUser = await this.prisma.wxUser.findUnique({
+      where: { id: wxUserId },
+      select: { linkedUserId: true, phone: true },
+    });
+
+    const where: Prisma.OrderWhereInput = {
+      id: orderId,
+      deletedAt: null,
+    };
+
+    if (wxUser?.linkedUserId) {
+      where.OR = [
+        { wxUserId },
+        { userId: wxUser.linkedUserId },
+      ];
+    } else {
+      where.OR = [{ wxUserId }];
+    }
+
+    if (wxUser?.phone) {
+      (where.OR as any[]).push({ customerPhone: wxUser.phone });
+    }
+
     const order = await this.prisma.order.findFirst({
-      where: { id: orderId, wxUserId },
+      where,
       include: { timeSlot: true },
     });
 
@@ -868,9 +892,31 @@ export class WxOrderService {
    * 删除订单（软删除）
    */
   async deleteOrder(wxUserId: string, orderId: string) {
-    const order = await this.prisma.order.findFirst({
-      where: { id: orderId, wxUserId },
+    // 使用与 getMyOrders / clearAllOrders 相同的查询逻辑查找订单
+    const wxUser = await this.prisma.wxUser.findUnique({
+      where: { id: wxUserId },
+      select: { linkedUserId: true, phone: true },
     });
+
+    const where: Prisma.OrderWhereInput = {
+      id: orderId,
+      deletedAt: null,
+    };
+
+    if (wxUser?.linkedUserId) {
+      where.OR = [
+        { wxUserId },
+        { userId: wxUser.linkedUserId },
+      ];
+    } else {
+      where.OR = [{ wxUserId }];
+    }
+
+    if (wxUser?.phone) {
+      (where.OR as any[]).push({ customerPhone: wxUser.phone });
+    }
+
+    const order = await this.prisma.order.findFirst({ where });
 
     if (!order) {
       throw new NotFoundException('订单不存在');

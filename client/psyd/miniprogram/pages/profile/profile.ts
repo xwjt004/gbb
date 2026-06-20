@@ -137,6 +137,16 @@ Page({
     wx.navigateTo({ url: '/pages/member/points/points' });
   },
 
+  goToStoreNav() {
+    wx.openLocation({
+      latitude: 41.692690,
+      longitude: 122.122332,
+      name: '乖宝宝儿童摄影',
+      address: '辽宁省锦州市黑山县启发路与东内环路交叉路口往西约150米(大红嘉园东侧)',
+      scale: 18,
+    });
+  },
+
   goToGroupBuy() {
     wx.navigateTo({
       url: '/pages/group-buy/list/list'

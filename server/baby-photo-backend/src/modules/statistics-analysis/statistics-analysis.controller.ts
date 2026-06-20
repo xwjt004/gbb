@@ -1,5 +1,6 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiQuery, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { StatisticsAnalysisService } from './statistics-analysis.service';
 import {
   TrendData,
@@ -15,6 +16,8 @@ import {
 } from './dto/statistics-analysis.dto';
 
 @ApiTags('统计分析')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('statistics-analysis')
 export class StatisticsAnalysisController {
   constructor(

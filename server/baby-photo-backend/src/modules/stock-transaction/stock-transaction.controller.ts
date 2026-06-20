@@ -8,12 +8,16 @@ import {
   HttpCode,
   HttpStatus,
   Logger,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { StockTransactionService } from './stock-transaction.service';
 import { QueryTransactionDto, ManualAdjustDto } from './dto';
 
 @ApiTags('库存管理 - 库存流水')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('stock-transaction')
 export class StockTransactionController {
   private readonly logger = new Logger(StockTransactionController.name);

@@ -82,17 +82,17 @@ import { GroupBuyScheduler } from './shared/schedulers/group-buy.scheduler';
       {
         name: 'short',
         ttl: 1000,
-        limit: 10,   // 每秒最多10次
+        limit: 30,   // 每秒最多30次
       },
       {
         name: 'medium',
         ttl: 10000,
-        limit: 50,   // 每10秒最多50次
+        limit: 150,  // 每10秒最多150次
       },
       {
         name: 'long',
         ttl: 60000,
-        limit: 200,  // 每分钟最多200次
+        limit: 600,  // 每分钟最多600次
       },
     ]),
 

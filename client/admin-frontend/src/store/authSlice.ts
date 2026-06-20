@@ -23,10 +23,10 @@ interface AuthState {
 // 初始状态
 const initialState: AuthState = {
   user: null,
-  token: localStorage.getItem('token'),
+  token: localStorage.getItem('admin_token'),
   isLoading: false,
   error: null,
-  isAuthenticated: !!localStorage.getItem('token'),
+  isAuthenticated: !!localStorage.getItem('admin_token'),
 };
 
 // 异步登录action - 修正为POST请求
@@ -48,7 +48,7 @@ export const login = createAsyncThunk<
 
 // 登出action
 export const logout = createAsyncThunk('auth/logout', async () => {
-  localStorage.removeItem('token');
+  localStorage.removeItem('admin_token');
   localStorage.removeItem('user');
 });
 
@@ -64,7 +64,7 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.isAuthenticated = true;
-      localStorage.setItem('token', action.payload.token);
+      localStorage.setItem('admin_token', action.payload.token);
       localStorage.setItem('user', JSON.stringify(action.payload.user));
     },
   },
@@ -82,7 +82,7 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.error = null;
         // 保存到localStorage
-        localStorage.setItem('token', action.payload.data.token);
+        localStorage.setItem('admin_token', action.payload.data.token);
         localStorage.setItem('user', JSON.stringify(action.payload.data));
       })
       .addCase(login.rejected, (state, action) => {

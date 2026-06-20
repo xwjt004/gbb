@@ -7,7 +7,10 @@ import {
   Param,
   Delete,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../modules/auth/guards/admin-jwt-auth.guard';
 import { InTransitService } from './in-transit.service';
 import {
   CreateInTransitDto,
@@ -21,6 +24,9 @@ import {
   QueryInTransitDto,
 } from './dto/create-in-transit.dto';
 
+@ApiTags('在途管理')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('in-transit')
 export class InTransitController {
   constructor(private readonly inTransitService: InTransitService) {}

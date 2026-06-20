@@ -246,7 +246,10 @@ const OrderList: React.FC = () => {
     // 使用后端返回的 orderStatus 字段
     const orderStatus = (record as any).orderStatus;
 
-    if (orderStatus === 'PENDING') {
+    const paymentStatus = record.paymentStatus;
+    const isRefunded = paymentStatus === 'REFUNDED' || paymentStatus === 'REFUNDING';
+
+    if (orderStatus === 'PENDING' && !isRefunded) {
       items.push({
         key: 'confirm',
         icon: <CheckCircleOutlined />,
@@ -264,8 +267,8 @@ const OrderList: React.FC = () => {
       });
     }
 
-    // 已确认或进行中的订单可以完成（需先付款后付货，未支付订单不可完成）
-    if ((orderStatus === 'CONFIRMED' || orderStatus === 'IN_PROGRESS') && record.paymentStatus !== 'PENDING_PAYMENT') {
+    // 已确认或进行中的订单可以完成（需先付款后付货，未支付和已退款订单不可完成）
+    if ((orderStatus === 'CONFIRMED' || orderStatus === 'IN_PROGRESS') && paymentStatus !== 'PENDING_PAYMENT' && !isRefunded) {
       items.push({
         key: 'complete',
         icon: <CheckCircleOutlined />,

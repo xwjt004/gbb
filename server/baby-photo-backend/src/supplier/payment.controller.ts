@@ -6,10 +6,16 @@ import {
   Patch,
   Param,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../modules/auth/guards/admin-jwt-auth.guard';
 import { PaymentService } from './payment.service';
 import { CreateSupplierPaymentDto, QueryPaymentDto } from './dto/create-payment.dto';
 
+@ApiTags('采购付款')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('payment')
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}

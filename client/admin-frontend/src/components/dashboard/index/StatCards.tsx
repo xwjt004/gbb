@@ -72,6 +72,8 @@ const StatCards: React.FC<Props> = ({ userStats, orderStats }) => {
   const pendingPct = totalPending > 0
     ? Math.min(totalPending / 50 * 100, 100)
     : 100;
+  const refundedOrders = Number(orderStats.refundedOrders || 0);
+  const refundPct = Math.min(refundedOrders / 100 * 100, 100);
 
   return (
     <Row gutter={16} style={{ marginBottom: 16 }}>
@@ -133,6 +135,16 @@ const StatCards: React.FC<Props> = ({ userStats, orderStats }) => {
               未付款 <strong>{unpaidPending}</strong>
             </Text>
           </div>
+        </Card>
+      </Col>
+
+      {/* ── Refunded Orders ── */}
+      <Col xs={12} lg={6}>
+        <Card styles={{ body: { padding: '20px 16px', textAlign: 'center' as const } }}>
+          <CircularRing value={refundPct} size={ringSize} stroke="#ff4d4f">
+            <div style={{ fontSize: 24, fontWeight: 800, color: '#ff4d4f', lineHeight: 1.1 }}>{refundedOrders}</div>
+            <div style={{ fontSize: 11, color: '#8888b0', marginTop: 2 }}>已退款订单</div>
+          </CircularRing>
         </Card>
       </Col>
     </Row>

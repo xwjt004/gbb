@@ -8,13 +8,18 @@ import {
   Delete,
   Query,
   HttpCode,
-  HttpStatus
+  HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { StockTransferService } from './stock-transfer.service';
 import { CreateTransferDto } from './dto/create-transfer.dto';
 import { UpdateTransferDto } from './dto/update-transfer.dto';
 import { QueryTransferDto } from './dto/query-transfer.dto';
 
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('stock-transfer')
 export class StockTransferController {
   constructor(private readonly stockTransferService: StockTransferService) {}

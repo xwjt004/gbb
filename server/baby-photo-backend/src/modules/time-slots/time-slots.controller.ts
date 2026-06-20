@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -15,7 +16,9 @@ import {
   ApiResponse,
   ApiParam,
   ApiQuery,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { TimeSlotsService } from './time-slots.service';
 import { CreateTimeSlotDto } from './dto/create-time-slot.dto';
 import { UpdateTimeSlotDto } from './dto/update-time-slot.dto';
@@ -24,6 +27,8 @@ import { CreateBatchTimeSlotsDto } from './dto/create-batch-time-slots.dto';
 import { BatchUpdateStatusDto, BatchDeleteDto } from './dto/batch-operation.dto';
 
 @ApiTags('时间槽管理')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('time-slots')
 export class TimeSlotsController {
   constructor(private readonly timeSlotsService: TimeSlotsService) {}

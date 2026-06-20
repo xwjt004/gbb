@@ -4,6 +4,7 @@ import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as net from 'net';
+import * as os from 'os';
 
 const START_TIME = new Date().toISOString();
 const PKG = JSON.parse(
@@ -73,6 +74,36 @@ export class AppService {
       // 非 Linux 环境跳过磁盘检查
     }
 
+    // CPU 使用率（基于 os.cpus() 快照）
+    let cpuPercent = 0;
+    try {
+      const cpus = os.cpus();
+      let totalIdle = 0;
+      let totalTick = 0;
+      for (const cpu of cpus) {
+        for (const type in cpu.times) {
+          totalTick += (cpu.times as any)[type];
+        }
+        totalIdle += cpu.times.idle;
+      }
+      cpuPercent = totalTick > 0 ? Math.round((1 - totalIdle / totalTick) * 100) : 0;
+    } catch (e) {
+      // ignore
+    }
+
+    // 内存使用率
+    let memPercent = 0;
+    try {
+      const totalMem = os.totalmem();
+      const freeMem = os.freemem();
+      memPercent = totalMem > 0 ? Math.round((1 - freeMem / totalMem) * 100) : 0;
+    } catch (e) {
+      // ignore
+    }
+
+    // 磁盘使用率（已通过 df 获取）
+    const diskPercent = diskStatus.usagePercent ?? 0;
+
     return {
       status: dbStatus === 'connected' ? 'ok' : 'degraded',
       message: dbStatus === 'connected' ? '系统运行正常' : '数据库连接异常',
@@ -80,6 +111,9 @@ export class AppService {
       uptime: `${Math.floor(uptime)}秒`,
       version: PKG.version || '1.0.0',
       environment: process.env.NODE_ENV || 'development',
+      cpu: cpuPercent,
+      memory: memPercent,
+      disk: diskPercent,
       services: {
         database: dbStatus,
         redis: redisStatus,

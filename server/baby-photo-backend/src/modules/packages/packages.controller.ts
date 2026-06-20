@@ -9,6 +9,7 @@ import {
   Query,
   Logger,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { PackagesService } from './packages.service';
@@ -17,9 +18,12 @@ import { CreatePackageDto } from './dto/create-package.dto';
 import { UpdatePackageDto } from './dto/update-package.dto';
 import { PackageSearchDto } from './dto/package-search.dto';
 import { NullToUndefinedPipe } from '../../shared/pipes/null-to-undefined.pipe';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 
 @ApiTags('packages')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('packages')
 export class PackagesController {
   private readonly logger = new Logger(PackagesController.name);

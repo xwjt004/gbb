@@ -7,7 +7,10 @@ import {
   Param,
   Delete,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../modules/auth/guards/admin-jwt-auth.guard';
 import { InboundService } from './inbound.service';
 import {
   CreateInboundDto,
@@ -19,6 +22,9 @@ import {
   UpdateInboundDto,
 } from './dto/create-inbound.dto';
 
+@ApiTags('入库管理')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('inbound')
 export class InboundController {
   constructor(private readonly inboundService: InboundService) {}

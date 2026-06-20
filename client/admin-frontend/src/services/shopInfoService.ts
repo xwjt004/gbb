@@ -1,11 +1,4 @@
-import axios from 'axios';
-
-// 优先使用正确的 VITE_API_URL (若配置为 /api/v1 形式则补全后端基址)
-// 兼容旧的 VITE_API_BASE_URL，以防尚未清理
-const rawApi = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
-const API_BASE_URL = rawApi
-  ? (rawApi.startsWith('http') ? rawApi : `${window.location.origin}${rawApi}`)
-  : `${window.location.origin}/api/v1`;
+import api from './api';
 
 export interface BannerItem {
   image: string;
@@ -56,11 +49,8 @@ export interface UpdateShopInfoDto {
   bannerInterval?: number;
 }
 
-/**
- * 获取店铺信息
- */
 export const getShopInfo = async (): Promise<ShopInfo> => {
-  const response = await axios.get(`${API_BASE_URL}/shop-info`);
+  const response = await api.get('/shop-info');
   return response.data.data;
 };
 
@@ -68,7 +58,7 @@ export const getShopInfo = async (): Promise<ShopInfo> => {
  * 更新店铺信息
  */
 export const updateShopInfo = async (data: UpdateShopInfoDto): Promise<ShopInfo> => {
-  const response = await axios.put(`${API_BASE_URL}/shop-info`, data);
+  const response = await api.put('/shop-info', data);
   return response.data.data;
 };
 
@@ -84,8 +74,8 @@ export const uploadShopImage = async (
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await axios.post(
-    `${API_BASE_URL}/shop-info/upload/${fieldName}`,
+  const response = await api.post(
+    `/shop-info/upload/${fieldName}`,
     formData,
     {
       headers: {

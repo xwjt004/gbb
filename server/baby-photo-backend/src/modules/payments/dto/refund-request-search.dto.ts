@@ -1,6 +1,7 @@
 import { IsOptional, IsString, IsEnum, IsDateString, IsNotEmpty, IsInt, Min, Max, Length } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
+import { RefundType } from './create-refund-request.dto';
 
 export enum RefundStatus {
   PENDING = 'PENDING',
@@ -57,6 +58,11 @@ export class RefundRequestSearchDto {
   @Min(1, { message: '每页数量必须大于等于1' })
   @Max(100, { message: '每页数量不能超过100' })
   limit?: number = 20;
+
+  @ApiPropertyOptional({ description: '退款类型', enum: RefundType })
+  @IsOptional()
+  @IsEnum(RefundType, { message: '退款类型必须是有效的枚举值' })
+  refundType?: RefundType;
 }
 
 export class ApproveRefundRequestDto {

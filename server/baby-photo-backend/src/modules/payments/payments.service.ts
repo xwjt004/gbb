@@ -450,13 +450,22 @@ export class PaymentsService {
         this.prisma.payment.count({ where: paymentWhere }),
       ]);
 
-      allPaymentRecords = payments.map(payment => ({
+      allPaymentRecords = payments.map(payment => {
+        // 如果订单已退款或部分退款，修正支付记录状态
+        const refundedAmount = Number(payment.order?.refundedAmount || 0);
+        const paidStatuses: string[] = ['FULLY_PAID', 'SUCCESS', 'PAID'];
+        let displayStatus = payment.status;
+        if (paidStatuses.includes(payment.status) && refundedAmount > 0) {
+          displayStatus = refundedAmount >= Number(payment.amount) ? PaymentStatus.REFUNDED : PaymentStatus.PARTIAL_REFUNDED;
+        }
+
+        return {
         payment_id: payment.id,
         order_no: payment.order.orderNo,
         amount: Number(payment.amount),
         payment_type: payment.paymentType,
         payment_method: payment.paymentMethod,
-        status: payment.status,
+        status: displayStatus,
         transaction_id: payment.transactionId,
         paid_at: payment.paidAt,
         created_at: payment.createdAt,
@@ -468,7 +477,8 @@ export class PaymentsService {
         },
         refund_amount: Number(payment.order?.refundedAmount || 0),
         refund_reason: payment.refundReason,
-      }));
+      };
+    });
 
       // 2. 如果需要包含未支付订单,查询未支付的订单
       // 但是如果用户搜索了特定的支付单号或第三方交易号,则不包含未支付订单
@@ -841,12 +851,21 @@ export class PaymentsService {
         data: { status: 'REFUNDED' },
       });
 
+      const newPaidAmount = Math.max(0, Number(payment.order.paidAmount) - Number(refundAmount));
+      const orderTotal = Number(payment.order.totalAmount);
+
       await tx.order.update({
         where: { id: payment.orderId },
         data: {
           refundedAmount: {
             increment: Number(refundAmount),
           },
+          paidAmount: newPaidAmount,
+          paymentStatus: newPaidAmount <= 0
+            ? PaymentStatus.REFUNDED
+            : newPaidAmount >= orderTotal
+              ? PaymentStatus.FULLY_PAID
+              : PaymentStatus.PARTIAL_PAID,
         },
       });
 
@@ -1097,15 +1116,22 @@ export class PaymentsService {
       throw new NotFoundException(`Payment with id ${id} not found`);
     }
 
+    // 已退款/退款中的支付不改变状态
+    if (payment.status === 'REFUNDED' || payment.status === 'REFUNDING' || payment.status === 'PARTIAL_REFUNDED') {
+      return this.prisma.payment.findUnique({
+        where: { id },
+        include: { order: true },
+      });
+    }
+
     // TODO: 调用支付网关查询支付状态接口
-
-  // 模拟同步结果：统一内部状态为 FULLY_PAID
-  const newStatus = 'FULLY_PAID';
-
-    await this.prisma.payment.update({
-      where: { id },
-      data: { status: newStatus as any },
-    });
+    // 已支付状态不做变更（待接入微信查询接口后改为真实查询）
+    if (payment.status === 'FULLY_PAID') {
+      return this.prisma.payment.findUnique({
+        where: { id },
+        include: { order: true },
+      });
+    }
 
     return this.prisma.payment.findUnique({
       where: { id },
@@ -2346,6 +2372,7 @@ export class PaymentsService {
         applicantId,
         startDate,
         endDate,
+        refundType,
         page = 1,
         limit = 20,
       } = searchDto;
@@ -2372,6 +2399,10 @@ export class PaymentsService {
 
       if (applicantId) {
         where.applicantId = applicantId;
+      }
+
+      if (refundType) {
+        where.refundType = refundType;
       }
 
       if (startDate || endDate) {

@@ -11,6 +11,7 @@ export enum PaymentStatus {
   FAILED = 'FAILED',                    // 支付失败
   REFUNDING = 'REFUNDING',              // 退款中
   REFUNDED = 'REFUNDED',                // 已退款
+  PARTIAL_REFUNDED = 'PARTIAL_REFUNDED',// 部分退款
   CANCELLED = 'CANCELLED',              // 已取消
 }
 

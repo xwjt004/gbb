@@ -1,6 +1,8 @@
-import { Controller, Get, Put, Body, Logger, UseInterceptors, UploadedFile, Post, Param, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Put, Body, Logger, UseInterceptors, UploadedFile, Post, Param, BadRequestException, UseGuards } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
+import { Public } from '../../shared/decorators/public.decorator';
 import { ShopInfoService } from './shop-info.service';
 import { UpdateShopInfoDto } from './dto/update-shop-info.dto';
 import { diskStorage } from 'multer';
@@ -14,6 +16,7 @@ export class ShopInfoController {
 
   constructor(private readonly shopInfoService: ShopInfoService) {}
 
+  @Public()
   @Get()
   @ApiOperation({ summary: '获取店铺信息' })
   @ApiResponse({ status: 200, description: '获取成功' })
@@ -21,6 +24,8 @@ export class ShopInfoController {
     return this.shopInfoService.getShopInfo();
   }
 
+  @UseGuards(AdminJwtAuthGuard)
+  @ApiBearerAuth()
   @Put()
   @ApiOperation({ summary: '更新店铺信息' })
   @ApiResponse({ status: 200, description: '更新成功' })
@@ -28,6 +33,8 @@ export class ShopInfoController {
     return this.shopInfoService.updateShopInfo(updateDto);
   }
 
+  @UseGuards(AdminJwtAuthGuard)
+  @ApiBearerAuth()
   @Post('upload/:fieldName')
   @ApiOperation({ summary: '上传店铺图片' })
   @ApiConsumes('multipart/form-data')

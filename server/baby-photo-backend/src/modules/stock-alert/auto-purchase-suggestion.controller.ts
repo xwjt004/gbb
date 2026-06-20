@@ -1,6 +1,11 @@
-import { Controller, Get, Post, Param, Query, Body, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, Body, ParseIntPipe, DefaultValuePipe, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { AutoPurchaseSuggestionService } from './auto-purchase-suggestion.service';
 
+@ApiTags('自动采购建议')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('auto-purchase-suggestions')
 export class AutoPurchaseSuggestionController {
   constructor(private readonly service: AutoPurchaseSuggestionService) {}

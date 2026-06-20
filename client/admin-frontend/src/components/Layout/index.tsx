@@ -25,6 +25,7 @@ import {
   BarChartOutlined,
   TeamOutlined,
   LockOutlined,
+  ExportOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/store';
@@ -212,21 +213,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       ],
     },
     {
+      key: 'export-menu',
+      icon: <ExportOutlined />,
+      label: '导出中心',
+      children: [
+        { key: '/export/all', label: '综合导出' },
+      ],
+    },
+    {
       key: 'tools-menu',
       icon: <SearchOutlined />,
       label: '工具',
       children: [
         { key: '/search', label: '全局搜索' },
-        {
-          key: 'export-sub',
-          label: '导出中心',
-          children: [
-            { key: '/export/orders', label: '订单导出' },
-            { key: '/export/users', label: '员工导出' },
-            { key: '/export/finance', label: '财务导出' },
-            { key: '/export/all', label: '全部导出' },
-          ],
-        },
         {
           key: 'notify-sub',
           label: '通知管理',
@@ -301,16 +300,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const toolsMenu: MenuProps['items'] = [
     {
-      key: 'export-group',
-      label: '导出中心',
-      children: [
-        { key: '/export/orders', label: '订单导出' },
-        { key: '/export/users', label: '员工导出' },
-        { key: '/export/finance', label: '财务导出' },
-        { key: '/export/all', label: '全部导出' },
-      ],
-    },
-    {
       key: 'notify-group',
       label: '通知管理',
       children: [
@@ -347,7 +336,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (pathname.startsWith('/marketing') || pathname.startsWith('/analytics')) return '营销管理';
     if (pathname.startsWith('/suppliers') || pathname.startsWith('/purchase-orders') || pathname.startsWith('/in-transit') || pathname.startsWith('/inbound') || pathname.startsWith('/stock')) return '供应链管理';
     if (pathname.startsWith('/users') || pathname.startsWith('/system') || pathname.startsWith('/settings')) return '系统管理';
-    if (pathname.startsWith('/search') || pathname.startsWith('/export') || pathname.startsWith('/notify')) return '工具';
+    if (pathname.startsWith('/export')) return '导出中心';
+    if (pathname.startsWith('/search') || pathname.startsWith('/notify')) return '工具';
     return '管理后台';
   };
 

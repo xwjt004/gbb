@@ -5,6 +5,7 @@ import { chartThemes } from '../../config/chartThemes';
 import { ThemeEditor } from '../../components/ThemeEditor';
 import dayjs, { Dayjs } from 'dayjs';
 import { FileExcelOutlined, FilePdfOutlined, DownloadOutlined, SettingOutlined, MoreOutlined, ReloadOutlined, DollarOutlined, ExclamationCircleOutlined, WarningOutlined } from '@ant-design/icons';
+import { simple } from '../../services/api';
 
 import { exportExcel, exportPDF, backupData } from '../../components/dashboard/ui/exportUtils';
 import SuspiciousPaymentsTable from '../../components/dashboard/ui/SuspiciousPaymentsTable';
@@ -38,12 +39,8 @@ const EnhancedReconciliation: React.FC = () => {
   const loadDashboardStats = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/v1/statistics-analysis/dashboard/stats');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setDashboardStats(data);
+      const res = await simple.get<any>('/statistics-analysis/dashboard/stats');
+      setDashboardStats(res?.data || res);
     } catch (error) {
       console.error('加载仪表板数据失败:', error);
       message.error('加载仪表板数据失败');
@@ -57,14 +54,12 @@ const EnhancedReconciliation: React.FC = () => {
       const startDate = dateRange[0].format('YYYY-MM-DD');
       const endDate = dateRange[1].format('YYYY-MM-DD');
       
-      const response = await fetch(
-        `/api/v1/statistics-analysis/orders/trend?period=${selectedPeriod}&startDate=${startDate}&endDate=${endDate}`
+      const res = await simple.get<any>(
+        `/statistics-analysis/orders/trend`, {
+          params: { period: selectedPeriod, startDate, endDate }
+        }
       );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setTrendData(Array.isArray(data) ? data : []);
+      setTrendData(Array.isArray(res?.data || res) ? res.data || res : []);
     } catch (error) {
       console.error('加载趋势数据失败:', error);
       message.error('加载趋势数据失败');
@@ -74,13 +69,12 @@ const EnhancedReconciliation: React.FC = () => {
 
   const loadSuspiciousPayments = useCallback(async () => {
     try {
-      const response = await fetch(
-        `/api/v1/statistics-analysis/payments/suspicious?type=${selectedSuspiciousType}`
+      const res = await simple.get<any>(
+        `/statistics-analysis/payments/suspicious`, {
+          params: { type: selectedSuspiciousType }
+        }
       );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
+      const data = res?.data || res;
       setSuspiciousPayments(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('加载可疑支付数据失败:', error);
@@ -94,14 +88,12 @@ const EnhancedReconciliation: React.FC = () => {
       const startDate = dateRange[0].format('YYYY-MM-DD');
       const endDate = dateRange[1].format('YYYY-MM-DD');
       
-      const response = await fetch(
-        `/api/v1/statistics-analysis/refunds/analysis?startDate=${startDate}&endDate=${endDate}`
+      const res = await simple.get<any>(
+        `/statistics-analysis/refunds/analysis`, {
+          params: { startDate, endDate }
+        }
       );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setRefundAnalysis(data);
+      setRefundAnalysis(res?.data || res);
     } catch (error) {
       console.error('加载退款分析数据失败:', error);
       message.error('加载退款分析数据失败');

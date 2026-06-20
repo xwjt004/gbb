@@ -45,7 +45,7 @@ const normalizeUrl = (url: string) => {
 // 请求拦截器
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('admin_token');
+    const token = localStorage.getItem('admin_token') || localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -112,6 +112,7 @@ api.interceptors.response.use(
     if (status === 401) {
       console.error('登录已过期，请重新登录');
       localStorage.removeItem('admin_token');
+      localStorage.removeItem('token');
       if (window.location.pathname !== '/admin/login') {
         window.location.href = '/admin/login';
       }

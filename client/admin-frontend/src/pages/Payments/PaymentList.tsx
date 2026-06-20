@@ -39,6 +39,8 @@ import { orderService } from '@/services/orders';
 import RefundModal from './RefundModal';
 import PaymentDetail from './PaymentDetail';
 import PaymentForm from './PaymentForm';
+import { useExport } from '@/hooks/useExport';
+import dayjs from 'dayjs';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -57,6 +59,7 @@ const PaymentList: React.FC = () => {
   const [refundVisible, setRefundVisible] = useState(false);
   const [createPaymentVisible, setCreatePaymentVisible] = useState(false);
   const [currentPayment, setCurrentPayment] = useState<Payment | undefined>();
+  const { exportData, loading: exporting } = useExport();
   // 判断是否为虚拟支付记录（无真实 Payment 表记录，仅由后端从 Order 合成）
   const isVirtualId = (id: string) => id.startsWith('UNPAID_') || id.startsWith('PENDING_');
   const [stats, setStats] = useState({
@@ -115,6 +118,7 @@ const PaymentList: React.FC = () => {
     [PaymentStatus.CANCELLED]: { color: 'default', text: '已取消', icon: <CloseCircleOutlined /> },
     [PaymentStatus.REFUNDING]: { color: 'orange', text: '退款中', icon: <SyncOutlined spin /> },
     [PaymentStatus.REFUNDED]: { color: 'purple', text: '已退款', icon: <UndoOutlined /> },
+    [PaymentStatus.PARTIAL_REFUNDED]: { color: 'purple', text: '部分退款', icon: <UndoOutlined /> },
   };
 
   const methodConfig: Record<string, { color: string; text: string }> = {
@@ -404,9 +408,9 @@ const PaymentList: React.FC = () => {
   // 导出数据
   const handleExport = async () => {
     try {
-      const exported = await paymentService.exportPayments(searchParams);
-      if (exported) {
-        message.success('导出成功');
+      const data = await paymentService.exportPayments(searchParams);
+      if (data && data.length > 0) {
+        await exportData(data, 'xlsx', `支付数据_${dayjs().format('YYYY-MM-DD')}`);
       } else {
         message.warning('没有数据可导出');
       }

@@ -9,8 +9,10 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { StockCheckService } from './stock-check.service';
 import { CreateCheckDto } from './dto/create-check.dto';
 import { UpdateCheckDto } from './dto/update-check.dto';
@@ -18,6 +20,8 @@ import { ApproveCheckDto } from './dto/approve-check.dto';
 import { QueryCheckDto } from './dto/query-check.dto';
 
 @ApiTags('库存管理 - 盘点管理')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('stock-check')
 export class StockCheckController {
   constructor(private readonly stockCheckService: StockCheckService) {}

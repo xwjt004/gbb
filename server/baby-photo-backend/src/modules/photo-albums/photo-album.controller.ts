@@ -1,10 +1,13 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Logger } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Logger, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { PhotoAlbumService } from './photo-album.service';
 import { CreateAlbumDto, QueryAlbumDto } from './dto/create-album.dto';
 import { RemovePhotoDto } from './dto/remove-photo.dto';
 
 @ApiTags('相册管理')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('photo-albums')
 export class PhotoAlbumController {
   private readonly logger = new Logger(PhotoAlbumController.name);

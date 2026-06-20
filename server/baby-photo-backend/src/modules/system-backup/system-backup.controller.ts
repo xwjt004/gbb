@@ -11,16 +11,20 @@ import {
   UploadedFile,
   HttpStatus,
   HttpCode,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { Response } from 'express';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { SystemBackupService } from './system-backup.service';
 import { CreateBackupDto, BackupConfigDto, RestoreBackupDto } from './dto/backup.dto';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 
 @ApiTags('系统备份')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('system/backup')
 export class SystemBackupController {
   constructor(private readonly backupService: SystemBackupService) {}

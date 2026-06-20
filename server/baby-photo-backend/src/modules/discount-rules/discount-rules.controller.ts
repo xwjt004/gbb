@@ -9,14 +9,18 @@ import {
   Query,
   Logger,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { DiscountRulesService } from './discount-rules.service';
 import { CreateDiscountRuleDto } from './dto/create-discount-rule.dto';
 import { UpdateDiscountRuleDto } from './dto/update-discount-rule.dto';
 import { QueryDiscountRuleDto } from './dto/query-discount-rule.dto';
 
 @ApiTags('折扣规则管理')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('discount-rules')
 export class DiscountRulesController {
   private readonly logger = new Logger(DiscountRulesController.name);

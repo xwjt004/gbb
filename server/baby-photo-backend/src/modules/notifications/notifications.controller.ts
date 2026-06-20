@@ -8,8 +8,10 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { NotificationsService } from './notifications.service';
 import { TemplatesService } from './templates.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
@@ -19,6 +21,8 @@ import { UpdateTemplateDto } from './dto/update-template.dto';
 import { QueryTemplateDto } from './dto/query-template.dto';
 
 @ApiTags('通知管理')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('notifications')
 export class NotificationsController {
   constructor(

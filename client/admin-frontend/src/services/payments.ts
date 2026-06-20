@@ -104,6 +104,7 @@ export const paymentService = {
       'CANCELED': 'CANCELLED',
       'CANCELLED': 'CANCELLED',
       'REFUNDED': 'REFUNDED',
+      'PARTIAL_REFUNDED': 'REFUNDED',
       'REFUNDING': 'REFUNDING',
     };
     return statusMap[backendStatus] || 'PENDING';
@@ -250,41 +251,10 @@ export const paymentService = {
     request.get('/payments/reconciliation', { params }),
 
   // 导出支付数据
-  exportPayments: async (params: PaymentSearchParams): Promise<boolean> => {
-    try {
-      const response = await simple.get<any>('/payments/export', { params });
-
-      // response.data 已经是数组格式
-      const exportData = response?.data || [];
-      if (Array.isArray(exportData) && exportData.length > 0) {
-        const headers = Object.keys(exportData[0] || {});
-        const csvContent = [
-          headers.join(','),
-          ...exportData.map((row: any) => 
-            headers.map(header => `"${row[header] || ''}"`).join(',')
-          )
-        ].join('\n');
-        
-        const blob = new Blob(['\uFEFF' + csvContent], { 
-          type: 'text/csv;charset=utf-8' 
-        });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `支付数据_${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Export error:', error);
-      throw error;
-    }
+  exportPayments: async (params: PaymentSearchParams): Promise<any[]> => {
+    const response = await simple.get<any>('/payments/export', { params });
+    return response?.data || [];
   },
-
   // 创建支付记录
   createPayment: async (data: {
     orderNo: string;

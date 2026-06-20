@@ -1,8 +1,9 @@
 import {
   Controller, Get, Post, Patch, Delete, Body, Param, Query,
-  HttpCode, HttpStatus, ParseIntPipe,
+  HttpCode, HttpStatus, ParseIntPipe, UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { CrmService } from './crm.service';
 import { CreateMemberLevelDto } from './dto/create-member-level.dto';
 import { UpdateMemberLevelDto } from './dto/update-member-level.dto';
@@ -11,6 +12,8 @@ import { UpdateComplaintDto } from './dto/update-complaint.dto';
 import { QueryComplaintDto } from './dto/query-complaint.dto';
 
 @ApiTags('CRM')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('crm')
 export class CrmController {
   constructor(private readonly crmService: CrmService) {}

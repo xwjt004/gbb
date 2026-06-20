@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Put, Param, Query, Body } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Put, Param, Query, Body, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { SalesPredictionService } from './services/sales-prediction.service';
 import { SafetyStockService } from './services/safety-stock.service';
 import { RestockSuggestionService } from './services/restock-suggestion.service';
@@ -12,6 +13,8 @@ import { SlowMovingQueryDto } from './dto/slow-moving.dto';
 import { TurnoverQueryDto } from './dto/turnover-analysis.dto';
 
 @ApiTags('库存智能预测')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('inventory-intelligence')
 export class InventoryIntelligenceController {
   constructor(

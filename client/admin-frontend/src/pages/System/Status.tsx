@@ -83,7 +83,7 @@ const SystemStatus: React.FC = () => {
               <Space split={<span style={{ color: '#ccc' }}>|</span>}>
                 {health && health.services ? (
                   Object.entries(health.services).map(([k, v]: any) => (
-                    <Tag color={String(v) === 'connected' ? 'green' : 'red'} key={k}>{k}: {String(v)}</Tag>
+                    <Tag color={String(v) === 'connected' ? 'green' : 'red'} key={k}>{k}: {typeof v === 'object' ? `${v.used}/${v.total} (${v.usagePercent}%)` : String(v)}</Tag>
                   ))
                 ) : (
                   <span>-</span>

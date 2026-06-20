@@ -8,7 +8,10 @@ import {
   Delete,
   Query,
   Put,
+  UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../modules/auth/guards/admin-jwt-auth.guard';
 import { SupplierService } from './supplier.service';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
@@ -16,6 +19,9 @@ import { QuerySupplierDto } from './dto/query-supplier.dto';
 import { RateSupplierDto } from './dto/rate-supplier.dto';
 import { QueryRatingHistoryDto } from './dto/query-rating-history.dto';
 
+@ApiTags('供应商管理')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('supplier')
 export class SupplierController {
   constructor(private readonly supplierService: SupplierService) {}

@@ -30,6 +30,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
+import { simple } from '../../services/api';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -110,15 +111,10 @@ const EnhancedReconciliation: React.FC = () => {
 
   const loadReconciliationData = async () => {
     try {
-      // 调用对账数据API
-      const response = await fetch('/api/v1/statistics-analysis/reconciliation/daily');
-      if (response.ok) {
-        const json = await response.json();
-        const items: ReconciliationRecord[] = Array.isArray(json.data) ? json.data : json || [];
-        setReconciliationData(items);
-      } else {
-        setReconciliationData([]);
-      }
+      const res = await simple.get<any>('/statistics-analysis/reconciliation/daily');
+      const json = res?.data || res;
+      const items: ReconciliationRecord[] = Array.isArray(json.data) ? json.data : json || [];
+      setReconciliationData(items);
     } catch (error) {
       console.error('加载对账数据失败:', error);
       setReconciliationData([]);
@@ -128,11 +124,10 @@ const EnhancedReconciliation: React.FC = () => {
   const loadSuspiciousPayments = async () => {
     try {
       // 调用可疑支付API
-      const response = await fetch('/api/v1/statistics-analysis/payments/suspicious?type=all');
-      if (response.ok) {
-        const data = await response.json();
-        setSuspiciousPayments(data);
-      }
+      const res = await simple.get<any>('/statistics-analysis/payments/suspicious', {
+        params: { type: 'all' }
+      });
+      setSuspiciousPayments(res?.data || res);
     } catch (error) {
       console.error('加载可疑支付数据失败:', error);
   // 不使用模拟数据，使用空列表以防误导
@@ -143,11 +138,8 @@ const EnhancedReconciliation: React.FC = () => {
   const loadDashboardStats = async () => {
     try {
       // 调用仪表板统计API
-      const response = await fetch('/api/v1/statistics-analysis/dashboard/stats');
-      if (response.ok) {
-        const data = await response.json();
-        setDashboardStats(data);
-      }
+      const res = await simple.get<any>('/statistics-analysis/dashboard/stats');
+      setDashboardStats(res?.data || res);
     } catch (error) {
       console.error('加载仪表板数据失败:', error);
   // 不再使用模拟数据，保留 null 以在 UI 上显示空状态

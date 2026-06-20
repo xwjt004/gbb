@@ -9,8 +9,10 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
 import { StockOutboundService } from './stock-outbound.service';
 import { CreateOutboundDto } from './dto/create-outbound.dto';
 import { UpdateOutboundDto } from './dto/update-outbound.dto';
@@ -18,6 +20,8 @@ import { ApproveOutboundDto } from './dto/approve-outbound.dto';
 import { QueryOutboundDto } from './dto/query-outbound.dto';
 
 @ApiTags('库存管理 - 出库管理')
+@ApiBearerAuth()
+@UseGuards(AdminJwtAuthGuard)
 @Controller('stock-outbound')
 export class StockOutboundController {
   constructor(private readonly stockOutboundService: StockOutboundService) {}

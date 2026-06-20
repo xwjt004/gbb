@@ -22,8 +22,8 @@ WORKDIR /app
 # 创建非 root 用户
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# 安装健康检查工具
-RUN apk add --no-cache wget
+# 安装健康检查工具和 PostgreSQL 客户端（用于 pg_dump 备份）
+RUN apk add --no-cache wget postgresql-client
 
 # 复制编译产物
 COPY --from=builder /app/dist ./dist
