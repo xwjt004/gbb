@@ -67,25 +67,13 @@ Page({
   },
 
   selectPackage() {
-    console.log('选择套餐');
-    wx.navigateTo({
-      url: '/pages/packages/list/list?selectMode=groupBuy',
-      fail(err) {
-        console.error('navigateTo失败', err);
-        wx.showToast({ title: '跳转失败: ' + err.errMsg, icon: 'none' });
-      }
-    });
+    wx.setStorageSync('groupBuySelectMode', 'groupBuy');
+    wx.switchTab({ url: '/pages/packages/list/list' });
   },
 
   selectProduct() {
-    console.log('选择商品');
-    wx.navigateTo({
-      url: '/pages/product/list?selectMode=groupBuy',
-      fail(err) {
-        console.error('navigateTo失败', err);
-        wx.showToast({ title: '跳转失败: ' + err.errMsg, icon: 'none' });
-      }
-    });
+    wx.setStorageSync('groupBuySelectMode', 'groupBuy');
+    wx.switchTab({ url: '/pages/product/list' });
   },
 
   clearSelection() {

@@ -85,6 +85,14 @@ Page({
    */
   onShow() {
     console.log('商品列表页显示 - 刷新数据');
+
+    // 选择模式（switchTab 无法传参，通过 storage 中转）
+    const pendingSelectMode = wx.getStorageSync('groupBuySelectMode');
+    if (pendingSelectMode) {
+      wx.removeStorageSync('groupBuySelectMode');
+      this.setData({ selectMode: pendingSelectMode });
+    }
+
     // 重新加载分类列表，确保分类是最新的
     this.loadCategories();
     // 重新加载商品列表，确保库存等信息是最新的
@@ -325,7 +333,7 @@ Page({
   viewDetail(e: any) {
     const id = Number(e.currentTarget.dataset.id);
 
-    // 选择模式: 选中后返回上级页面
+    // 选择模式: 选中后跳转回发起团购页
     if (this.data.selectMode === 'groupBuy') {
       const prod = this.data.products.find((p: any) => p.id === id);
       if (prod) {
@@ -338,7 +346,8 @@ Page({
           images: prod.images,
         });
       }
-      wx.navigateBack();
+      this.setData({ selectMode: '' });
+      wx.navigateTo({ url: '/pages/group-buy/start/start' });
       return;
     }
 
@@ -408,7 +417,7 @@ Page({
    */
   cancelSelect() {
     this.setData({ selectMode: '' });
-    wx.navigateBack();
+    wx.navigateTo({ url: '/pages/group-buy/start/start' });
   },
 
   /**

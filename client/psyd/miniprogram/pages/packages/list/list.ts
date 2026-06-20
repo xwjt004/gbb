@@ -79,11 +79,21 @@ Page({
   },
 
   onLoad(options: any) {
+    // 选择模式通过 onLoad 参数（reLaunch 方式）或 onShow 中 storage 方式传入
     if (options.selectMode === 'groupBuy') {
       this.setData({ selectMode: 'groupBuy' });
     }
     this.loadCategories();
     this.loadPackages();
+  },
+
+  onShow() {
+    // 从 storage 读取选择模式（switchTab 无法传参，通过 storage 中转）
+    const pendingSelectMode = wx.getStorageSync('groupBuySelectMode');
+    if (pendingSelectMode) {
+      wx.removeStorageSync('groupBuySelectMode');
+      this.setData({ selectMode: pendingSelectMode });
+    }
   },
 
   /**
@@ -353,7 +363,7 @@ Page({
   goToDetail(e: any) {
     const id = Number(e.currentTarget.dataset.id);
 
-    // 选择模式: 选中后返回上级页面
+    // 选择模式: 选中后跳转回发起团购页
     if (this.data.selectMode === 'groupBuy') {
       const pkg = this.data.packages.find((p: any) => p.id === id);
       if (pkg) {
@@ -367,7 +377,8 @@ Page({
           groupMinCount: pkg.groupMinCount || 3,
         });
       }
-      wx.navigateBack();
+      this.setData({ selectMode: '' });
+      wx.navigateTo({ url: '/pages/group-buy/start/start' });
       return;
     }
 
@@ -381,7 +392,7 @@ Page({
    */
   cancelSelect() {
     this.setData({ selectMode: '' });
-    wx.navigateBack();
+    wx.navigateTo({ url: '/pages/group-buy/start/start' });
   },
 
   /**
