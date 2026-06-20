@@ -241,6 +241,67 @@ export class WxMallService {
   }
 
   /**
+   * 获取团购套系列表（有正在组团活动的套系）
+   */
+  async getGroupBuyPackages(query: QueryPackagesDto) {
+    const { page = 1, limit = 10 } = query;
+    const skip = (page - 1) * limit;
+
+    // 查询有活跃团购活动的套系
+    const now = new Date();
+    const where: any = {
+      isOnSale: true,
+      status: 'ACTIVE',
+      groupBuyActivities: {
+        some: {
+          status: 'ACTIVE',
+          expiredAt: { gt: now },
+        },
+      },
+    };
+
+    const [items, total] = await Promise.all([
+      this.prisma.package.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { sortOrder: 'asc' },
+        include: {
+          packageCategory: {
+            select: { id: true, name: true, icon: true, color: true },
+          },
+          groupBuyTiers: {
+            select: { id: true, minCount: true, price: true },
+            orderBy: { minCount: 'asc' },
+          },
+        },
+      }),
+      this.prisma.package.count({ where }),
+    ]);
+
+    const safeItems = items.map(item => ({
+      ...item,
+      includes: (item.includes as string[]) || [],
+      images: (item.images as string[]) || [],
+      tags: (item.tags as string[]) || [],
+      detailImages: (item.detailImages as string[]) || [],
+      coverImage: ((item.images as string[])?.[0]) || '',
+      currentPrice: item.price,
+    }));
+
+    return {
+      packages: safeItems,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+      data: safeItems,
+    };
+  }
+
+  /**
    * 获取套系详情
    */
   async getPackageById(id: number) {

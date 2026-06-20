@@ -4,15 +4,27 @@
   <view class="category-nav">
     <scroll-view scroll-x class="category-scroll">
       <view class="category-list">
-        <view 
+        <view
           class="category-item {{activeCategory === 0 ? 'active' : ''}}"
           bindtap="onCategoryChange"
           data-id="{{0}}"
         >
           <text>全部</text>
         </view>
-        <view 
-          wx:for="{{categories}}" 
+        <view
+          class="category-item {{showPopular ? 'active' : ''}}"
+          bindtap="onPopularToggle"
+        >
+          <text>⭐ 热门</text>
+        </view>
+        <view
+          class="category-item {{showGroupBuy ? 'active' : ''}}"
+          bindtap="onGroupBuyToggle"
+        >
+          <text>🔥 团购</text>
+        </view>
+        <view
+          wx:for="{{categories}}"
           wx:key="id"
           class="category-item {{activeCategory === item.id ? 'active' : ''}}"
           bindtap="onCategoryChange"
@@ -22,11 +34,6 @@
         </view>
       </view>
     </scroll-view>
-    
-    <!-- 热门筛选按钮 -->
-    <view class="filter-btn" bindtap="onPopularToggle">
-      <text class="{{showPopular ? 'active' : ''}}">⭐ 热门</text>
-    </view>
   </view>
 
   <!-- 套系列表 -->

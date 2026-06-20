@@ -68,6 +68,7 @@ Page({
     
     // 筛选条件
     showPopular: false, // 是否只显示热门
+    showGroupBuy: false, // 是否只显示团购
   },
 
   onLoad() {
@@ -118,6 +119,32 @@ Page({
     try {
       const page = reset ? 1 : this.data.page;
       this.setData({ loading: true });
+
+      // 团购模式：调用独立接口
+      if (this.data.showGroupBuy) {
+        const params: any = { page, limit: this.data.limit };
+        const res = await request<any>({
+          url: '/wx-mall/packages/group-buy',
+          method: 'GET',
+          data: params,
+        });
+        const rawPackages = res.packages || [];
+        const newPackages = rawPackages.map((pkg: any) => ({
+          ...pkg,
+          coverImage: pkg.images && pkg.images.length > 0
+            ? getFullImageUrl(pkg.images[0])
+            : '/images/placeholder.png',
+        }));
+        const pagination = res.pagination;
+        this.setData({
+          packages: reset ? newPackages : [...this.data.packages, ...newPackages],
+          page: pagination.page,
+          total: pagination.total,
+          hasMore: pagination.page < pagination.totalPages,
+        });
+        this.setData({ loading: false, refreshing: false });
+        return;
+      }
 
       const params: any = {
         page,
@@ -202,6 +229,23 @@ Page({
   onPopularToggle() {
     this.setData({
       showPopular: !this.data.showPopular,
+      showGroupBuy: false,
+      activeCategory: 0,
+      packages: [],
+      page: 1,
+      hasMore: true
+    });
+    this.loadPackages(true);
+  },
+
+  /**
+   * 团购筛选切换
+   */
+  onGroupBuyToggle() {
+    this.setData({
+      showGroupBuy: !this.data.showGroupBuy,
+      showPopular: false,
+      activeCategory: 0,
       packages: [],
       page: 1,
       hasMore: true

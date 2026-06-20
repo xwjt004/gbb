@@ -46,6 +46,15 @@ export class WxMallController {
   }
 
   /**
+   * 获取团购套系列表（有正在组团活动的套系）
+   * GET /api/v1/wx-mall/packages/group-buy
+   */
+  @Get('packages/group-buy')
+  async getGroupBuyPackages(@Query() query: QueryPackagesDto) {
+    return this.wxMallService.getGroupBuyPackages(query);
+  }
+
+  /**
    * 获取套系详情
    * GET /api/v1/wx-mall/packages/:id
    */
