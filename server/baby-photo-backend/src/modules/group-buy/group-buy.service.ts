@@ -301,6 +301,42 @@ export class GroupBuyService {
     return { code: 200, message: '查询成功', data: { items: enrichedItems, pagination: { page, limit, total } } };
   }
 
+  /**
+   * 获取正在组团的活动列表（小程序端公开）
+   */
+  async getActiveList(query: QueryGroupBuyDto) {
+    const page = query.page || 1;
+    const limit = query.limit || 20;
+    const now = new Date();
+    const where = {
+      status: 'ACTIVE' as const,
+      expiredAt: { gt: now },
+    };
+
+    const [items, total] = await Promise.all([
+      this.prisma.groupBuyActivity.findMany({
+        where,
+        include: {
+          package: { select: { id: true, name: true, price: true, groupPrice: true, images: true } },
+          product: { select: { id: true, name: true, salePrice: true, images: true } },
+          creator: { select: { id: true, nickname: true, avatar: true } },
+          _count: { select: { participants: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.groupBuyActivity.count({ where }),
+    ]);
+
+    return {
+      data: {
+        items,
+        pagination: { page, limit, total },
+      },
+    };
+  }
+
   // ==================== 阶梯价格管理 ====================
 
   /** 获取阶梯价列表（按套餐或商品） */

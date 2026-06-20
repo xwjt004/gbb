@@ -4,15 +4,54 @@
     <text class="subtitle">邀请好友一起享受团购优惠</text>
   </view>
 
-  <view wx:if="{{packageInfo}}" class="package-card">
+  <!-- 未选择时：显示选择按钮 -->
+  <view wx:if="{{!selectedType}}" class="select-area">
+    <view class="select-card" bindtap="selectPackage">
+      <view class="select-icon">📦</view>
+      <view class="select-body">
+        <view class="select-title">选择套餐</view>
+        <view class="select-desc">从套系列表中选择要团购的套餐</view>
+      </view>
+      <view class="select-arrow">→</view>
+    </view>
+    <view class="select-card" bindtap="selectProduct">
+      <view class="select-icon">🛍️</view>
+      <view class="select-body">
+        <view class="select-title">选择商品</view>
+        <view class="select-desc">从商品列表中选择要团购的商品</view>
+      </view>
+      <view class="select-arrow">→</view>
+    </view>
+  </view>
+
+  <!-- 已选择套餐时 -->
+  <view wx:elif="{{selectedType === 'package' && packageInfo}}" class="package-card">
     <image class="package-img" src="{{packageInfo.coverImage || ''}}" mode="aspectFill" />
     <view class="package-info">
       <text class="package-name">{{packageInfo.name}}</text>
       <view class="price-row">
-        <text class="price-label">拼团价</text>
+        <text class="price-label">团购价</text>
         <text class="price-value">¥{{packageInfo.groupPrice || packageInfo.price}}</text>
       </view>
     </view>
+    <view class="clear-btn" bindtap="clearSelection">✕</view>
+  </view>
+
+  <!-- 已选择商品时 -->
+  <view wx:elif="{{selectedType === 'product' && productInfo}}" class="package-card">
+    <image class="package-img" src="{{productInfo.coverImage}}" mode="aspectFill" />
+    <view class="package-info">
+      <text class="package-name">{{productInfo.name}}</text>
+      <view class="price-row">
+        <text class="price-label">团购价</text>
+        <text class="price-value">¥{{productInfo.groupPrice || productInfo.price}}</text>
+      </view>
+    </view>
+    <view class="clear-btn" bindtap="clearSelection">✕</view>
+  </view>
+
+  <view wx:if="{{selectedType}}" class="change-row">
+    <text class="change-text" bindtap="clearSelection">重新选择</text>
   </view>
 
   <view class="setting-card">
@@ -26,7 +65,7 @@
   </view>
 
   <view class="bottom-bar">
-    <view class="start-btn {{loading ? 'disabled' : ''}}" bindtap="onStart">
+    <view class="start-btn {{loading || !selectedType ? 'disabled' : ''}}" bindtap="onStart">
       <text wx:if="{{!loading}}">立即开团</text>
       <text wx:else>开团中...</text>
     </view>

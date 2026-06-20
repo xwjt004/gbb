@@ -60,18 +60,28 @@ Page({
     limit: 10,
     total: 0,
     hasMore: true,
-    
+
+    // 团购活动列表
+    groupBuyList: [] as any[],
+    groupBuyPage: 1,
+    groupBuyHasMore: true,
+    groupBuyTotal: 0,
+
     // 分类筛选
     activeCategory: 0, // 0表示全部
     categories: [] as PackageCategory[],
     categoriesLoading: false,
-    
+
     // 筛选条件
     showPopular: false, // 是否只显示热门
     showGroupBuy: false, // 是否只显示团购
+    selectMode: '', // 选择模式: '' 或 'groupBuy'
   },
 
-  onLoad() {
+  onLoad(options: any) {
+    if (options.selectMode === 'groupBuy') {
+      this.setData({ selectMode: 'groupBuy' });
+    }
     this.loadCategories();
     this.loadPackages();
   },
@@ -114,37 +124,12 @@ Page({
    */
   async loadPackages(reset: boolean = false) {
     if (this.data.loading) return;
+    if (this.data.showGroupBuy) return;
     if (!reset && !this.data.hasMore) return;
 
     try {
       const page = reset ? 1 : this.data.page;
       this.setData({ loading: true });
-
-      // 团购模式：调用独立接口
-      if (this.data.showGroupBuy) {
-        const params: any = { page, limit: this.data.limit };
-        const res = await request<any>({
-          url: '/wx-mall/packages/group-buy',
-          method: 'GET',
-          data: params,
-        });
-        const rawPackages = res.packages || [];
-        const newPackages = rawPackages.map((pkg: any) => ({
-          ...pkg,
-          coverImage: pkg.images && pkg.images.length > 0
-            ? getFullImageUrl(pkg.images[0])
-            : '/images/placeholder.png',
-        }));
-        const pagination = res.pagination;
-        this.setData({
-          packages: reset ? newPackages : [...this.data.packages, ...newPackages],
-          page: pagination.page,
-          total: pagination.total,
-          hasMore: pagination.page < pagination.totalPages,
-        });
-        this.setData({ loading: false, refreshing: false });
-        return;
-      }
 
       const params: any = {
         page,
@@ -210,6 +195,62 @@ Page({
   },
 
   /**
+   * 加载团购活动列表
+   */
+  async loadGroupBuyActivities(reset: boolean = false) {
+    if (this.data.loading) return;
+    if (!reset && !this.data.groupBuyHasMore) return;
+
+    try {
+      const page = reset ? 1 : this.data.groupBuyPage;
+      this.setData({ loading: true });
+
+      const res = await request<any>({
+        url: '/group-buy/active/list',
+        method: 'GET',
+        data: { page, limit: this.data.limit }
+      });
+
+      // getActiveList 返回 { data: { items, pagination } }
+      const body = res.data || res;
+      const items = (body.items || []).map((item: any) => {
+        const now = Date.now();
+        const expiredAt = new Date(item.expiredAt).getTime();
+        const remaining = Math.max(0, expiredAt - now);
+        const hours = Math.floor(remaining / 3600000);
+        const minutes = Math.floor((remaining % 3600000) / 60000);
+
+        return {
+          ...item,
+          remainingTime: hours > 0 ? `${hours}小时${minutes}分` : `${minutes}分`,
+          progress: item._count?.participants || 0,
+          progressPercent: Math.min(100, ((item._count?.participants || 0) / (item.minCount || 2)) * 100),
+          targetName: item.package?.name || item.product?.name || '未知套餐',
+          coverImage: item.package?.images?.[0]
+            ? getFullImageUrl(item.package.images[0])
+            : item.product?.images?.[0]
+              ? getFullImageUrl(item.product.images[0])
+              : '/images/placeholder.png',
+          price: item.package?.price || item.product?.salePrice || '0',
+        };
+      });
+      const pagination = body.pagination || { page, limit: this.data.limit, total: 0 };
+
+      this.setData({
+        groupBuyList: reset ? items : [...this.data.groupBuyList, ...items],
+        groupBuyPage: pagination.page,
+        groupBuyHasMore: pagination.page * pagination.limit < pagination.total,
+        groupBuyTotal: pagination.total || items.length,
+      });
+    } catch (error) {
+      console.error('加载团购列表失败:', error);
+      wx.showToast({ title: '加载团购失败', icon: 'none' });
+    } finally {
+      this.setData({ loading: false, refreshing: false });
+    }
+  },
+
+  /**
    * 分类切换
    */
   onCategoryChange(e: any) {
@@ -242,39 +283,67 @@ Page({
    * 团购筛选切换
    */
   onGroupBuyToggle() {
+    const newVal = !this.data.showGroupBuy;
     this.setData({
-      showGroupBuy: !this.data.showGroupBuy,
+      showGroupBuy: newVal,
       showPopular: false,
       activeCategory: 0,
       packages: [],
+      groupBuyList: [],
+      groupBuyPage: 1,
+      groupBuyHasMore: true,
       page: 1,
       hasMore: true
     });
-    this.loadPackages(true);
+    if (newVal) {
+      this.loadGroupBuyActivities(true);
+    } else {
+      this.loadPackages(true);
+    }
   },
 
   /**
    * 下拉刷新
    */
   onPullDownRefresh() {
-    this.setData({
-      refreshing: true,
-      packages: [],
-      page: 1,
-      hasMore: true
-    });
-    this.loadPackages(true).then(() => {
-      wx.stopPullDownRefresh();
-    });
+    if (this.data.showGroupBuy) {
+      this.setData({
+        refreshing: true,
+        groupBuyList: [],
+        groupBuyPage: 1,
+        groupBuyHasMore: true
+      });
+      this.loadGroupBuyActivities(true).then(() => {
+        wx.stopPullDownRefresh();
+      });
+    } else {
+      this.setData({
+        refreshing: true,
+        packages: [],
+        page: 1,
+        hasMore: true
+      });
+      this.loadPackages(true).then(() => {
+        wx.stopPullDownRefresh();
+      });
+    }
   },
 
   /**
    * 上拉加载更多
    */
   onReachBottom() {
-    if (this.data.hasMore && !this.data.loading) {
-      this.setData({ page: this.data.page + 1 });
-      this.loadPackages();
+    if (this.data.loading) return;
+    if (this.data.showGroupBuy) {
+      if (this.data.groupBuyHasMore) {
+        this.setData({ groupBuyPage: this.data.groupBuyPage + 1 });
+        this.loadGroupBuyActivities();
+      }
+    } else {
+      if (this.data.hasMore) {
+        this.setData({ page: this.data.page + 1 });
+        this.loadPackages();
+      }
     }
   },
 
@@ -283,8 +352,54 @@ Page({
    */
   goToDetail(e: any) {
     const id = e.currentTarget.dataset.id;
+
+    // 选择模式: 选中后返回上级页面
+    if (this.data.selectMode === 'groupBuy') {
+      const pkg = this.data.packages.find((p: any) => p.id === id);
+      if (pkg) {
+        wx.setStorageSync('pendingGroupBuyPackage', {
+          id: pkg.id,
+          name: pkg.name,
+          price: pkg.price,
+          groupPrice: pkg.groupPrice,
+          coverImage: pkg.coverImage,
+          images: pkg.images,
+          groupMinCount: pkg.groupMinCount || 3,
+        });
+      }
+      wx.navigateBack();
+      return;
+    }
+
     wx.navigateTo({
       url: `/pages/packages/detail/detail?id=${id}`
+    });
+  },
+
+  /**
+   * 取消选择模式
+   */
+  cancelSelect() {
+    this.setData({ selectMode: '' });
+    wx.navigateBack();
+  },
+
+  /**
+   * 跳转到发起组团
+   */
+  goToGroupBuyStart() {
+    wx.navigateTo({
+      url: '/pages/group-buy/start/start'
+    });
+  },
+
+  /**
+   * 跳转到团购详情
+   */
+  goToGroupBuyDetail(e: any) {
+    const id = e.currentTarget.dataset.id;
+    wx.navigateTo({
+      url: `/pages/group-buy/detail/detail?id=${id}`
     });
   },
 

@@ -32,6 +32,13 @@ export class GroupBuyController {
     return this.groupBuyService.start(wxUserId, dto);
   }
 
+  @Public()
+  @Get('active/list')
+  @ApiOperation({ summary: '获取正在组团的活动列表（无需登录）' })
+  async getActiveList(@Query() query: QueryGroupBuyDto) {
+    return this.groupBuyService.getActiveList(query);
+  }
+
   @Post(':id/join')
   @UseGuards(WxJwtAuthGuard)
   @ApiBearerAuth()

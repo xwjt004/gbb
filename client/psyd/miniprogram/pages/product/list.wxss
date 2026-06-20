@@ -257,3 +257,23 @@
 .sort-option:active {
   background: #f5f5f5;
 }
+
+/* 选择模式提示栏 */
+.select-mode-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 28rpx;
+  background: linear-gradient(135deg, #07c160, #05a850);
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.select-mode-cancel {
+  font-size: 26rpx;
+  color: rgba(255,255,255,0.85);
+  padding: 8rpx 20rpx;
+  border: 2rpx solid rgba(255,255,255,0.5);
+  border-radius: 24rpx;
+}

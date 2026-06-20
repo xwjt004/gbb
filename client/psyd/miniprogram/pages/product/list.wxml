@@ -1,4 +1,10 @@
 <view class="product-list-container">
+  <!-- 选择模式提示 -->
+  <view wx:if="{{selectMode === 'groupBuy'}}" class="select-mode-bar">
+    <text>请选择要团购的商品</text>
+    <text class="select-mode-cancel" bindtap="cancelSelect">取消</text>
+  </view>
+
   <!-- 搜索栏 -->
   <view class="search-bar">
     <view class="search-input-wrapper">

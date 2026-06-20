@@ -30,6 +30,7 @@
   padding: 24rpx;
   margin-bottom: 24rpx;
   box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06);
+  position: relative;
 }
 
 .package-img {
@@ -154,4 +155,81 @@
 
 .start-btn.disabled {
   opacity: 0.6;
+}
+
+/* ===== 选择区域 ===== */
+.select-area {
+  margin-bottom: 24rpx;
+}
+
+.select-card {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 28rpx 24rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06);
+  border: 2rpx solid #f0f0f0;
+}
+
+.select-card:active {
+  background: #f7f8fa;
+  border-color: #07c160;
+}
+
+.select-icon {
+  font-size: 48rpx;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.select-body {
+  flex: 1;
+}
+
+.select-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #323233;
+  margin-bottom: 6rpx;
+}
+
+.select-desc {
+  font-size: 24rpx;
+  color: #969799;
+}
+
+.select-arrow {
+  font-size: 32rpx;
+  color: #c8c9cc;
+  margin-left: 16rpx;
+  flex-shrink: 0;
+}
+
+/* 已选卡片上的清除按钮 */
+.clear-btn {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  width: 40rpx;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.3);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 24rpx;
+}
+
+/* 重新选择 */
+.change-row {
+  text-align: center;
+  margin-bottom: 24rpx;
+}
+
+.change-text {
+  font-size: 24rpx;
+  color: #07c160;
 }

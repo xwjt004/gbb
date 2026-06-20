@@ -51,7 +51,10 @@ Page({
     showSortMenu: false,
     
     // 搜索
-    searchKeyword: ''
+    searchKeyword: '',
+
+    // 选择模式
+    selectMode: '',
   },
 
   /**
@@ -59,15 +62,20 @@ Page({
    */
   onLoad(options: any) {
     console.log('商品列表页加载', options);
-    
+
+    // 选择模式
+    if (options.selectMode === 'groupBuy') {
+      this.setData({ selectMode: 'groupBuy' });
+    }
+
     // 从路由参数获取分类
     if (options.category) {
       this.setData({ activeCategory: options.category });
     }
-    
+
     // 加载商品分类
     this.loadCategories();
-    
+
     // 加载商品列表
     this.loadProducts(true);
   },
@@ -316,6 +324,24 @@ Page({
    */
   viewDetail(e: any) {
     const { id } = e.currentTarget.dataset;
+
+    // 选择模式: 选中后返回上级页面
+    if (this.data.selectMode === 'groupBuy') {
+      const prod = this.data.products.find((p: any) => p.id === id);
+      if (prod) {
+        wx.setStorageSync('pendingGroupBuyProduct', {
+          id: prod.id,
+          name: prod.name,
+          price: prod.price,
+          groupPrice: prod.groupPrice,
+          coverImage: prod.thumbnail || (prod.images?.[0]) || '',
+          images: prod.images,
+        });
+      }
+      wx.navigateBack();
+      return;
+    }
+
     wx.navigateTo({
       url: `/pages/product/detail?id=${id}`
     });
@@ -375,6 +401,14 @@ Page({
         });
       }
     }
+  },
+
+  /**
+   * 取消选择模式
+   */
+  cancelSelect() {
+    this.setData({ selectMode: '' });
+    wx.navigateBack();
   },
 
   /**

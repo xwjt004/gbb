@@ -1,5 +1,11 @@
 <!--套系列表页-->
 <view class="container">
+  <!-- 选择模式提示 -->
+  <view wx:if="{{selectMode === 'groupBuy'}}" class="select-mode-bar">
+    <text>请选择要团购的套餐</text>
+    <text class="select-mode-cancel" bindtap="cancelSelect">取消</text>
+  </view>
+
   <!-- 顶部分类导航 -->
   <view class="category-nav">
     <scroll-view scroll-x class="category-scroll">
@@ -37,7 +43,7 @@
   </view>
 
   <!-- 套系列表 -->
-  <view class="package-list">
+  <view class="package-list" wx:if="{{!showGroupBuy}}">
     <view 
       wx:for="{{packages}}" 
       wx:key="id"
@@ -114,6 +120,69 @@
 
     <!-- 没有更多 -->
     <view wx:if="{{!hasMore && packages.length > 0}}" class="no-more">
+      <text>没有更多了</text>
+    </view>
+  </view>
+
+  <!-- ===== 团购视图 ===== -->
+  <view wx:if="{{showGroupBuy}}" class="group-buy-container">
+    <!-- 发起组团按钮 -->
+    <view class="group-buy-hero" bindtap="goToGroupBuyStart">
+      <view class="hero-avatar">👥</view>
+      <view class="hero-body">
+        <view class="hero-title">发起组团</view>
+        <view class="hero-desc">邀请好友一起拼团，享受更优惠的价格</view>
+      </view>
+      <view class="hero-arrow">→</view>
+    </view>
+
+    <!-- 活动列表标题 -->
+    <view class="section-title">
+      <text class="section-title-text">正在组团的活动</text>
+      <text class="section-title-count">{{groupBuyTotal}}个</text>
+    </view>
+
+    <!-- 团购活动卡片列表 -->
+    <view wx:for="{{groupBuyList}}" wx:key="id" class="group-buy-card" bindtap="goToGroupBuyDetail" data-id="{{item.id}}">
+      <!-- 左侧图片 -->
+      <image class="gb-card-image" src="{{item.coverImage}}" mode="aspectFill" />
+      <!-- 右侧信息 -->
+      <view class="gb-card-info">
+        <view class="gb-card-name">{{item.targetName}}</view>
+        <!-- 发起人 -->
+        <view class="gb-card-creator">
+          <image class="gb-creator-avatar" src="{{item.creator.avatar || '/images/placeholder.png'}}" mode="aspectFill" />
+          <text class="gb-creator-name">{{item.creator.nickname || '匿名用户'}}</text>
+          <text class="gb-creator-label">发起人</text>
+        </view>
+        <!-- 进度条 -->
+        <view class="gb-card-progress">
+          <view class="gb-progress-bar">
+            <view class="gb-progress-fill" style="width: {{item.progressPercent}}%"></view>
+          </view>
+          <text class="gb-progress-text">{{item.progress}}/{{item.minCount || 2}}人</text>
+        </view>
+        <!-- 底部信息 -->
+        <view class="gb-card-footer">
+          <text class="gb-card-price">¥{{item.price}}</text>
+          <text class="gb-card-time">剩余 {{item.remainingTime}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载状态 -->
+    <view wx:if="{{loading}}" class="loading">
+      <text>加载中...</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:if="{{!loading && groupBuyList.length === 0}}" class="empty">
+      <image src="/images/placeholder.png" mode="aspectFit" />
+      <text>暂无组团活动</text>
+    </view>
+
+    <!-- 没有更多 -->
+    <view wx:if="{{!groupBuyHasMore && groupBuyList.length > 0}}" class="no-more">
       <text>没有更多了</text>
     </view>
   </view>
