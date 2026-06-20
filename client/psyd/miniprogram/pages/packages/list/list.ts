@@ -92,7 +92,12 @@ Page({
     const pendingSelectMode = wx.getStorageSync('groupBuySelectMode');
     if (pendingSelectMode) {
       wx.removeStorageSync('groupBuySelectMode');
-      this.setData({ selectMode: pendingSelectMode });
+      this.setData({
+        selectMode: pendingSelectMode,
+        showGroupBuy: false,
+        showPopular: false,
+        activeCategory: 0,
+      });
     }
   },
 
