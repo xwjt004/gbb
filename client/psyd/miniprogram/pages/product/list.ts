@@ -323,7 +323,7 @@ Page({
    * 查看商品详情
    */
   viewDetail(e: any) {
-    const { id } = e.currentTarget.dataset;
+    const id = Number(e.currentTarget.dataset.id);
 
     // 选择模式: 选中后返回上级页面
     if (this.data.selectMode === 'groupBuy') {

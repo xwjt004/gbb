@@ -351,7 +351,7 @@ Page({
    * 跳转到套系详情
    */
   goToDetail(e: any) {
-    const id = e.currentTarget.dataset.id;
+    const id = Number(e.currentTarget.dataset.id);
 
     // 选择模式: 选中后返回上级页面
     if (this.data.selectMode === 'groupBuy') {
