@@ -86,13 +86,6 @@ Page({
   onShow() {
     console.log('商品列表页显示 - 刷新数据');
 
-    // 选择模式（switchTab 无法传参，通过 storage 中转）
-    const pendingSelectMode = wx.getStorageSync('groupBuySelectMode');
-    if (pendingSelectMode) {
-      wx.removeStorageSync('groupBuySelectMode');
-      this.setData({ selectMode: pendingSelectMode });
-    }
-
     // 重新加载分类列表，确保分类是最新的
     this.loadCategories();
     // 重新加载商品列表，确保库存等信息是最新的

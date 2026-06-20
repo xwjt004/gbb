@@ -87,20 +87,6 @@ Page({
     this.loadPackages();
   },
 
-  onShow() {
-    // 从 storage 读取选择模式（switchTab 无法传参，通过 storage 中转）
-    const pendingSelectMode = wx.getStorageSync('groupBuySelectMode');
-    if (pendingSelectMode) {
-      wx.removeStorageSync('groupBuySelectMode');
-      this.setData({
-        selectMode: pendingSelectMode,
-        showGroupBuy: false,
-        showPopular: false,
-        activeCategory: 0,
-      });
-    }
-  },
-
   /**
    * 加载分类列表
    */

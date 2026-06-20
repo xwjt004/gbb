@@ -67,13 +67,15 @@ Page({
   },
 
   selectPackage() {
-    wx.setStorageSync('groupBuySelectMode', 'groupBuy');
-    wx.switchTab({ url: '/pages/packages/list/list' });
+    wx.reLaunch({
+      url: '/pages/packages/list/list?selectMode=groupBuy'
+    });
   },
 
   selectProduct() {
-    wx.setStorageSync('groupBuySelectMode', 'groupBuy');
-    wx.switchTab({ url: '/pages/product/list' });
+    wx.reLaunch({
+      url: '/pages/product/list?selectMode=groupBuy'
+    });
   },
 
   clearSelection() {
