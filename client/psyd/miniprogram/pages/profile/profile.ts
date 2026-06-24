@@ -137,13 +137,25 @@ Page({
     wx.navigateTo({ url: '/pages/member/points/points' });
   },
 
-  goToStoreNav() {
-    wx.openLocation({
-      latitude: 41.692690,
-      longitude: 122.122332,
-      name: '乖宝宝儿童摄影',
-      address: '辽宁省锦州市黑山县启发路与东内环路交叉路口往西约150米(大红嘉园东侧)',
-      scale: 18,
+  goToCart() {
+    wx.navigateTo({ url: '/pages/cart/cart' });
+  },
+
+  followOfficialAccount() {
+    wx.showModal({
+      title: '关注服务号',
+      content: '打开微信 → 通讯录 → 公众号 → 搜索「乖宝宝儿童摄影」关注我们，获取订单通知和活动信息',
+      showCancel: false,
+      confirmText: '知道了',
+    });
+  },
+
+  enableNotification() {
+    wx.showModal({
+      title: '开启通知',
+      content: '点击右上角「···」→ 设置 → 开启「接收消息通知」，即可收到拍摄提醒、优惠活动等信息',
+      showCancel: false,
+      confirmText: '知道了',
     });
   },
 

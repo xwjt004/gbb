@@ -19,6 +19,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { AdminJwtAuthGuard } from '../auth/guards/admin-jwt-auth.guard';
+import { Public } from '../../shared/decorators/public.decorator';
 import { TimeSlotsService } from './time-slots.service';
 import { CreateTimeSlotDto } from './dto/create-time-slot.dto';
 import { UpdateTimeSlotDto } from './dto/update-time-slot.dto';
@@ -72,6 +73,7 @@ export class TimeSlotsController {
     return this.timeSlotsService.findAll(query);
   }
 
+  @Public()
   @Get('available')
   @ApiOperation({ summary: '获取可用时间槽' })
   @ApiQuery({ name: 'date', required: false, description: '指定日期（可选）' })

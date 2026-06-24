@@ -20,6 +20,7 @@ import {
   Badge,
   Image,
   Dropdown,
+  Popover,
 } from 'antd';
 import type { MenuProps } from 'antd';
 import {
@@ -39,6 +40,7 @@ import RichTextEditor from '@/components/RichTextEditor';
 import { formatImageUrl } from '@/utils/image';
 import productService from '@/services/products';
 import productCategoryService from '@/services/productCategories';
+import { simple } from '@/services/api';
 import type {
   Product,
   ProductCategory,
@@ -73,6 +75,7 @@ const ProductList: React.FC = () => {
   });
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [exportLoading, setExportLoading] = useState(false);
+  const [bindings, setBindings] = useState<Record<number, { bound: boolean; packages: string[] }>>({});
   const [form] = Form.useForm();
   const [stockForm] = Form.useForm();
   const isFirstRender = useRef(true);
@@ -177,6 +180,8 @@ const ProductList: React.FC = () => {
         pageSize: response.pagination.pageSize,
         total: response.pagination.total,
       });
+      // 加载套餐绑定信息
+      loadBindings(response.list);
     } catch (error) {
       message.error('加载商品列表失败');
       console.error(error);
@@ -185,7 +190,35 @@ const ProductList: React.FC = () => {
     }
   };
 
-  // 打开新增/编辑弹窗
+  // 加载套餐绑定信息
+  const loadBindings = async (productList: Product[]) => {
+    const bindingMap: Record<number, { bound: boolean; packages: string[] }> = {};
+    await Promise.all(
+      productList.map(async (p) => {
+        try {
+          const data = await productService.checkBindings(p.id);
+          bindingMap[p.id] = {
+            bound: data.bound,
+            packages: data.packages.map((bp) => bp.packageName),
+          };
+        } catch {
+          bindingMap[p.id] = { bound: false, packages: [] };
+        }
+      })
+    );
+    setBindings(bindingMap);
+  };
+
+  // 解除套餐关联
+  const handleUnbind = async (id: number) => {
+    try {
+      const result = await productService.unbindProduct(id);
+      message.success(`已解除 ${result.count} 条套餐关联`);
+      loadProducts();
+    } catch (error: any) {
+      message.error(error.message || '解除失败');
+    }
+  };
   const handleOpenModal = (product?: Product) => {
     setModalVisible(true);
     // 等待 Modal 渲染后再设置表单值
@@ -208,15 +241,15 @@ const ProductList: React.FC = () => {
   };
 
   // 提交表单
-  const handleSubmit = async () => {
+  const handleSubmit = async (notify = false) => {
     try {
       const values = await form.validateFields();
-      
+
       console.log('=== 商品表单提交 ===');
       console.log('编辑的商品:', editingProduct);
       console.log('提交的表单数据:', values);
       console.log('isActive 值:', values.isActive);
-      
+
       if (editingProduct) {
         // 更新
         const result = await productService.updateProduct(editingProduct.id, values);
@@ -227,11 +260,19 @@ const ProductList: React.FC = () => {
         await productService.createProduct(values);
         message.success('添加成功');
       }
-      
+
       setModalVisible(false);
       // 确保先刷新数据
       await loadProducts();
       await loadStatistics();
+
+      if (notify) {
+        simple.post('/wx-official-account/notify', {
+          type: 'product',
+          name: values.name,
+          page: 'pages/product/list',
+        }).catch(() => {});
+      }
     } catch (error: any) {
       if (error.errorFields) {
         return;
@@ -458,59 +499,95 @@ const ProductList: React.FC = () => {
       render: (date) => new Date(date).toLocaleString('zh-CN'),
     },
     {
+      title: '绑定套餐',
+      key: 'binding',
+      width: 120,
+      align: 'center',
+      render: (_, record) => {
+        const info = bindings[record.id];
+        if (!info) return <Tag>检查中...</Tag>;
+        return info.bound ? (
+          <Popover title="已绑定的套餐" content={info.packages.map((n, i) => <div key={i}>{n}</div>)}>
+            <Tag color="processing" style={{ cursor: 'pointer' }}>{info.packages.length} 个套餐</Tag>
+          </Popover>
+        ) : (
+          <Tag style={{ color: '#999' }}>未绑定</Tag>
+        );
+      },
+    },
+    {
       title: '操作',
       key: 'action',
-      width: 220,
+      width: 280,
       fixed: 'right',
-      render: (_, record) => (
-        <Space size="small">
-          <Button
-            type="link"
-            size="small"
-            icon={<StockOutlined />}
-            onClick={() => handleOpenStockModal(record)}
-          >
-            库存
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleOpenModal(record)}
-          >
-            编辑
-          </Button>
-          {!record.isActive && (
-            <Popconfirm
-              title="确定要删除这个商品吗？"
-              onConfirm={() => handleDelete(record.id)}
-              okText="确定"
-              cancelText="取消"
+      render: (_, record) => {
+        const info = bindings[record.id];
+        return (
+          <Space size="small">
+            <Button
+              type="link"
+              size="small"
+              icon={<StockOutlined />}
+              onClick={() => handleOpenStockModal(record)}
             >
+              库存
+            </Button>
+            <Button
+              type="link"
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => handleOpenModal(record)}
+            >
+              编辑
+            </Button>
+            {info?.bound && (
+              <Popconfirm
+                title="确定解除该商品与所有套餐的关联？解除后即可删除商品。"
+                onConfirm={() => handleUnbind(record.id)}
+                okText="确定"
+                cancelText="取消"
+              >
+                <Button
+                  type="link"
+                  size="small"
+                  style={{ color: '#faad14' }}
+                >
+                  解除
+                </Button>
+              </Popconfirm>
+            )}
+            {!record.isActive && (
+              <Popconfirm
+                title="确定要删除这个商品吗？"
+                onConfirm={() => handleDelete(record.id)}
+                okText="确定"
+                cancelText="取消"
+              >
+                <Button
+                  type="link"
+                  size="small"
+                  danger
+                  icon={<DeleteOutlined />}
+                >
+                  删除
+                </Button>
+              </Popconfirm>
+            )}
+            {record.isActive && (
               <Button
                 type="link"
                 size="small"
                 danger
                 icon={<DeleteOutlined />}
+                disabled
+                title="启用状态的商品不能删除，请先禁用"
               >
                 删除
               </Button>
-            </Popconfirm>
-          )}
-          {record.isActive && (
-            <Button
-              type="link"
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-              disabled
-              title="启用状态的商品不能删除，请先禁用"
-            >
-              删除
-            </Button>
-          )}
-        </Space>
-      ),
+            )}
+          </Space>
+        );
+      },
     },
   ];
 
@@ -792,11 +869,17 @@ const ProductList: React.FC = () => {
       <Modal
         title={editingProduct ? '编辑商品' : '新增商品'}
         open={modalVisible}
-        onOk={handleSubmit}
         onCancel={() => setModalVisible(false)}
         width={800}
         destroyOnHidden
         styles={{ body: { maxHeight: '65vh', overflowY: 'auto' } }}
+        footer={
+          <Space>
+            <Button onClick={() => setModalVisible(false)}>取消</Button>
+            <Button onClick={() => handleSubmit(false)}>保存</Button>
+            <Button type="primary" onClick={() => handleSubmit(true)}>保存并通知</Button>
+          </Space>
+        }
       >
         <Form
           form={form}

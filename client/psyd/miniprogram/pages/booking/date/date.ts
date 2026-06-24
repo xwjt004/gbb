@@ -82,6 +82,7 @@ Page({
       const res = await request<any>({
         url: '/time-slots/available',
         method: 'GET',
+        needAuth: false,
         data: {
           startDate: this.formatDate(startDate),
           endDate: this.formatDate(endDate),

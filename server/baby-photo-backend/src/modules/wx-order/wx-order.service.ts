@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
-import { CreateWxOrderDto, QueryMyOrdersDto } from './dto/create-wx-order.dto';
+import { CreateWxOrderDto, QueryMyOrdersDto, CreateBookingOrderDto } from './dto/create-wx-order.dto';
 import { Prisma } from '@prisma/client';
 import { OrderStatus, PaymentStatus } from '../../shared/enums/status.enum';
 
@@ -155,8 +155,11 @@ export class WxOrderService {
       throw new NotFoundException('用户不存在');
     }
 
-    // 如果没有关联用户,使用默认值(稍后可以通过后台管理绑定)
-    const userId = wxUser.linkedUserId || 1; // 使用默认用户ID或创建临时用户
+    // 如果没有关联用户,使用系统默认用户
+    let userId = wxUser.linkedUserId;
+    if (!userId) {
+      userId = await this.getDefaultUserId();
+    }
 
     // 8. 创建订单(使用事务)
     const order = await this.prisma.$transaction(async (tx) => {
@@ -249,6 +252,134 @@ export class WxOrderService {
     }
 
     // 10. 返回订单详情
+    return this.getOrderDetail(wxUserId, order.id);
+  }
+
+  /**
+   * 预约直接下单（无需购物车/收货地址）
+   */
+  async createBookingOrder(wxUserId: string, dto: CreateBookingOrderDto) {
+    // 1. 获取套系信息
+    const pkg = await this.prisma.package.findUnique({
+      where: { id: dto.packageId },
+    });
+    if (!pkg) throw new NotFoundException('套系不存在');
+
+    // 2. 验证时间段
+    const timeSlot = await this.prisma.timeSlot.findUnique({
+      where: { id: dto.timeSlotId },
+    });
+    if (!timeSlot) throw new NotFoundException('时间段不存在');
+
+    // 3. 获取用户信息
+    const wxUser = await this.prisma.wxUser.findUnique({
+      where: { id: wxUserId },
+    });
+    if (!wxUser) throw new NotFoundException('用户不存在');
+
+    // 4. 套系价格
+    let unitPrice = Number(pkg.price);
+
+    // 5. 团购价处理
+    let groupBuyActivityId: string | null = null;
+    if (dto.groupBuyActivityId) {
+      const activity = await this.prisma.groupBuyActivity.findUnique({
+        where: { id: dto.groupBuyActivityId },
+        select: {
+          id: true,
+          package: { select: { groupPrice: true, price: true } },
+          minCount: true,
+          _count: { select: { participants: true } },
+        },
+      });
+
+      if (activity && activity.package) {
+        groupBuyActivityId = activity.id;
+
+        // 阶梯价
+        const participantCount = activity._count?.participants || 0;
+        const tiers = await this.prisma.groupBuyTier.findMany({
+          where: { packageId: dto.packageId },
+          orderBy: { minCount: 'desc' },
+        });
+        let bestPrice: number | null = null;
+        for (const tier of tiers) {
+          if (participantCount >= tier.minCount) {
+            bestPrice = Number(tier.price);
+            break;
+          }
+        }
+        if (!bestPrice && activity.package.groupPrice) {
+          bestPrice = Number(activity.package.groupPrice);
+        }
+        if (bestPrice && bestPrice > 0 && bestPrice < unitPrice) {
+          unitPrice = bestPrice;
+        }
+      }
+    }
+
+    // 6. 支付类型 -> deposit
+    const isDeposit = dto.paymentType === 'DEPOSIT';
+    const depositAmount = isDeposit ? Number(pkg.deposit || 0) : 0;
+
+    // 7. 生成订单号
+    const orderNo = this.generateOrderNo();
+
+    // 8. 计算默认用户ID
+    let defaultUserId = wxUser.linkedUserId;
+    if (!defaultUserId) {
+      defaultUserId = await this.getDefaultUserId();
+    }
+
+    // 9. 创建订单（事务）
+    const order = await this.prisma.$transaction(async (tx) => {
+      const newOrder = await tx.order.create({
+        data: {
+          orderNo,
+          userId: defaultUserId,
+          wxUserId,
+          source: 'WXAPP',
+          totalAmount: unitPrice,
+          depositAmount,
+          paidAmount: 0,
+          paymentStatus: 'PENDING_PAYMENT' as any,
+          orderStatus: 'PENDING',
+          customerName: dto.customerName || wxUser.nickname || '未设置',
+          customerPhone: dto.customerPhone || wxUser.phone || '',
+          notes: dto.notes,
+          childrenCount: dto.childrenCount || 1,
+          appointmentDate: dto.appointmentDate,
+          timeSlotId: dto.timeSlotId,
+          groupBuyActivityId,
+        },
+      });
+
+      // 创建订单明细
+      await tx.orderItem.create({
+        data: {
+          orderId: newOrder.id,
+          itemType: 'PACKAGE',
+          packageId: dto.packageId,
+          itemName: pkg.name,
+          itemImage: Array.isArray(pkg.images) ? pkg.images[0] : null,
+          quantity: 1,
+          unitPrice,
+          totalPrice: unitPrice,
+        },
+      });
+
+      // 更新时间段
+      await tx.timeSlot.update({
+        where: { id: dto.timeSlotId },
+        data: {
+          bookedCount: { increment: 1 },
+          isBooked: true,
+        },
+      });
+
+      return newOrder;
+    });
+
     return this.getOrderDetail(wxUserId, order.id);
   }
 
@@ -960,5 +1091,20 @@ export class WxOrderService {
     });
 
     return { code: 200, message: '已清空所有订单' };
+  }
+
+  /**
+   * 获取系统默认用户ID（当微信用户未关联后台用户时使用）
+   */
+  private async getDefaultUserId(): Promise<number> {
+    const defaultUser = await this.prisma.user.findFirst({
+      where: { status: 'ACTIVE' },
+      orderBy: { id: 'asc' },
+      select: { id: true },
+    });
+    if (!defaultUser) {
+      throw new BadRequestException('系统暂无可用用户，无法创建订单');
+    }
+    return defaultUser.id;
   }
 }

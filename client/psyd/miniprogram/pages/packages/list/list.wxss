@@ -1,6 +1,11 @@
 /* 套系列表页样式 — 3D立体卡片风格 */
 
 /* 容器 */
+page {
+  padding: 0;
+  margin: 0;
+}
+
 .container {
   min-height: 100vh;
   background: linear-gradient(180deg, #F8F6F7 0%, #F0ECEE 100%);
@@ -53,6 +58,27 @@
   color: #fff;
   font-weight: 600;
   box-shadow: 0 4rpx 12rpx rgba(255,154,158,0.3);
+}
+
+/* 团购标签放大突出 */
+.gb-filter {
+  padding: 0 36rpx !important;
+  height: 68rpx !important;
+  font-size: 30rpx !important;
+  font-weight: 700 !important;
+  background: linear-gradient(135deg, #FFF0F0, #FFE4E4) !important;
+  border: 2rpx solid rgba(255,107,107,0.2);
+}
+
+.gb-filter.active {
+  background: linear-gradient(135deg, #FF6B6B, #FF8E8E) !important;
+  border-color: transparent !important;
+  box-shadow: 0 6rpx 20rpx rgba(255,107,107,0.35) !important;
+}
+
+.gb-filter-text {
+  font-size: 30rpx !important;
+  font-weight: 700 !important;
 }
 
 .filter-btn {

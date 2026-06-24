@@ -282,12 +282,28 @@ const OrderGroupBuyList: React.FC = () => {
     {
       title: '团购编号',
       key: 'id',
-      width: 100,
+      width: 220,
       render: (_, record) => (
-        <span style={{ fontFamily: 'monospace', fontSize: 12 }}>
-          {record.id.slice(0, 8)}...
-        </span>
+        <span style={{ fontFamily: 'monospace', fontSize: 12 }}>{record.id}</span>
       ),
+    },
+    {
+      title: '订单编号',
+      key: 'orderNos',
+      width: 180,
+      render: (_, record) => {
+        const orderNos = record.orders?.map(o => o.orderNo).filter(Boolean) || [];
+        if (orderNos.length === 0) return <span style={{ color: '#999' }}>-</span>;
+        return (
+          <div>
+            {orderNos.map((no, i) => (
+              <div key={i} style={{ fontFamily: 'monospace', fontSize: 12, lineHeight: '22px' }}>
+                {no}
+              </div>
+            ))}
+          </div>
+        );
+      },
     },
     {
       title: '商品信息',
@@ -650,6 +666,22 @@ const OrderGroupBuyList: React.FC = () => {
             </Descriptions.Item>
             <Descriptions.Item label="过期时间" span={1}>
               {dayjs(selectedActivity.expiredAt).format('YYYY-MM-DD HH:mm')}
+            </Descriptions.Item>
+            <Descriptions.Item label="关联订单" span={2}>
+              {selectedActivity.orders && selectedActivity.orders.length > 0 ? (
+                <Space direction="vertical" size={2}>
+                  {selectedActivity.orders.map((o, i) => (
+                    <span key={i} style={{ fontFamily: 'monospace', fontSize: 13 }}>
+                      {o.orderNo}
+                      <Tag color={o.paymentStatus === 'FULLY_PAID' ? 'green' : 'orange'} style={{ marginLeft: 8 }}>
+                        {o.paymentStatus === 'FULLY_PAID' ? '已付款' : '未付款'}
+                      </Tag>
+                    </span>
+                  ))}
+                </Space>
+              ) : (
+                <span style={{ color: '#999' }}>暂无关联订单</span>
+              )}
             </Descriptions.Item>
           </Descriptions>
         )}

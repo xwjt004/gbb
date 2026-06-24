@@ -52,11 +52,27 @@ export class AuthService {
   async adminLogin(adminLoginDto: AdminLoginDto) {
     const { username, password } = adminLoginDto;
 
-    // 先在数据库查找用户
+    // 先在数据库查找用户（用 username 字段）
     let user = await this.prisma.user.findUnique({
-      where: { openid: `admin-${username}` },
-      include: { role: { include: { permissions: true } } },
+      where: { username },
+      include: {
+        userRoles: {
+          include: { role: { include: { permissions: true } } },
+        },
+      },
     });
+
+    // 如果找不到 username，回退到 openid 查找（兼容旧数据）
+    if (!user) {
+      user = await this.prisma.user.findUnique({
+        where: { openid: `admin-${username}` },
+        include: {
+          userRoles: {
+            include: { role: { include: { permissions: true } } },
+          },
+        },
+      });
+    }
 
     // 数据库用户存在且设置了密码 → 用数据库密码验证
     if (user && user.passwordHash) {
@@ -90,12 +106,21 @@ export class AuthService {
       if (!user) {
         user = await this.prisma.user.create({
           data: {
-            openid: `admin-${username}`,
+            username,
+            openid: `admin-${username}-${Date.now()}`,
             nickname: username,
             phone: '',
-            role: { connect: { id: 1 } }, // 默认关联超级管理员角色
           },
-          include: { role: { include: { permissions: true } } },
+          include: {
+            userRoles: {
+              include: { role: { include: { permissions: true } } },
+            },
+          },
+        });
+
+        // 默认关联超级管理员角色
+        await this.prisma.userRole.create({
+          data: { userId: user.id, roleId: 1 },
         });
       }
 
@@ -107,15 +132,34 @@ export class AuthService {
       });
     }
 
-    // 生成 JWT，包含角色和权限信息
-    const permissions = user.role?.permissions?.map(p => p.permission) || [];
+    // 重新查询完整用户信息（含角色和权限）
+    const fullUser = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        userRoles: {
+          include: { role: { include: { permissions: true } } },
+        },
+      },
+    });
+
+    // 合并所有角色的权限
+    const allPermissions = [...new Set(
+      fullUser?.userRoles?.flatMap(ur =>
+        ur.role.permissions.map(p => p.permission)
+      ) || []
+    )];
+    const roleNames = fullUser?.userRoles?.map(ur => ur.role.name) || [];
+    const roleIds = fullUser?.userRoles?.map(ur => ur.roleId) || [];
+
+    // 生成 JWT，包含多角色和权限信息
     const token = this.jwtService.sign({
       sub: user.id,
       openid: user.openid,
+      username: user.username,
       isAdmin: true,
-      roleId: user.roleId,
-      roleName: user.role?.name,
-      permissions,
+      roleIds,
+      roleNames,
+      permissions: allPermissions,
     });
 
     return {
@@ -124,13 +168,14 @@ export class AuthService {
       data: {
         id: user.id,
         openid: user.openid,
+        username: user.username,
         nickname: user.nickname,
         phone: user.phone,
         email: user.email,
         isAdmin: true,
-        roleId: user.roleId,
-        roleName: user.role?.name,
-        permissions,
+        roleIds,
+        roleNames,
+        permissions: allPermissions,
         token,
       },
     };
@@ -250,12 +295,20 @@ export class AuthService {
     // 验证当前用户是超级管理员（roleId = 1 或权限包含 *:*）
     const admin = await this.prisma.user.findUnique({
       where: { id: currentUserId },
-      include: { role: { include: { permissions: true } } },
+      include: {
+        userRoles: {
+          include: { role: { include: { permissions: true } } },
+        },
+      },
     });
 
     if (!admin) throw new NotFoundException('当前用户不存在');
 
-    const adminPerms = admin.role?.permissions?.map(p => p.permission) || [];
+    const adminPerms = [...new Set(
+      admin.userRoles?.flatMap(ur =>
+        ur.role.permissions.map(p => p.permission)
+      ) || []
+    )];
     const isSuperAdmin = adminPerms.includes('*:*');
     if (!isSuperAdmin) {
       throw new UnauthorizedException('只有超级管理员可以重置其他用户的密码');

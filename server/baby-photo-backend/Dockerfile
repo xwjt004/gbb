@@ -13,7 +13,7 @@ EXPOSE 3000
 # ===== Stage 2: builder (编译构建) =====
 FROM base AS builder
 ENV NODE_OPTIONS="--max-old-space-size=2048"
-RUN npx prisma generate && npx tsc
+RUN rm -f tsconfig.tsbuildinfo && npx prisma generate && npx tsc
 
 # ===== Stage 3: runner (生产运行) =====
 FROM node:20-alpine AS runner
@@ -21,9 +21,6 @@ WORKDIR /app
 
 # 创建非 root 用户
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-
-# 安装健康检查工具和 PostgreSQL 客户端（用于 pg_dump 备份）
-RUN apk add --no-cache wget postgresql-client
 
 # 复制编译产物
 COPY --from=builder /app/dist ./dist

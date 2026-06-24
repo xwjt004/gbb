@@ -221,6 +221,73 @@ export class ProductsService {
     }
 
     try {
+      // 先清理套餐关联
+      await this.prisma.packageProduct.deleteMany({
+        where: { productId: id },
+      });
+
+      // 清理购物车引用
+      await this.prisma.cartItem.deleteMany({
+        where: { productId: id },
+      });
+
+      // 解除订单引用（置空 productId 但保留订单记录中的商品名称）
+      await this.prisma.orderItem.updateMany({
+        where: { productId: id },
+        data: { productId: null },
+      });
+
+      // 清理库存预警
+      await this.prisma.stockAlert.deleteMany({
+        where: { productId: id },
+      });
+
+      // 清理库存盘点记录
+      await this.prisma.stockCheckItem.deleteMany({
+        where: { productId: id },
+      });
+
+      // 清理库存交易记录
+      await this.prisma.stockTransaction.deleteMany({
+        where: { productId: id },
+      });
+
+      // 清理库存转移记录
+      await this.prisma.stockTransfer.deleteMany({
+        where: { productId: id },
+      });
+
+      // 清理出库单明细
+      await this.prisma.stockOutboundItem.deleteMany({
+        where: { productId: id },
+      });
+
+      // 清理自动采购建议
+      await this.prisma.autoPurchaseSuggestion.deleteMany({
+        where: { productId: id },
+      });
+
+      // 解除采购订单引用
+      await this.prisma.purchaseOrderItem.updateMany({
+        where: { productId: id },
+        data: { productId: null },
+      });
+
+      // 解除收藏引用
+      await this.prisma.userFavorite.deleteMany({
+        where: { productId: id },
+      });
+
+      // 解除团购活动引用
+      await this.prisma.groupBuyTier.updateMany({
+        where: { productId: id },
+        data: { productId: null },
+      });
+      await this.prisma.groupBuyActivity.updateMany({
+        where: { productId: id },
+        data: { productId: null },
+      });
+
       await this.prisma.product.delete({ where: { id } });
       this.logger.log(`商品删除成功: ID=${id}`);
       return { code: 200, message: '删除成功' };
@@ -277,6 +344,63 @@ export class ProductsService {
       return { code: 200, message: '批量更新成功' };
     } catch (error) {
       this.logger.error(`批量更新状态失败: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * 检查商品是否关联了套餐
+   */
+  async getBindings(id: number) {
+    const product = await this.prisma.product.findUnique({ where: { id } });
+    if (!product) {
+      throw new NotFoundException(`商品 ID=${id} 不存在`);
+    }
+
+    const bindings = await this.prisma.packageProduct.findMany({
+      where: { productId: id },
+      include: {
+        package: {
+          select: { id: true, name: true },
+        },
+      },
+    });
+
+    return {
+      code: 200,
+      message: '查询成功',
+      data: {
+        bound: bindings.length > 0,
+        count: bindings.length,
+        packages: bindings.map((b) => ({
+          packageId: b.packageId,
+          packageName: b.package.name,
+          quantity: b.quantity,
+        })),
+      },
+    };
+  }
+
+  /**
+   * 解除商品与所有套餐的关联
+   */
+  async unbindPackageProducts(id: number) {
+    this.logger.log(`解除商品套餐关联: ID=${id}`);
+
+    const product = await this.prisma.product.findUnique({ where: { id } });
+    if (!product) {
+      throw new NotFoundException(`商品 ID=${id} 不存在`);
+    }
+
+    try {
+      const result = await this.prisma.packageProduct.deleteMany({
+        where: { productId: id },
+      });
+
+      this.logger.log(`商品套餐解除成功: ID=${id}, 移除了 ${result.count} 条关联`);
+      return { code: 200, message: `已解除 ${result.count} 条套餐关联`, count: result.count };
+    } catch (error) {
+      this.logger.error(`解除商品套餐关联失败: ${error.message}`);
       throw error;
     }
   }

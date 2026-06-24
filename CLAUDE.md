@@ -50,8 +50,8 @@ NestJS modular structure with four directory categories:
   - `exceptions/` — `BusinessException` for domain-specific errors
   - `validators/` — Custom validators (order-status transitions)
   - `utils/` — Utilities (date, masking, payment-adapter)
-- **`src/payment/`** — Payment-specific controllers/services
-- **`src/types/`** — TypeScript type definitions
+- **`src/payment/`** — Payment-specific controllers/services (payment-processing, refunds, payment-system abstraction)
+- **`src/types/`** — TypeScript type definitions (express.d.ts, pagination, API response types)
 - **Database**: Prisma schema in `prisma/schema.prisma` (PostgreSQL, ~1800 lines, 43+ models)
 - **Entry**: `src/main.ts` — CORS config, Swagger, global ValidationPipe, Sentry init, X-HTTP-Method-Override for WeChat PATCH, default role seeding, security startup checks (JWT_SECRET validation in production)
 - **API prefix**: `/api/v1/`, Swagger at `/api/docs`
@@ -97,13 +97,14 @@ React SPA with Vite:
 
 ### Store Frontend (`client/ps-frontend/`)
 
-Separate React SPA for customer-facing store:
+Separate React SPA for customer-facing store, built with Vite (+ React 18, Ant Design 5, React Router 6):
 
-- **`src/pages/`** — Customer-facing pages (shopping, ordering, etc.)
-- **`src/components/`** — Shared components
-- **`src/services/`** — API client layer
-- Built with Vite, separate from admin frontend
-- Docker dev (port 3003) and production (port 3004 via nginx upstream `storefront`) setups
+- **`src/pages/`** — ~10 pages (Home, Packages, Products, Cart, Checkout, Orders, Profile, Appointment, Favorites, Coupons)
+- **`src/components/`** — Shared UI components (Header, Footer, ProductCard, CartItem, etc.)
+- **`src/services/`** — API client layer (same pattern as admin: Axios instance + domain service files)
+- **`src/styles/`**, **`src/types/`**, **`src/utils/`** — Global styles, TypeScript types, utility functions
+- **Routing**: Standard React Router, no lazy loading (simpler app than admin)
+- **Docker**: Dev (port 3003), production (port 3004 via nginx upstream `storefront`)
 
 ### WeChat Mini Program (`client/psyd/`)
 
@@ -171,6 +172,20 @@ bash deploy.sh [production|staging]               # Full deploy: pull, migrate, 
 - `docker-compose.prod.yml` / `docker-compose.dev.yml` — Environment overrides
 - `nginx.conf` — Reverse proxy: HTTP→HTTPS redirect, `/api/`→backend, `/admin/`→admin-frontend, `/`→storefront
 - `deploy.sh` — One-click deploy script (Docker-based)
-- `playwright.config.ts` — Root-level Playwright config targeting `tests/e2e/`
+- `playwright.config.ts` — Root-level Playwright config targeting `tests/e2e/` (Chromium only, retries: 2)
 - `server/baby-photo-backend/.env` — Backend env vars
 - `client/admin-frontend/vite.config.ts` — Vite proxy, path aliases (`@/`), build chunks
+
+## Root-Level Tooling
+
+- **Husky** + **lint-staged**: Pre-commit hooks run ESLint on staged backend `.ts` and admin-frontend `.ts/.tsx` files
+- **Playwright**: E2E tests in `tests/e2e/`, `baseURL: http://localhost:3000`, Chromium-only, 2 retries
+- **Sentry**: Both backend (`@sentry/node`) and admin frontend (`@sentry/react`) have Sentry integration via `SENTRY_DSN` env var
+
+## Getting Started
+
+1. `cp server/baby-photo-backend/.env.example server/baby-photo-backend/.env` — configure DB, Redis, JWT, WeChat credentials
+2. `docker compose up -d` — starts PostgreSQL, Redis, and backend
+3. Backend: `cd server/baby-photo-backend && npm install && npm run prisma:migrate && npm run start:dev`
+4. Admin frontend: `cd client/admin-frontend && npm install && npm run dev`
+5. Store frontend: `cd client/ps-frontend && npm install && npm run dev`

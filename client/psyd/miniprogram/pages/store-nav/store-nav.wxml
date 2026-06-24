@@ -1,0 +1,114 @@
+<view class="page">
+  <!-- ===== 顶部品牌区 ===== -->
+  <view class="hero">
+    <view class="hero-bg"></view>
+    <view class="hero-content">
+      <view class="hero-logo">
+        <text class="hero-emoji">🏪</text>
+      </view>
+      <text class="hero-title">{{storeName}}</text>
+      <text class="hero-slogan">用镜头记录每一个幸福瞬间</text>
+    </view>
+  </view>
+
+  <!-- ===== 快捷操作区 ===== -->
+  <view class="quick-actions">
+    <view class="quick-item" bindtap="onNavigate">
+      <view class="quick-icon" style="background: linear-gradient(135deg, #FF9A9E, #FAD0C4);">
+        <text>🗺️</text>
+      </view>
+      <text class="quick-label">导航到店</text>
+    </view>
+    <view class="quick-item" bindtap="onCall">
+      <view class="quick-icon" style="background: linear-gradient(135deg, #A8E6CF, #DCEDC1);">
+        <text>📞</text>
+      </view>
+      <text class="quick-label">客服电话</text>
+    </view>
+    <view class="quick-item" bindtap="onCopyAddress">
+      <view class="quick-icon" style="background: linear-gradient(135deg, #FFD3B6, #FFAAA5);">
+        <text>📋</text>
+      </view>
+      <text class="quick-label">复制地址</text>
+    </view>
+  </view>
+
+  <!-- ===== 详细信息卡片 ===== -->
+  <view class="section-title">店铺信息</view>
+
+  <view class="info-card">
+    <view class="info-item">
+      <view class="info-icon-wrap" style="background:#FFF0F5;">
+        <text>📍</text>
+      </view>
+      <view class="info-body">
+        <text class="info-label">店铺地址</text>
+        <text class="info-value">{{address}}</text>
+      </view>
+      <view class="info-tag" bindtap="onCopyAddress">复制</view>
+    </view>
+    <view class="info-divider"></view>
+    <view class="info-item">
+      <view class="info-icon-wrap" style="background:#F0F8FF;">
+        <text>🕐</text>
+      </view>
+      <view class="info-body">
+        <text class="info-label">营业时间</text>
+        <text class="info-value">{{businessHours}}</text>
+      </view>
+    </view>
+    <view class="info-divider"></view>
+    <view class="info-item">
+      <view class="info-icon-wrap" style="background:#F5FFE8;">
+        <text>📞</text>
+      </view>
+      <view class="info-body">
+        <text class="info-label">座机</text>
+        <text class="info-value">{{phone}}</text>
+      </view>
+      <view class="info-tag" bindtap="onCall">拨打</view>
+    </view>
+    <view class="info-divider"></view>
+    <view class="info-item">
+      <view class="info-icon-wrap" style="background:#FFF8E1;">
+        <text>📱</text>
+      </view>
+      <view class="info-body">
+        <text class="info-label">手机</text>
+        <text class="info-value">{{mobile}}</text>
+      </view>
+      <view class="info-tag" bindtap="onCallMobile">拨打</view>
+    </view>
+  </view>
+
+  <!-- ===== 导航按钮 ===== -->
+  <view class="nav-btn" bindtap="onNavigate">
+    <view class="nav-btn-icon">🗺️</view>
+    <view class="nav-btn-text">
+      <text class="nav-btn-title">一键导航到店</text>
+      <text class="nav-btn-desc">打开地图 APP 开始导航</text>
+    </view>
+    <text class="nav-btn-arrow">›</text>
+  </view>
+
+  <!-- ===== 地图卡片 ===== -->
+  <view class="map-card" bindtap="onNavigate">
+    <view class="map-bg">
+      <view class="map-dot" style="top:15%;left:20%;animation-delay:0s;"></view>
+      <view class="map-dot" style="top:40%;left:65%;animation-delay:0.8s;"></view>
+      <view class="map-dot" style="top:65%;left:35%;animation-delay:1.6s;"></view>
+      <view class="map-dot" style="top:25%;left:75%;animation-delay:2.4s;"></view>
+      <view class="map-dot" style="top:70%;left:60%;animation-delay:3.2s;"></view>
+      <view class="map-pin">📍</view>
+      <view class="map-pulse"></view>
+    </view>
+    <view class="map-overlay">
+      <text class="map-btn">打开地图开始导航 ›</text>
+    </view>
+  </view>
+
+  <!-- ===== 底部提示 ===== -->
+  <view class="footer-tip">
+    <text class="footer-tip-text">期待您的光临 ❤️</text>
+  </view>
+</view>

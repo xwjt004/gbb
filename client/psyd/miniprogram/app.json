@@ -38,9 +38,11 @@
     "pages/member/benefits/benefits",
     "pages/member/points/points",
     "pages/album/album",
+    "pages/works/works",
     "pages/group-buy/start/start",
     "pages/group-buy/detail/detail",
-    "pages/group-buy/list/list"
+    "pages/group-buy/list/list",
+    "pages/store-nav/store-nav"
   ],
   "window": {
     "navigationBarTextStyle": "black",
@@ -62,8 +64,12 @@
         "text": "商品"
       },
       {
-        "pagePath": "pages/cart/cart",
-        "text": "购物车"
+        "pagePath": "pages/works/works",
+        "text": "作品"
+      },
+      {
+        "pagePath": "pages/store-nav/store-nav",
+        "text": "导航到店"
       },
       {
         "pagePath": "pages/profile/profile",

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import api from './api';
 
 // 登录请求接口
 export interface LoginRequest {
@@ -20,26 +20,15 @@ export interface LoginResponse {
   };
 }
 
-// 配置axios实例
-const api = axios.create({
-  baseURL: '/api/v1', // 使用Vite代理，会转发到http://localhost:3000/api/v1
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
 // 管理员登录 - 用于后台管理系统
 export const adminLogin = async (data: LoginRequest): Promise<LoginResponse> => {
   const response = await api.post('/users/admin-login', data);
   return response.data;
 };
 
-// 修改密码
-export const changePassword = async (userId: number, oldPassword: string, newPassword: string) => {
-  const token = localStorage.getItem('token');
-  const response = await api.post('/auth/change-password', { userId, oldPassword, newPassword }, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+// 修改密码（使用共享 api 实例，自动携带 JWT token）
+export const changePassword = async (oldPassword: string, newPassword: string) => {
+  const response = await api.post('/auth/change-password', { oldPassword, newPassword });
   return response.data;
 };
 

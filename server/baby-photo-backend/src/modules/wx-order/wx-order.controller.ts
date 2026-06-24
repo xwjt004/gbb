@@ -18,7 +18,7 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 import { WxOrderService } from './wx-order.service';
-import { CreateWxOrderDto, QueryMyOrdersDto } from './dto/create-wx-order.dto';
+import { CreateWxOrderDto, QueryMyOrdersDto, CreateBookingOrderDto } from './dto/create-wx-order.dto';
 import { WxJwtAuthGuard } from '../wx-auth/guards/wx-jwt-auth.guard';
 
 @ApiTags('微信订单')
@@ -36,6 +36,14 @@ export class WxOrderController {
   async createOrder(@Req() req: any, @Body() createDto: CreateWxOrderDto) {
     const wxUserId = req.user.id;
     return this.wxOrderService.createOrderFromCart(wxUserId, createDto);
+  }
+
+  @Post('booking')
+  @ApiOperation({ summary: '预约直接下单（无需购物车/收货地址）' })
+  @ApiResponse({ status: 201, description: '订单创建成功' })
+  async createBookingOrder(@Req() req: any, @Body() dto: CreateBookingOrderDto) {
+    const wxUserId = req.user.id;
+    return this.wxOrderService.createBookingOrder(wxUserId, dto);
   }
 
   @Get('my')

@@ -1,22 +1,14 @@
 import React, { useState } from 'react';
 import { Card, Form, Input, Button, message, App } from 'antd';
 import { LockOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
 import { changePassword } from '@/services/auth';
-import { useAppSelector } from '@/store';
 
 const ChangePassword: React.FC = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-  const { user } = useAppSelector((state) => state.auth);
   const { message: msg } = App.useApp();
 
   const handleSubmit = async (values: { oldPassword: string; newPassword: string; confirmPassword: string }) => {
-    if (!user?.id) {
-      msg.error('用户信息不存在');
-      return;
-    }
     if (values.newPassword !== values.confirmPassword) {
       msg.error('两次输入的新密码不一致');
       return;
@@ -28,7 +20,7 @@ const ChangePassword: React.FC = () => {
 
     setLoading(true);
     try {
-      const res = await changePassword(user.id, values.oldPassword, values.newPassword);
+      const res = await changePassword(values.oldPassword, values.newPassword);
       if (res.success) {
         msg.success('密码修改成功');
         form.resetFields();

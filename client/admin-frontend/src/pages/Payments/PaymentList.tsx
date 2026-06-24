@@ -315,14 +315,17 @@ const PaymentList: React.FC = () => {
     } else if (/^1[3-9]\d{9}$/.test(keyword)) {
       // 手机号搜索
       searchPattern.phone = keyword;
-    } else if (keyword.startsWith('ORD')) {
-      // 订单号搜索（优先于第三方交易号，避免 ORD 开头订单号被误判）
+    } else if (/^(WX|ORD)\d+/i.test(keyword)) {
+      // 订单号搜索（WX/ORD 开头）
       searchPattern.orderId = keyword;
-    } else if (keyword.startsWith('wx') || keyword.startsWith('ali') || keyword.startsWith('4') || /^[a-zA-Z0-9_-]{10,}$/.test(keyword)) {
-      // 第三方交易号搜索（微信、支付宝等）
+    } else if (/^(wx|ali|4)/i.test(keyword) && /^[a-zA-Z0-9_-]{16,}$/.test(keyword)) {
+      // 第三方交易号搜索（微信/支付宝交易号通常16位以上）
       searchPattern.thirdPartyId = keyword;
+    } else if (/^[a-zA-Z0-9_-]{10,}$/.test(keyword) && !/^\d+$/.test(keyword)) {
+      // 较长非纯数字字符串，优先作为订单号搜索
+      searchPattern.orderId = keyword;
     } else {
-      // 订单号搜索（包含其他格式）
+      // 默认作为订单号搜索
       searchPattern.orderId = keyword;
     }
 

@@ -36,11 +36,19 @@ export class PermissionGuard implements CanActivate {
 
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
-        include: { role: { include: { permissions: true } } },
+        include: {
+          userRoles: {
+            include: { role: { include: { permissions: true } } },
+          },
+        },
       });
-      if (!user?.role) return false;
+      if (!user?.userRoles?.length) return false;
 
-      const userPermissions = user.role.permissions.map((p) => p.permission);
+      const userPermissions = [...new Set(
+        user.userRoles.flatMap(ur =>
+          ur.role.permissions.map(p => p.permission)
+        )
+      )];
       // 通配符 `*:*` 表示所有权限
       if (userPermissions.includes('*:*')) return true;
 

@@ -2,6 +2,7 @@ import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UsersWxLoginDto, AdminLoginDto, PhoneLoginDto } from '../users/dto';
 import { WxJwtAuthGuard } from '../wx-auth/guards/wx-jwt-auth.guard';
+import { AdminJwtAuthGuard } from './guards/admin-jwt-auth.guard';
 import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('auth')
@@ -24,12 +25,14 @@ export class AuthController {
   }
 
   @Post('change-password')
+  @UseGuards(AdminJwtAuthGuard)
+  @ApiBearerAuth()
   async changePassword(
-    @Body('userId') userId: number,
+    @Req() req,
     @Body('oldPassword') oldPassword: string,
     @Body('newPassword') newPassword: string,
   ) {
-    return this.authService.changePassword(userId, oldPassword, newPassword);
+    return this.authService.changePassword(req.user.id, oldPassword, newPassword);
   }
 
   @Post('forgot-password')

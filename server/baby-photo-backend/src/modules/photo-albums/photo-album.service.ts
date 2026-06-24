@@ -18,17 +18,27 @@ export class PhotoAlbumService {
         coverUrl: dto.coverUrl,
         photoUrls,
         description: dto.description,
+        categoryId: dto.categoryId || null,
+        photographerId: dto.photographerId || null,
+        isPublic: dto.isPublic ?? true,
+      },
+      include: {
+        category: true,
+        photographer: true,
       },
     });
     return { code: 200, message: '创建成功', data: album };
   }
 
   async findAll(query: QueryAlbumDto) {
-    const { wxUserId, albumType, page = '1', limit = '20' } = query;
+    const { wxUserId, albumType, categoryId, photographerId, isPublic, page = '1', limit = '20' } = query;
     const where: any = {};
 
     if (wxUserId) where.wxUserId = wxUserId;
     if (albumType) where.albumType = albumType;
+    if (categoryId) where.categoryId = Number(categoryId);
+    if (photographerId) where.photographerId = Number(photographerId);
+    if (isPublic !== undefined) where.isPublic = isPublic === 'true';
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const [items, total] = await Promise.all([
@@ -37,7 +47,11 @@ export class PhotoAlbumService {
         orderBy: { createdAt: 'desc' },
         skip,
         take: parseInt(limit),
-        include: { wxUser: { select: { nickname: true, avatar: true } } },
+        include: {
+          wxUser: { select: { nickname: true, avatar: true } },
+          category: true,
+          photographer: true,
+        },
       }),
       this.prisma.photoAlbum.count({ where }),
     ]);
@@ -60,7 +74,11 @@ export class PhotoAlbumService {
   async findOne(id: string) {
     const album = await this.prisma.photoAlbum.findUnique({
       where: { id },
-      include: { wxUser: { select: { nickname: true, avatar: true } } },
+      include: {
+        wxUser: { select: { nickname: true, avatar: true } },
+        category: true,
+        photographer: true,
+      },
     });
     if (!album) throw new NotFoundException('相册不存在');
     return { code: 200, message: '查询成功', data: album };
@@ -72,8 +90,18 @@ export class PhotoAlbumService {
 
     const data: any = { ...dto };
     if (data.wxUserId === undefined) data.wxUserId = existing.wxUserId;
+    if (dto.categoryId !== undefined) data.categoryId = dto.categoryId;
+    if (dto.photographerId !== undefined) data.photographerId = dto.photographerId;
+    if (dto.isPublic !== undefined) data.isPublic = dto.isPublic;
 
-    const updated = await this.prisma.photoAlbum.update({ where: { id }, data });
+    const updated = await this.prisma.photoAlbum.update({
+      where: { id },
+      data,
+      include: {
+        category: true,
+        photographer: true,
+      },
+    });
     return { code: 200, message: '更新成功', data: updated };
   }
 

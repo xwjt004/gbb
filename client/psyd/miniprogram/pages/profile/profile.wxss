@@ -150,6 +150,72 @@
   font-weight: 300;
 }
 
+/* ===== 关注引导卡片 ===== */
+.guide-card {
+  position: relative;
+  z-index: 2;
+  margin: -48rpx 24rpx 20rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 8rpx 8rpx;
+  box-shadow: 0 8rpx 32rpx rgba(255,154,158,0.15);
+  overflow: hidden;
+}
+
+.guide-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 16rpx;
+  cursor: pointer;
+}
+
+.guide-item:active {
+  background: #FAF8F9;
+}
+
+.guide-icon {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  flex-shrink: 0;
+  margin-right: 16rpx;
+}
+
+.guide-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.guide-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #3D2C33;
+}
+
+.guide-desc {
+  font-size: 22rpx;
+  color: #B8ADB2;
+}
+
+.guide-arrow {
+  font-size: 24rpx;
+  color: #FF9A9E;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.guide-divider {
+  height: 1rpx;
+  background: #F5F0F2;
+  margin: 0 16rpx;
+}
+
 /* ===== 快捷入口网格 ===== */
 .grid-card {
   position: relative;
@@ -190,10 +256,19 @@
   margin-bottom: 12rpx;
 }
 
+.icon-cart { background: #E8F8E8; }
 .icon-fav { background: #FFF0F6; }
 .icon-addr { background: #E8F4FD; }
 .icon-cpn { background: #FFF8E1; }
 .icon-pts { background: #F3E8FF; }
+
+.icon-group-buy {
+  width: 96rpx;
+  height: 96rpx;
+  font-size: 48rpx;
+  background: linear-gradient(135deg, #FFF0F0, #FFE4E4);
+  border: 2rpx solid rgba(255,107,107,0.15);
+}
 
 .grid-label {
   font-size: 24rpx;

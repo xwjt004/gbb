@@ -356,7 +356,7 @@ const PackageForm: React.FC<PackageFormProps> = ({
     ));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (notify = false) => {
     try {
       const values = await form.validateFields();
       setLoading(true);
@@ -412,6 +412,14 @@ const PackageForm: React.FC<PackageFormProps> = ({
 
       message.success(pkg ? '更新套餐成功' : '创建套餐成功');
       onSubmit();
+
+      if (notify) {
+        simple.post('/wx-official-account/notify', {
+          type: 'package',
+          name: payload.name,
+          page: 'pages/packages/list/list',
+        }).catch(() => {});
+      }
     } catch (error: any) {
       message.error((pkg ? '更新' : '创建') + '套餐失败: ' + (error.message || '未知错误'));
     } finally {
@@ -1059,7 +1067,8 @@ const PackageForm: React.FC<PackageFormProps> = ({
         <div>{formContent}</div>
         <div style={{ marginTop: 16, textAlign: 'right' }}>
           <Button style={{ marginRight: 8 }} onClick={onCancel}>取消</Button>
-          <Button type="primary" loading={loading} onClick={handleSubmit}>保存</Button>
+          <Button style={{ marginRight: 8 }} loading={loading} onClick={() => handleSubmit(false)}>保存</Button>
+          <Button type="primary" loading={loading} onClick={() => handleSubmit(true)}>保存并通知</Button>
         </div>
       </div>
     );
@@ -1070,11 +1079,17 @@ const PackageForm: React.FC<PackageFormProps> = ({
       title={pkg ? '编辑套餐' : '新增套餐'}
       open={visible}
       onCancel={onCancel}
-      onOk={handleSubmit}
       confirmLoading={loading}
       destroyOnHidden
       width={1200}
       styles={{ body: { maxHeight: '65vh', overflow: 'auto', resize: 'both', minWidth: 600, minHeight: 300 } }}
+      footer={
+        <Space>
+          <Button onClick={onCancel}>取消</Button>
+          <Button loading={loading} onClick={() => handleSubmit(false)}>保存</Button>
+          <Button type="primary" loading={loading} onClick={() => handleSubmit(true)}>保存并通知</Button>
+        </Space>
+      }
     >
       {formContent}
     </Modal>

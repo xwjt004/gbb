@@ -4,17 +4,20 @@ import {
   Form,
   Input,
   Select,
-  Switch,
-  InputNumber,
+  DatePicker,
   message,
-  Alert,
+  Divider,
+  Typography,
 } from 'antd';
 import { User } from '@/types/user';
 import { userService } from '@/services/users';
 import { Status } from '@/types/common';
 import { simple } from '@/services/api';
+import dayjs from 'dayjs';
 
 const { Option } = Select;
+const { TextArea } = Input;
+const { Text } = Typography;
 
 interface UserFormProps {
   visible: boolean;
@@ -41,19 +44,29 @@ const UserForm: React.FC<UserFormProps> = ({
   useEffect(() => {
     if (visible) {
       if (user) {
+        // 编辑模式：回填数据
+        const roleIds = user.roleIds || [];
         form.setFieldsValue({
-          openid: user.openid,
-          phone: user.phone,
+          username: user.username,
           nickname: user.nickname,
-          wechatId: user.wechatId,
+          phone: user.phone,
+          realName: user.realName,
+          gender: user.gender,
+          birthDate: user.birthDate ? dayjs(user.birthDate) : undefined,
+          education: user.education,
+          address: user.address,
+          skills: user.skills,
+          workHistory: user.workHistory,
+          wechatOfficialId: user.wechatOfficialId,
+          remarks: user.remarks,
           status: user.status,
-          isVip: user.isVip,
-          vipLevel: user.vipLevel,
-          tags: user.tags,
-          roleId: (user as any).roleId,
+          roleIds,
         });
       } else {
         form.resetFields();
+        form.setFieldsValue({
+          status: Status.ACTIVE,
+        });
       }
       // 加载角色列表
       simple.get<any>('/roles').then((res: any) => {
@@ -68,46 +81,50 @@ const UserForm: React.FC<UserFormProps> = ({
       const values = await form.validateFields();
       setLoading(true);
 
-      // 状态映射：前端小写转后端大写
-      const statusMapping = {
+      const statusMapping: Record<string, string> = {
         'active': 'ACTIVE',
         'inactive': 'INACTIVE',
         'pending': 'PENDING',
         'deleted': 'DELETED'
       };
 
-      // 创建API调用的数据格式，只包含后端支持的字段
       const apiData: any = {
-        openid: values.openid,
-        phone: values.phone,
+        username: values.username,
         nickname: values.nickname,
-        avatar: values.avatar,
+        phone: values.phone,
+        realName: values.realName,
+        gender: values.gender,
+        birthDate: values.birthDate ? values.birthDate.format('YYYY-MM-DD') : undefined,
+        education: values.education,
+        address: values.address,
+        skills: values.skills,
+        workHistory: values.workHistory,
+        wechatOfficialId: values.wechatOfficialId,
+        remarks: values.remarks,
+        roleIds: values.roleIds && values.roleIds.length > 0 ? values.roleIds : undefined,
       };
 
-      // 只有当status有值时才添加到apiData中
+      // 只有在创建或填写了密码时才传
+      if (values.password) {
+        apiData.password = values.password;
+      }
+
       if (values.status) {
         apiData.status = statusMapping[values.status as keyof typeof statusMapping];
       }
 
-      // 角色分配
-      if (values.roleId) {
-        apiData.roleId = values.roleId;
-      }
-
-      console.log('更新用户:', { id: user?.id, data: apiData });
-
       if (user) {
         await userService.updateUser(user.id, apiData);
-        message.success('更新用户成功');
+        message.success('更新员工成功');
       } else {
         await userService.createUser(apiData);
-        message.success('创建用户成功');
+        message.success('创建员工成功');
       }
 
       onSubmit();
     } catch (error) {
       console.error('User operation error:', error);
-      message.error(user ? '更新用户失败' : '创建用户失败');
+      message.error(user ? '更新员工失败' : '创建员工失败');
     } finally {
       setLoading(false);
     }
@@ -115,34 +132,78 @@ const UserForm: React.FC<UserFormProps> = ({
 
   return (
     <Modal
-      title={user ? '编辑用户' : '新增用户'}
+      title={user ? '编辑员工' : '新增员工'}
       open={visible}
       onCancel={onCancel}
       onOk={handleSubmit}
       confirmLoading={loading}
       destroyOnHidden
-      width={600}
-      styles={{ body: { maxHeight: '65vh', overflowY: 'auto' } }}
+      width={640}
+      styles={{ body: { maxHeight: '70vh', overflowY: 'auto' } }}
     >
-      <Alert
-        message="功能说明"
-        description="微信号、VIP状态、VIP等级和用户标签功能暂未开放，无法编辑。VIP状态基于用户订单数量自动判断（≥3个订单为VIP）。"
-        type="info"
-        showIcon
-        style={{ marginBottom: 16 }}
-      />
-      
       <Form
         form={form}
         layout="vertical"
-        initialValues={{
-          status: Status.ACTIVE,
-          isVip: false,
-          vipLevel: 1,
-        }}
+        initialValues={{ status: Status.ACTIVE }}
       >
-        <Form.Item name="openid" label="员工ID">
-          <Input placeholder="可选，留空则自动生成" />
+        {/* ===== 登录信息 ===== */}
+        <Divider orientation="left" plain>
+          <Text type="secondary">登录信息</Text>
+        </Divider>
+
+        <Form.Item
+          name="username"
+          label="用户名"
+          rules={[
+            { required: true, message: '请输入用户名' },
+            { min: 3, message: '用户名至少3个字符' },
+            { pattern: /^[a-zA-Z0-9_-]+$/, message: '用户名只能包含字母、数字、下划线和连字符' },
+          ]}
+        >
+          <Input placeholder="登录用户名" disabled={!!user} />
+        </Form.Item>
+
+        {!user && (
+          <Form.Item
+            name="password"
+            label="密码"
+            rules={[
+              { required: true, message: '请设置密码' },
+              { min: 6, message: '密码长度不能少于6位' },
+            ]}
+          >
+            <Input.Password placeholder="登录密码" />
+          </Form.Item>
+        )}
+
+        {/* ===== 基础信息 ===== */}
+        <Divider orientation="left" plain>
+          <Text type="secondary">基础信息</Text>
+        </Divider>
+
+        <Form.Item name="realName" label="真实姓名">
+          <Input placeholder="请输入真实姓名" />
+        </Form.Item>
+
+        <Form.Item name="gender" label="性别">
+          <Select placeholder="请选择性别" allowClear>
+            <Option value="MALE">男</Option>
+            <Option value="FEMALE">女</Option>
+          </Select>
+        </Form.Item>
+
+        <Form.Item name="birthDate" label="出生日期">
+          <DatePicker style={{ width: '100%' }} placeholder="请选择出生日期" />
+        </Form.Item>
+
+        <Form.Item name="education" label="学历">
+          <Select placeholder="请选择学历" allowClear>
+            <Option value="高中">高中</Option>
+            <Option value="大专">大专</Option>
+            <Option value="本科">本科</Option>
+            <Option value="硕士">硕士</Option>
+            <Option value="博士">博士</Option>
+          </Select>
         </Form.Item>
 
         <Form.Item
@@ -157,55 +218,55 @@ const UserForm: React.FC<UserFormProps> = ({
         </Form.Item>
 
         <Form.Item name="nickname" label="昵称">
-          <Input placeholder="请输入昵称" />
+          <Input placeholder="请输入昵称（选填）" />
         </Form.Item>
 
-        <Form.Item name="wechatId" label="微信号">
-          <Input placeholder="请输入微信号" disabled />
+        {/* ===== 档案信息 ===== */}
+        <Divider orientation="left" plain>
+          <Text type="secondary">档案信息</Text>
+        </Divider>
+
+        <Form.Item name="address" label="家庭住址">
+          <TextArea rows={2} placeholder="请输入家庭住址" />
         </Form.Item>
 
-        <Form.Item name="status" label="状态">
-          <Select>
-            <Option value={Status.ACTIVE}>正常</Option>
-            <Option value={Status.INACTIVE}>禁用</Option>
-          </Select>
+        <Form.Item name="skills" label="技能特长">
+          <TextArea rows={3} placeholder="请输入技能特长，如：摄影、修图、客服等" />
         </Form.Item>
 
-        <Form.Item name="roleId" label="管理角色">
-          <Select placeholder="选择管理角色（仅管理员用户）" allowClear>
+        <Form.Item name="workHistory" label="工作履历">
+          <TextArea rows={4} placeholder="请输入工作履历" />
+        </Form.Item>
+
+        <Form.Item name="remarks" label="备注">
+          <TextArea rows={2} placeholder="备注信息" />
+        </Form.Item>
+
+        <Form.Item name="wechatOfficialId" label="公众号 OpenID">
+          <Input placeholder="微信公众号 OpenID（选填）" />
+        </Form.Item>
+
+        {/* ===== 系统设置 ===== */}
+        <Divider orientation="left" plain>
+          <Text type="secondary">系统设置</Text>
+        </Divider>
+
+        <Form.Item name="roleIds" label="管理角色">
+          <Select
+            mode="multiple"
+            placeholder="选择管理角色（可多选）"
+            allowClear
+          >
             {roles.map(r => (
               <Option key={r.id} value={r.id}>{r.name}</Option>
             ))}
           </Select>
         </Form.Item>
 
-        {/* VIP相关字段 - 暂时禁用，因为后端不支持 */}
-        <Form.Item name="isVip" label="VIP用户" valuePropName="checked">
-          <Switch disabled />
-        </Form.Item>
-
-        <Form.Item
-          name="vipLevel"
-          label="VIP等级"
-          dependencies={['isVip']}
-          style={{
-            display: Form.useWatch('isVip', form) ? 'block' : 'none',
-          }}
-        >
-          <InputNumber min={1} max={10} disabled />
-        </Form.Item>
-
-        <Form.Item name="tags" label="用户标签">
-          <Select
-            mode="tags"
-            placeholder="用户标签功能暂未开放"
-            style={{ width: '100%' }}
-            disabled
-          >
-            <Option value="新用户">新用户</Option>
-            <Option value="活跃用户">活跃用户</Option>
-            <Option value="高价值">高价值</Option>
-            <Option value="流失风险">流失风险</Option>
+        <Form.Item name="status" label="状态">
+          <Select>
+            <Option value={Status.ACTIVE}>正常</Option>
+            <Option value={Status.INACTIVE}>禁用</Option>
           </Select>
         </Form.Item>
       </Form>

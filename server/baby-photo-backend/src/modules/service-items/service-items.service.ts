@@ -138,7 +138,7 @@ export class ServiceItemsService {
         orderBy: { category: 'asc' },
       });
 
-      const categoryList = categories.map(item => item.category);
+      const categoryList = categories.map(item => item.category).filter(Boolean);
 
       return {
         code: 200,
@@ -149,6 +149,80 @@ export class ServiceItemsService {
       this.logger.error(`获取服务分类失败: ${error.message}`);
       throw error;
     }
+  }
+
+  /**
+   * 创建服务分类
+   */
+  async createCategory(name: string) {
+    this.logger.log(`创建服务分类: ${name}`);
+
+    if (!name || !name.trim()) {
+      throw new ConflictException('分类名称不能为空');
+    }
+
+    return {
+      code: 200,
+      message: '创建成功',
+      data: { name: name.trim() },
+    };
+  }
+
+  /**
+   * 重命名服务分类（更新所有服务项目中的分类名称）
+   */
+  async renameCategory(oldName: string, newName: string) {
+    this.logger.log(`重命名服务分类: ${oldName} -> ${newName}`);
+
+    if (!oldName || !newName) {
+      throw new NotFoundException('分类名称不能为空');
+    }
+
+    const count = await this.prisma.serviceItem.count({
+      where: { category: oldName },
+    });
+
+    if (count === 0) {
+      throw new NotFoundException(`服务分类 "${oldName}" 不存在`);
+    }
+
+    await this.prisma.serviceItem.updateMany({
+      where: { category: oldName },
+      data: { category: newName },
+    });
+
+    this.logger.log(`服务分类重命名成功，已更新 ${count} 个服务项目`);
+    return {
+      code: 200,
+      message: `重命名成功，已更新 ${count} 个服务项目`,
+      data: { name: newName, updatedCount: count },
+    };
+  }
+
+  /**
+   * 删除服务分类（清空所有服务项目中的该分类）
+   */
+  async deleteCategory(name: string) {
+    this.logger.log(`删除服务分类: ${name}`);
+
+    const count = await this.prisma.serviceItem.count({
+      where: { category: name },
+    });
+
+    if (count === 0) {
+      throw new NotFoundException(`服务分类 "${name}" 不存在`);
+    }
+
+    await this.prisma.serviceItem.updateMany({
+      where: { category: name },
+      data: { category: '' },
+    });
+
+    this.logger.log(`服务分类删除成功，已清空 ${count} 个服务项目的分类`);
+    return {
+      code: 200,
+      message: `删除成功，已清空 ${count} 个服务项目的分类归属`,
+    };
   }
 
   /**

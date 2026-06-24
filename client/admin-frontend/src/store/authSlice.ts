@@ -20,9 +20,19 @@ interface AuthState {
   isAuthenticated: boolean;
 }
 
+// 从 localStorage 恢复用户信息
+function loadUser(): User | null {
+  try {
+    const raw = localStorage.getItem('user');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 // 初始状态
 const initialState: AuthState = {
-  user: null,
+  user: loadUser(),
   token: localStorage.getItem('admin_token'),
   isLoading: false,
   error: null,

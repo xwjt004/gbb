@@ -18,6 +18,9 @@ import * as crypto from 'crypto';
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
+  private readonly PBKDF2_ITERATIONS = 10000;
+  private readonly PBKDF2_KEY_LENGTH = 64;
+  private readonly PBKDF2_DIGEST = 'sha512';
 
   constructor(
     private readonly prisma: PrismaService,
@@ -25,48 +28,97 @@ export class UsersService {
     private readonly jwtService: JwtService,
   ) {}
 
+  private hashPassword(password: string, salt?: string): { hash: string; salt: string } {
+    const s = salt || crypto.randomBytes(16).toString('hex');
+    const hash = crypto.pbkdf2Sync(password, s, this.PBKDF2_ITERATIONS, this.PBKDF2_KEY_LENGTH, this.PBKDF2_DIGEST).toString('hex');
+    return { hash, salt: s };
+  }
+
+  private verifyPassword(password: string, storedHash: string): boolean {
+    const [salt, hash] = storedHash.split(':');
+    if (!salt || !hash) return false;
+    const { hash: computedHash } = this.hashPassword(password, salt);
+    return computedHash === hash;
+  }
+
+  private hashStored(hash: string, salt: string): string {
+    return `${salt}:${hash}`;
+  }
+
   /**
    * 创建用户
    */
   async create(createUserDto: CreateUserDto) {
     try {
+      // 检查用户名是否已存在
+      if (createUserDto.username) {
+        const existingUsername = await this.prisma.user.findUnique({
+          where: { username: createUserDto.username },
+        });
+        if (existingUsername) {
+          throw new ConflictException('用户名已被使用');
+        }
+      }
+
       // 检查手机号是否已存在
       if (createUserDto.phone) {
         const existingUser = await this.prisma.user.findFirst({
           where: { phone: createUserDto.phone },
         });
-
         if (existingUser) {
           throw new ConflictException('手机号已被注册');
         }
       }
 
-      // 如果没有提供openid，生成一个唯一的openid
-      let openid = createUserDto.openid;
-      if (!openid) {
-        openid = `admin-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      } else {
-        // 检查openid是否已存在
-        const existingUser = await this.prisma.user.findUnique({
-          where: { openid },
-        });
+      // 生成唯一 openid
+      const openid = `admin-${createUserDto.username || Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-        if (existingUser) {
-          throw new ConflictException('用户已存在');
-        }
+      // 处理密码
+      let passwordHash: string | undefined;
+      if (createUserDto.password) {
+        const { hash, salt } = this.hashPassword(createUserDto.password);
+        passwordHash = this.hashStored(hash, salt);
+      }
+
+      // 处理出生日期
+      let birthDate: Date | undefined;
+      if (createUserDto.birthDate) {
+        birthDate = new Date(createUserDto.birthDate);
       }
 
       const user = await this.prisma.user.create({
         data: {
           openid,
-          nickname: createUserDto.nickname,
+          username: createUserDto.username,
+          nickname: createUserDto.nickname || createUserDto.username,
+          realName: createUserDto.realName,
+          gender: createUserDto.gender,
+          birthDate,
+          education: createUserDto.education,
+          address: createUserDto.address,
+          skills: createUserDto.skills,
+          workHistory: createUserDto.workHistory,
           avatar: createUserDto.avatar || '',
           phone: createUserDto.phone || '',
+          wechatOfficialId: createUserDto.wechatOfficialId,
+          remarks: createUserDto.remarks,
+          passwordHash: passwordHash,
           status: createUserDto.status || 'ACTIVE',
+          // 多角色关联
+          ...(createUserDto.roleIds?.length ? {
+            userRoles: {
+              create: createUserDto.roleIds.map(roleId => ({ roleId })),
+            },
+          } : {}),
+        },
+        include: {
+          userRoles: {
+            include: { role: true },
+          },
         },
       });
 
-      this.logger.log(`用户创建成功: ${user.openid}`);
+      this.logger.log(`用户创建成功: ${user.username || user.openid}`);
 
       return {
         code: 200,
@@ -77,9 +129,8 @@ export class UsersService {
       if (error instanceof ConflictException) {
         throw error;
       }
-      // 输出更详细的调试信息
-  this.logger.error(`创建用户失败: ${(error as any).message}`, (error as any).stack);
-  throw new BadRequestException('创建用户失败');
+      this.logger.error(`创建用户失败: ${(error as any).message}`, (error as any).stack);
+      throw new BadRequestException('创建用户失败');
     }
   }
 
@@ -194,14 +245,24 @@ export class UsersService {
         select: {
           id: true,
           openid: true,
+          username: true,
           nickname: true,
+          realName: true,
+          gender: true,
+          birthDate: true,
+          education: true,
+          address: true,
+          skills: true,
+          workHistory: true,
           avatar: true,
           phone: true,
+          wechatOfficialId: true,
+          remarks: true,
           status: true,
           createdAt: true,
           updatedAt: true,
-          role: {
-            select: { id: true, name: true },
+          userRoles: {
+            include: { role: { select: { id: true, name: true } } },
           },
           _count: {
             select: { orders: true },
@@ -249,8 +310,12 @@ export class UsersService {
     const users = await this.prisma.user.findMany({
       where: {
         status: 'ACTIVE',
-        role: {
-          name: { contains: '摄影' },
+        userRoles: {
+          some: {
+            role: {
+              name: { contains: '摄影' },
+            },
+          },
         },
       },
       select: {
@@ -356,12 +421,18 @@ export class UsersService {
         where,
         select: {
           openid: true,
+          username: true,
           nickname: true,
-          avatar: true,
+          realName: true,
+          gender: true,
+          education: true,
           phone: true,
           status: true,
           createdAt: true,
           updatedAt: true,
+          userRoles: {
+            include: { role: { select: { name: true } } },
+          },
           _count: {
             select: { orders: true },
           },
@@ -382,21 +453,18 @@ export class UsersService {
       // 转换为导出格式
       const exportData = filteredUsers.map(user => {
         const orderCount = user._count?.orders || 0;
-        const isVipUser = orderCount >= 3; // VIP判断逻辑：订单数量>=3
-        
+        const roleNames = user.userRoles?.map(ur => ur.role.name).join('、') || '';
+
         return {
-          用户ID: user.openid,
+          用户名: user.username || user.openid,
+          真实姓名: user.realName || '',
+          性别: user.gender === 'MALE' ? '男' : user.gender === 'FEMALE' ? '女' : '',
+          学历: user.education || '',
           手机号码: user.phone || '未设置',
           昵称: user.nickname || '未设置',
-          微信ID: '', // 数据库中暂无此字段
+          管理角色: roleNames,
           状态: user.status,
-          VIP状态: isVipUser ? '是' : '否',
-          VIP等级: isVipUser ? '金牌会员' : '',
-          订单数量: orderCount,
-          消费总额: 0, // 暂时设为0，后续可加入订单金额统计
           注册时间: new Date(user.createdAt).toLocaleString('zh-CN'),
-          更新时间: new Date(user.updatedAt).toLocaleString('zh-CN'),
-          最后登录: '', // 暂时为空，后续可加入登录记录
         };
       });
 
@@ -525,6 +593,9 @@ export class UsersService {
           const user = await this.prisma.user.findUnique({
             where: { id: parseInt(id, 10) },
             include: {
+              userRoles: {
+                include: { role: { select: { id: true, name: true } } },
+              },
               orders: {
                 take: 5,
                 orderBy: { createdAt: 'desc' },
@@ -572,7 +643,7 @@ export class UsersService {
   async update(id: string, updateUserDto: UpdateUserDto) {
     try {
       const userId = parseInt(id, 10);
-      
+
       // 检查用户是否存在
       const existingUser = await this.prisma.user.findUnique({
         where: { id: userId },
@@ -580,6 +651,16 @@ export class UsersService {
 
       if (!existingUser) {
         throw new NotFoundException('用户不存在');
+      }
+
+      // 如果更新用户名，检查是否冲突
+      if (updateUserDto.username && updateUserDto.username !== existingUser.username) {
+        const usernameExists = await this.prisma.user.findUnique({
+          where: { username: updateUserDto.username },
+        });
+        if (usernameExists) {
+          throw new ConflictException('用户名已被其他用户使用');
+        }
       }
 
       // 如果更新手机号，检查是否冲突
@@ -596,9 +677,50 @@ export class UsersService {
         }
       }
 
+      // 分离出需要特殊处理的字段
+      const { roleIds, password, birthDate, ...restData } = updateUserDto;
+
+      // 构建更新数据（排除未定义的字段）
+      const updateData: any = {};
+      for (const [key, value] of Object.entries(restData)) {
+        if (value !== undefined) {
+          updateData[key] = value;
+        }
+      }
+
+      // 处理密码
+      if (password) {
+        const { hash, salt } = this.hashPassword(password);
+        updateData.passwordHash = this.hashStored(hash, salt);
+      }
+
+      // 处理出生日期
+      if (birthDate !== undefined) {
+        updateData.birthDate = birthDate ? new Date(birthDate) : null;
+      }
+
+      // 更新角色（如果提供了 roleIds）
+      if (roleIds !== undefined) {
+        // 删除现有角色
+        await this.prisma.userRole.deleteMany({
+          where: { userId },
+        });
+        // 创建新角色
+        if (roleIds.length > 0) {
+          await this.prisma.userRole.createMany({
+            data: roleIds.map(roleId => ({ userId, roleId })),
+          });
+        }
+      }
+
       const user = await this.prisma.user.update({
         where: { id: userId },
-        data: updateUserDto,
+        data: updateData,
+        include: {
+          userRoles: {
+            include: { role: { select: { id: true, name: true } } },
+          },
+        },
       });
 
       // 清除缓存
@@ -920,50 +1042,131 @@ export class UsersService {
     const { username, password } = adminLoginDto;
 
     const expectedUsername = process.env.ADMIN_USERNAME || 'admin';
-    const expectedPasswordHash = process.env.ADMIN_PASSWORD_HASH;
 
-    // 用户名验证
-    if (username !== expectedUsername) {
-      throw new UnauthorizedException('用户名或密码错误');
+    // 查找员工用户记录（用 username 字段）
+    let adminUser = await this.prisma.user.findUnique({
+      where: { username },
+      include: {
+        userRoles: {
+          include: { role: { include: { permissions: true } } },
+        },
+      },
+    });
+
+    // 如果找不到 username，回退到 openid 查找（兼容旧数据）
+    if (!adminUser) {
+      adminUser = await this.prisma.user.findUnique({
+        where: { openid: `admin-${username}` },
+        include: {
+          userRoles: {
+            include: { role: { include: { permissions: true } } },
+          },
+        },
+      });
     }
 
-    // 密码验证（优先校验哈希，无哈希时回退明文比较用于首次设置）
+    // 密码验证：优先校验数据库密码哈希，再回退到环境变量
     let passwordValid = false;
-    if (expectedPasswordHash) {
-      // PBKDF2 哈希验证
-      const [salt, storedHash] = expectedPasswordHash.split(':');
-      if (salt && storedHash) {
-        const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
-        passwordValid = hash === storedHash;
-      }
+
+    if (adminUser?.passwordHash) {
+      // 数据库中有密码哈希 → 用 PBKDF2 验证
+      passwordValid = this.verifyPassword(password, adminUser.passwordHash);
     } else {
-      // 未配置 ADMIN_PASSWORD_HASH 时使用明文（仅用于首次初始化）
-      const plainPassword = process.env.ADMIN_PASSWORD || 'admin123';
-      passwordValid = password === plainPassword;
+      // 数据库中无密码哈希 → 回退到环境变量（首次登录或旧版迁移）
+      const expectedPasswordHash = process.env.ADMIN_PASSWORD_HASH;
+      if (expectedPasswordHash) {
+        const [salt, storedHash] = expectedPasswordHash.split(':');
+        if (salt && storedHash) {
+          const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+          passwordValid = hash === storedHash;
+        }
+      } else {
+        const plainPassword = process.env.ADMIN_PASSWORD || 'admin123';
+        passwordValid = password === plainPassword;
+      }
     }
 
     if (!passwordValid) {
       throw new UnauthorizedException('用户名或密码错误');
     }
 
-    // 查找或创建管理员用户记录
-    let adminUser = await this.prisma.user.findUnique({
-      where: { openid: `admin-${username}` },
-    });
+    // 如果是从环境变量验证通过的，将密码哈希存入数据库
+    if (!adminUser?.passwordHash) {
+      if (!adminUser) {
+        // 只有超级管理员（通过环境变量首次登录）才能自动创建用户
+        if (username !== expectedUsername) {
+          throw new UnauthorizedException('用户名或密码错误');
+        }
+        const newUser = await this.prisma.user.create({
+          data: {
+            username,
+            openid: `admin-${username}-${Date.now()}`,
+            nickname: '系统管理员',
+            phone: '18888888888',
+          },
+        });
 
-    if (!adminUser) {
-      adminUser = await this.prisma.user.create({
-        data: {
-          openid: `admin-${username}`,
-          nickname: '系统管理员',
-          phone: '18888888888',
-        },
+        // 默认关联超级管理员角色
+        await this.prisma.userRole.create({
+          data: { userId: newUser.id, roleId: 1 },
+        });
+
+        // 重新查询以获取完整的 userRoles 信息
+        adminUser = await this.prisma.user.findUnique({
+          where: { id: newUser.id },
+          include: {
+            userRoles: {
+              include: { role: { include: { permissions: true } } },
+            },
+          },
+        });
+
+        if (!adminUser) {
+          throw new UnauthorizedException('用户创建失败');
+        }
+      }
+      const { hash, salt } = this.hashPassword(password);
+      await this.prisma.user.update({
+        where: { id: adminUser.id },
+        data: { passwordHash: this.hashStored(hash, salt) },
       });
     }
 
-    // 生成 JWT token
+    // adminUser 在密码验证后应为有效用户，加上类型守卫满足 TypeScript
+    if (!adminUser) {
+      throw new UnauthorizedException('用户不存在');
+    }
+
+    // 重新查询完整用户信息（含角色和权限）
+    const fullUser = await this.prisma.user.findUnique({
+      where: { id: adminUser.id },
+      include: {
+        userRoles: {
+          include: { role: { include: { permissions: true } } },
+        },
+      },
+    });
+
+    // 合并所有角色的权限
+    const allPermissions = [...new Set(
+      fullUser?.userRoles?.flatMap(ur =>
+        ur.role.permissions.map(p => p.permission)
+      ) || []
+    )];
+    const roleNames = fullUser?.userRoles?.map(ur => ur.role.name) || [];
+    const roleIds = fullUser?.userRoles?.map(ur => ur.roleId) || [];
+
+    // 生成 JWT token（含多角色和权限信息）
     const token = this.jwtService.sign(
-      { sub: adminUser.id, openid: adminUser.openid, isAdmin: true },
+      {
+        sub: adminUser.id,
+        openid: adminUser.openid,
+        username: adminUser.username,
+        isAdmin: true,
+        roleIds,
+        roleNames,
+        permissions: allPermissions,
+      },
       { expiresIn: '24h' },
     );
 
@@ -973,9 +1176,13 @@ export class UsersService {
       data: {
         id: adminUser.id,
         openid: adminUser.openid,
+        username: adminUser.username,
         nickname: adminUser.nickname,
         phone: adminUser.phone,
         isAdmin: true,
+        roleIds,
+        roleNames,
+        permissions: allPermissions,
         token,
       },
     };

@@ -74,6 +74,29 @@ class ServiceItemService {
     const response = await request.get(`/service-items/by-category/${encodeURIComponent(category)}`);
     return response.data.data;
   }
+
+  /**
+   * 创建服务分类
+   */
+  async createCategory(name: string): Promise<{ name: string }> {
+    const response = await request.post('/service-items/categories', { name });
+    return response.data.data;
+  }
+
+  /**
+   * 重命名服务分类
+   */
+  async renameCategory(oldName: string, newName: string): Promise<{ name: string; updatedCount: number }> {
+    const response = await request.patch(`/service-items/categories/${encodeURIComponent(oldName)}`, { name: newName });
+    return response.data.data;
+  }
+
+  /**
+   * 删除服务分类
+   */
+  async deleteCategory(name: string): Promise<void> {
+    await request.delete(`/service-items/categories/${encodeURIComponent(name)}`);
+  }
 }
 
 export default new ServiceItemService();

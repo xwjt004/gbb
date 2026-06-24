@@ -61,6 +61,9 @@ import { WxUserModule } from './modules/wx-user/wx-user.module';
 import { WxFavoriteModule } from './modules/wx-favorite/wx-favorite.module';
 import { PhotoAlbumModule } from './modules/photo-albums/photo-album.module';
 import { GroupBuyModule } from './modules/group-buy/group-buy.module';
+import { WxOfficialAccountModule } from './modules/wx-official-account/wx-official-account.module';
+import { WorkCategoryModule } from './modules/work-categories/work-category.module';
+import { PhotographerModule } from './modules/photographers/photographer.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { OperationLogInterceptor } from './shared/interceptors/operation-log.interceptor';
 import { GroupBuyScheduler } from './shared/schedulers/group-buy.scheduler';
@@ -163,6 +166,9 @@ import { GroupBuyScheduler } from './shared/schedulers/group-buy.scheduler';
     WxFavoriteModule,
     PhotoAlbumModule,
     GroupBuyModule,
+    WxOfficialAccountModule,
+    WorkCategoryModule,
+    PhotographerModule,
   ],
   controllers: [AppController],
   providers: [

@@ -93,6 +93,22 @@ export class ProductsController {
     return this.productsService.updateStock(id, updateDto);
   }
 
+  @Get(':id/bindings')
+  @ApiOperation({ summary: '检查商品关联的套餐' })
+  @ApiParam({ name: 'id', description: '商品ID', type: 'number' })
+  @ApiResponse({ status: 200, description: '查询成功' })
+  getBindings(@Param('id', ParseIntPipe) id: number) {
+    return this.productsService.getBindings(id);
+  }
+
+  @Post(':id/unbind')
+  @ApiOperation({ summary: '解除商品与所有套餐的关联' })
+  @ApiParam({ name: 'id', description: '商品ID', type: 'number' })
+  @ApiResponse({ status: 200, description: '解除成功' })
+  unbindPackageProducts(@Param('id', ParseIntPipe) id: number) {
+    return this.productsService.unbindPackageProducts(id);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: '删除商品' })
   @ApiParam({ name: 'id', description: '商品ID', type: 'number' })

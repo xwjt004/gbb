@@ -349,9 +349,9 @@ export class PaymentsService {
         orderConditions.user = { phone };
       }
 
-      // 订单号查询
+      // 订单号查询（模糊匹配）
       if (orderNo) {
-        orderConditions.orderNo = orderNo;
+        orderConditions.orderNo = { contains: orderNo, mode: 'insensitive' };
       }
 
       // 如果有order相关的查询条件，设置到paymentWhere中
@@ -454,6 +454,7 @@ export class PaymentsService {
         // 如果订单已退款或部分退款，修正支付记录状态
         const refundedAmount = Number(payment.order?.refundedAmount || 0);
         const paidStatuses: string[] = ['FULLY_PAID', 'SUCCESS', 'PAID'];
+        const refundedStatuses: string[] = ['REFUNDED', 'PARTIAL_REFUNDED'];
         let displayStatus = payment.status;
         if (paidStatuses.includes(payment.status) && refundedAmount > 0) {
           displayStatus = refundedAmount >= Number(payment.amount) ? PaymentStatus.REFUNDED : PaymentStatus.PARTIAL_REFUNDED;
@@ -475,7 +476,7 @@ export class PaymentsService {
           total_amount: Number(payment.order.totalAmount),
           order: payment.order,
         },
-        refund_amount: Number(payment.order?.refundedAmount || 0),
+        refund_amount: refundedStatuses.includes(displayStatus) ? refundedAmount : 0,
         refund_reason: payment.refundReason,
       };
     });

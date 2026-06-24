@@ -29,6 +29,10 @@ export interface GroupBuyActivity {
     avatar?: string;
     phone?: string;
   };
+  orders?: {
+    orderNo: string;
+    paymentStatus: string;
+  }[];
   _count: {
     participants: number;
   };

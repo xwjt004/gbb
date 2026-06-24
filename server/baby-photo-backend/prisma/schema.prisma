@@ -4,25 +4,37 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 model User {
   id                 Int                @id @default(autoincrement())
   openid             String             @unique
+  username           String?            @unique @map("username")
   nickname           String?
+  realName           String?            @map("real_name")
+  gender             String?            @map("gender")
+  birthDate          DateTime?          @map("birth_date")
+  education          String?            @map("education")
+  address            String?            @map("address")
+  skills             String?            @map("skills")
+  workHistory        String?            @map("work_history")
   avatar             String?
   phone              String?
   email              String?            @map("email")
+  wechatOfficialId   String?            @map("wechat_official_id")
+  remarks            String?            @map("remarks")
   passwordHash       String?            @map("password_hash")
   resetToken         String?            @map("reset_token")
   resetExpires       DateTime?          @map("reset_expires")
   createdAt          DateTime           @default(now()) @map("created_at")
   updatedAt          DateTime           @default(now()) @updatedAt @map("updated_at")
   status             UserStatus         @default(ACTIVE)
-  roleId             Int?                @map("role_id")
-  role               Role?               @relation(fields: [roleId], references: [id])
+  roleId             Int?               @map("role_id")
+  role               Role?              @relation(fields: [roleId], references: [id])
+  userRoles          UserRole[]
   orders             Order[]
   alertsHandled      StockAlert[]
   checksApproved     StockCheck[]       @relation("CheckApprover")
@@ -30,16 +42,29 @@ model User {
   outboundsApproved  StockOutbound[]    @relation("OutboundApprover")
   outboundsSubmitted StockOutbound[]    @relation("OutboundSubmitter")
   complaintsHandled  Complaint[]        @relation("ComplaintHandler")
-  photographerOrders Order[]           @relation("PhotographerOrders")
+  photographerOrders Order[]            @relation("PhotographerOrders")
   transactions       StockTransaction[]
   transfersApproved  StockTransfer[]    @relation("TransferApprover")
   transfersSubmitted StockTransfer[]    @relation("TransferSubmitter")
   WxUser             WxUser[]
 
   @@index([openid])
+  @@index([username])
   @@index([phone])
   @@index([status])
   @@map("users")
+}
+
+model UserRole {
+  userId Int  @map("user_id")
+  roleId Int  @map("role_id")
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_roles")
 }
 
 model Role {
@@ -51,6 +76,7 @@ model Role {
   createdAt   DateTime         @default(now()) @map("created_at")
   updatedAt   DateTime         @updatedAt @map("updated_at")
   users       User[]
+  userRoles   UserRole[]
   permissions RolePermission[]
 
   @@index([status])
@@ -60,7 +86,7 @@ model Role {
 model RolePermission {
   id         Int      @id @default(autoincrement())
   roleId     Int      @map("role_id")
-  permission String   // 格式: "module:action"，如 "orders:edit", "users:delete"
+  permission String // 格式: "module:action"，如 "orders:edit", "users:delete"
   role       Role     @relation(fields: [roleId], references: [id])
   createdAt  DateTime @default(now()) @map("created_at")
 
@@ -87,56 +113,56 @@ model PackageCategory {
 }
 
 model Package {
-  id              Int              @id @default(autoincrement())
-  name            String
-  description     String?
-  price           Decimal          @db.Decimal(10, 2)
-  deposit         Decimal          @db.Decimal(10, 2)
-  durationMinutes Int              @map("duration_minutes")
-  includes        String[]         @default([])
-  createdAt       DateTime         @default(now()) @map("created_at")
-  status          PackageStatus    @default(ACTIVE)
-  isPopular       Boolean          @default(false) @map("is_popular")
-  images          String[]         @default([])
-  category        String?
-  tags            String[]         @default([])
-  categoryId      Int?             @map("category_id")
-  packageType     String           @default("CUSTOM") @map("package_type") @db.VarChar(20)
-  style           String?          @db.VarChar(100)
-  theme           String?          @db.VarChar(100)
-  detailImages    String[]         @default([]) @map("detail_images")
-  isOnSale        Boolean          @default(true) @map("is_on_sale")
-  salesVolume     Int              @default(0) @map("sales_volume")
-  baseSales       Int              @default(0) @map("base_sales") // 基础销量（用于展示的初始销量）
-  sortOrder       Int              @default(0) @map("sort_order")
-  videoUrl        String?          @map("video_url")
-  virtualSales    Int              @default(0) @map("virtual_sales")
+  id                  Int                @id @default(autoincrement())
+  name                String
+  description         String?
+  price               Decimal            @db.Decimal(10, 2)
+  deposit             Decimal            @db.Decimal(10, 2)
+  durationMinutes     Int                @map("duration_minutes")
+  includes            String[]           @default([])
+  createdAt           DateTime           @default(now()) @map("created_at")
+  status              PackageStatus      @default(ACTIVE)
+  isPopular           Boolean            @default(false) @map("is_popular")
+  images              String[]           @default([])
+  category            String?
+  tags                String[]           @default([])
+  categoryId          Int?               @map("category_id")
+  packageType         String             @default("CUSTOM") @map("package_type") @db.VarChar(20)
+  style               String?            @db.VarChar(100)
+  theme               String?            @db.VarChar(100)
+  detailImages        String[]           @default([]) @map("detail_images")
+  isOnSale            Boolean            @default(true) @map("is_on_sale")
+  salesVolume         Int                @default(0) @map("sales_volume")
+  baseSales           Int                @default(0) @map("base_sales") // 基础销量（用于展示的初始销量）
+  sortOrder           Int                @default(0) @map("sort_order")
+  videoUrl            String?            @map("video_url")
+  virtualSales        Int                @default(0) @map("virtual_sales")
   // 促销相关
-  promotionPrice    Decimal?   @map("promotion_price") @db.Decimal(10, 2)
-  promotionStart    DateTime?  @map("promotion_start")
-  promotionEnd      DateTime?  @map("promotion_end")
+  promotionPrice      Decimal?           @map("promotion_price") @db.Decimal(10, 2)
+  promotionStart      DateTime?          @map("promotion_start")
+  promotionEnd        DateTime?          @map("promotion_end")
   // 团购相关
-  groupMinCount     Int?       @default(0) @map("group_min_count")
-  groupPrice        Decimal?   @map("group_price") @db.Decimal(10, 2)
-  groupBuyDescription String?  @map("group_buy_description") @db.Text
+  groupMinCount       Int?               @default(0) @map("group_min_count")
+  groupPrice          Decimal?           @map("group_price") @db.Decimal(10, 2)
+  groupBuyDescription String?            @map("group_buy_description") @db.Text
   // 团购海报配置
-  posterTitle       String?    @map("poster_title") @db.VarChar(200)
-  posterContent     String?    @map("poster_content") @db.Text
-  posterBackground  String?    @map("poster_background") @db.VarChar(500)
-  posterImages      String[]   @default([]) @map("poster_images")
+  posterTitle         String?            @map("poster_title") @db.VarChar(200)
+  posterContent       String?            @map("poster_content") @db.Text
+  posterBackground    String?            @map("poster_background") @db.VarChar(500)
+  posterImages        String[]           @default([]) @map("poster_images")
   // 关联
-  seasonalPrices    SeasonalPrice[]
-  crossSellPackages CrossSellPackage[] @relation("SourcePackage")
-  crossSellSource   CrossSellPackage[] @relation("RecommendedPackage")
-  cartItems         CartItem[]
-  orderItems        OrderItem[]
-  orders            Order[]
-  packageProducts   PackageProduct[]
-  packageServices   PackageService[]
-  packageCategory   PackageCategory? @relation(fields: [categoryId], references: [id])
-  favorites         UserFavorite[]
-  groupBuyActivities GroupBuyActivity[]
-  groupBuyTiers      GroupBuyTier[]
+  seasonalPrices      SeasonalPrice[]
+  crossSellPackages   CrossSellPackage[] @relation("SourcePackage")
+  crossSellSource     CrossSellPackage[] @relation("RecommendedPackage")
+  cartItems           CartItem[]
+  orderItems          OrderItem[]
+  orders              Order[]
+  packageProducts     PackageProduct[]
+  packageServices     PackageService[]
+  packageCategory     PackageCategory?   @relation(fields: [categoryId], references: [id])
+  favorites           UserFavorite[]
+  groupBuyActivities  GroupBuyActivity[]
+  groupBuyTiers       GroupBuyTier[]
 
   @@index([categoryId])
   @@index([packageType])
@@ -151,8 +177,8 @@ model SeasonalPrice {
   packageId Int      @map("package_id")
   startDate DateTime @map("start_date") @db.Date
   endDate   DateTime @map("end_date") @db.Date
-  price     Decimal  @db.Decimal(10, 2)     // override price during this period
-  label     String?  @db.VarChar(50)         // e.g. "旺季", "淡季"
+  price     Decimal  @db.Decimal(10, 2) // override price during this period
+  label     String?  @db.VarChar(50) // e.g. "旺季", "淡季"
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   package   Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
@@ -162,13 +188,13 @@ model SeasonalPrice {
 }
 
 model CrossSellPackage {
-  id                Int      @id @default(autoincrement())
-  sourcePkgId       Int      @map("source_pkg_id")
-  recommendedPkgId  Int      @map("recommended_pkg_id")
-  sortOrder         Int      @default(0) @map("sort_order")
-  createdAt         DateTime @default(now()) @map("created_at")
-  sourcePkg         Package  @relation("SourcePackage", fields: [sourcePkgId], references: [id], onDelete: Cascade)
-  recommended       Package  @relation("RecommendedPackage", fields: [recommendedPkgId], references: [id], onDelete: Cascade)
+  id               Int      @id @default(autoincrement())
+  sourcePkgId      Int      @map("source_pkg_id")
+  recommendedPkgId Int      @map("recommended_pkg_id")
+  sortOrder        Int      @default(0) @map("sort_order")
+  createdAt        DateTime @default(now()) @map("created_at")
+  sourcePkg        Package  @relation("SourcePackage", fields: [sourcePkgId], references: [id], onDelete: Cascade)
+  recommended      Package  @relation("RecommendedPackage", fields: [recommendedPkgId], references: [id], onDelete: Cascade)
 
   @@unique([sourcePkgId, recommendedPkgId])
   @@map("cross_sell_packages")
@@ -199,61 +225,61 @@ model TimeSlot {
 }
 
 model Order {
-  id                String            @id @default(uuid())
-  orderNo           String            @unique @map("order_no")
-  userId            Int               @map("user_id")
-  packageId         Int?              @map("package_id")
-  timeSlotId        Int?              @map("time_slot_id")
-  appointmentDate   DateTime?         @map("appointment_date")
-  totalAmount       Decimal           @map("total_amount") @db.Decimal(10, 2)
-  depositAmount     Decimal           @map("deposit_amount") @db.Decimal(10, 2)
-  paidAmount        Decimal           @default(0) @map("paid_amount") @db.Decimal(10, 2)
-  notes             String?
-  childrenCount     Int               @default(1) @map("children_count")
-  createdAt         DateTime          @default(now()) @map("created_at")
-  updatedAt         DateTime          @updatedAt @map("updated_at")
-  customerName      String?           @map("customer_name")
-  customerPhone     String?           @map("customer_phone")
-  diyPackageId      Int?              @map("diy_package_id")
-  couponId          String?           @map("coupon_id")
-  discountAmount    Decimal           @default(0) @map("discount_amount") @db.Decimal(10, 2)
-  shippingAddressId String?           @map("shipping_address_id")
-  shippingInfo      Json?             @map("shipping_info")
-  source            OrderSource       @default(ADMIN)
-  wxUserId          String?           @map("wx_user_id")
-  deletedAt         DateTime?         @map("deleted_at")
-  depositTimeout    DateTime?         @map("deposit_timeout")
-  finalTimeout      DateTime?         @map("final_timeout")
-  paymentMode       PaymentMode       @default(FULL_ONLINE) @map("payment_mode")
-  paymentSummary    Json?             @map("payment_summary")
-  refundedAmount    Decimal           @default(0) @map("refunded_amount") @db.Decimal(10, 2)
-  remainingAmount   Decimal           @default(0) @map("remaining_amount") @db.Decimal(10, 2)
-  paymentStatus     PaymentStatus     @default(PENDING_PAYMENT) @map("payment_status")
-  orderStatus       OrderStatus       @default(PENDING) @map("order_status")
+  id                      String            @id @default(uuid())
+  orderNo                 String            @unique @map("order_no")
+  userId                  Int               @map("user_id")
+  packageId               Int?              @map("package_id")
+  timeSlotId              Int?              @map("time_slot_id")
+  appointmentDate         DateTime?         @map("appointment_date")
+  totalAmount             Decimal           @map("total_amount") @db.Decimal(10, 2)
+  depositAmount           Decimal           @map("deposit_amount") @db.Decimal(10, 2)
+  paidAmount              Decimal           @default(0) @map("paid_amount") @db.Decimal(10, 2)
+  notes                   String?
+  childrenCount           Int               @default(1) @map("children_count")
+  createdAt               DateTime          @default(now()) @map("created_at")
+  updatedAt               DateTime          @updatedAt @map("updated_at")
+  customerName            String?           @map("customer_name")
+  customerPhone           String?           @map("customer_phone")
+  diyPackageId            Int?              @map("diy_package_id")
+  couponId                String?           @map("coupon_id")
+  discountAmount          Decimal           @default(0) @map("discount_amount") @db.Decimal(10, 2)
+  shippingAddressId       String?           @map("shipping_address_id")
+  shippingInfo            Json?             @map("shipping_info")
+  source                  OrderSource       @default(ADMIN)
+  wxUserId                String?           @map("wx_user_id")
+  deletedAt               DateTime?         @map("deleted_at")
+  depositTimeout          DateTime?         @map("deposit_timeout")
+  finalTimeout            DateTime?         @map("final_timeout")
+  paymentMode             PaymentMode       @default(FULL_ONLINE) @map("payment_mode")
+  paymentSummary          Json?             @map("payment_summary")
+  refundedAmount          Decimal           @default(0) @map("refunded_amount") @db.Decimal(10, 2)
+  remainingAmount         Decimal           @default(0) @map("remaining_amount") @db.Decimal(10, 2)
+  paymentStatus           PaymentStatus     @default(PENDING_PAYMENT) @map("payment_status")
+  orderStatus             OrderStatus       @default(PENDING) @map("order_status")
   // 支付协议记录（新增字段）
-  agreementAccepted     Boolean?   @map("agreement_accepted")
-  agreementVersion      String?    @map("agreement_version")
-  agreementAcceptedAt   DateTime?  @map("agreement_accepted_at")
+  agreementAccepted       Boolean?          @map("agreement_accepted")
+  agreementVersion        String?           @map("agreement_version")
+  agreementAcceptedAt     DateTime?         @map("agreement_accepted_at")
   // 调度相关字段
-  photographerId     Int?        @map("photographer_id")
-  checkinStatus      String      @default("PENDING") @map("checkin_status")
-  checkinTime        DateTime?   @map("checkin_time")
-  reminderSentAt           DateTime?   @map("reminder_sent_at")
-  completedAt              DateTime?   @map("completed_at")
-  photoPickReminderSentAt  DateTime?   @map("photo_pick_reminder_sent_at")
-  items             OrderItem[]
-  diyPackage        DiyPackage?       @relation(fields: [diyPackageId], references: [id])
-  package           Package?          @relation(fields: [packageId], references: [id])
-  timeSlot          TimeSlot?         @relation(fields: [timeSlotId], references: [id])
-  groupBuyActivityId String?          @map("group_buy_activity_id")
-  groupBuyActivity  GroupBuyActivity? @relation(fields: [groupBuyActivityId], references: [id])
-  user              User              @relation(fields: [userId], references: [id])
-  photographer      User?             @relation("PhotographerOrders", fields: [photographerId], references: [id])
-  wxUser            WxUser?           @relation("WxOrders", fields: [wxUserId], references: [id])
-  payments          Payment[]
-  refunds           Refund[]
-  statusChangeLogs  StatusChangeLog[]
-  outbounds         StockOutbound[]
+  photographerId          Int?              @map("photographer_id")
+  checkinStatus           String            @default("PENDING") @map("checkin_status")
+  checkinTime             DateTime?         @map("checkin_time")
+  reminderSentAt          DateTime?         @map("reminder_sent_at")
+  completedAt             DateTime?         @map("completed_at")
+  photoPickReminderSentAt DateTime?         @map("photo_pick_reminder_sent_at")
+  items                   OrderItem[]
+  diyPackage              DiyPackage?       @relation(fields: [diyPackageId], references: [id])
+  package                 Package?          @relation(fields: [packageId], references: [id])
+  timeSlot                TimeSlot?         @relation(fields: [timeSlotId], references: [id])
+  groupBuyActivityId      String?           @map("group_buy_activity_id")
+  groupBuyActivity        GroupBuyActivity? @relation(fields: [groupBuyActivityId], references: [id])
+  user                    User              @relation(fields: [userId], references: [id])
+  photographer            User?             @relation("PhotographerOrders", fields: [photographerId], references: [id])
+  wxUser                  WxUser?           @relation("WxOrders", fields: [wxUserId], references: [id])
+  payments                Payment[]
+  refunds                 Refund[]
+  statusChangeLogs        StatusChangeLog[]
+  outbounds               StockOutbound[]
 
   @@index([diyPackageId])
   @@index([wxUserId])
@@ -428,56 +454,56 @@ model ProductCategory {
 }
 
 model Product {
-  id              Int                 @id @default(autoincrement())
-  productNo       String              @unique @map("product_no") @db.VarChar(50)
-  name            String              @db.VarChar(100)
-  categoryId      Int                 @map("category_id")
-  specification   String?             @db.VarChar(100)
-  unit            String              @default("件") @db.VarChar(20)
-  costPrice       Decimal             @default(0) @map("cost_price") @db.Decimal(10, 2)
-  salePrice       Decimal             @default(0) @map("sale_price") @db.Decimal(10, 2)
-  marketPrice     Decimal?            @map("market_price") @db.Decimal(10, 2)
-  stockQuantity   Int                 @default(0) @map("stock_quantity")
-  lowStock        Int                 @default(10) @map("low_stock")
-  isTrackStock    Boolean             @default(true) @map("is_track_stock")
-  description     String?
-  images          Json?
-  attributes      Json?
-  status          String              @default("ACTIVE") @db.VarChar(20)
-  isActive        Boolean             @default(true) @map("is_active")
-  isFeatured      Boolean             @default(false) @map("is_featured")
-  createdAt       DateTime            @default(now()) @map("created_at")
-  updatedAt       DateTime            @updatedAt @map("updated_at")
-  maxStock        Int?                @map("max_stock")
-  minStock        Int?                @map("min_stock")
-  reorderPoint    Int?                @map("reorder_point")
-  safetyStock     Int                 @default(0) @map("safety_stock")
-  dailyConsumption Int                @default(0) @map("daily_consumption")
-  slowMovingDays  Int                 @default(90) @map("slow_moving_days")
-  brand           String?             @db.VarChar(50)
-  model           String?             @db.VarChar(50)
-  detailImages    String[]            @default([]) @map("detail_images")
-  isOnSale        Boolean             @default(true) @map("is_on_sale")
-  salesVolume     Int                 @default(0) @map("sales_volume")
-  sortOrder       Int                 @default(0) @map("sort_order")
-  virtualSales    Int                 @default(0) @map("virtual_sales")
-  deletedAt       DateTime?           @map("deleted_at")
-  detailContent   Json?               @map("detail_content")
-  baseSales       Int                 @default(0) @map("base_sales")
-  cartItems       CartItem[]
-  orderItems      OrderItem[]
-  packageProducts PackageProduct[]
-  category        ProductCategory     @relation(fields: [categoryId], references: [id])
-  purchaseItems   PurchaseOrderItem[]
-  alerts          StockAlert[]
+  id                  Int                      @id @default(autoincrement())
+  productNo           String                   @unique @map("product_no") @db.VarChar(50)
+  name                String                   @db.VarChar(100)
+  categoryId          Int                      @map("category_id")
+  specification       String?                  @db.VarChar(100)
+  unit                String                   @default("件") @db.VarChar(20)
+  costPrice           Decimal                  @default(0) @map("cost_price") @db.Decimal(10, 2)
+  salePrice           Decimal                  @default(0) @map("sale_price") @db.Decimal(10, 2)
+  marketPrice         Decimal?                 @map("market_price") @db.Decimal(10, 2)
+  stockQuantity       Int                      @default(0) @map("stock_quantity")
+  lowStock            Int                      @default(10) @map("low_stock")
+  isTrackStock        Boolean                  @default(true) @map("is_track_stock")
+  description         String?
+  images              Json?
+  attributes          Json?
+  status              String                   @default("ACTIVE") @db.VarChar(20)
+  isActive            Boolean                  @default(true) @map("is_active")
+  isFeatured          Boolean                  @default(false) @map("is_featured")
+  createdAt           DateTime                 @default(now()) @map("created_at")
+  updatedAt           DateTime                 @updatedAt @map("updated_at")
+  maxStock            Int?                     @map("max_stock")
+  minStock            Int?                     @map("min_stock")
+  reorderPoint        Int?                     @map("reorder_point")
+  safetyStock         Int                      @default(0) @map("safety_stock")
+  dailyConsumption    Int                      @default(0) @map("daily_consumption")
+  slowMovingDays      Int                      @default(90) @map("slow_moving_days")
+  brand               String?                  @db.VarChar(50)
+  model               String?                  @db.VarChar(50)
+  detailImages        String[]                 @default([]) @map("detail_images")
+  isOnSale            Boolean                  @default(true) @map("is_on_sale")
+  salesVolume         Int                      @default(0) @map("sales_volume")
+  sortOrder           Int                      @default(0) @map("sort_order")
+  virtualSales        Int                      @default(0) @map("virtual_sales")
+  deletedAt           DateTime?                @map("deleted_at")
+  detailContent       Json?                    @map("detail_content")
+  baseSales           Int                      @default(0) @map("base_sales")
+  cartItems           CartItem[]
+  orderItems          OrderItem[]
+  packageProducts     PackageProduct[]
+  category            ProductCategory          @relation(fields: [categoryId], references: [id])
+  purchaseItems       PurchaseOrderItem[]
+  alerts              StockAlert[]
   purchaseSuggestions AutoPurchaseSuggestion[]
-  checkItems      StockCheckItem[]
-  outboundItems   StockOutboundItem[]
-  transactions    StockTransaction[]
-  transfers       StockTransfer[]
-  favorites       UserFavorite[]
-  groupBuyActivities GroupBuyActivity[]
-  groupBuyTiers      GroupBuyTier[]
+  checkItems          StockCheckItem[]
+  outboundItems       StockOutboundItem[]
+  transactions        StockTransaction[]
+  transfers           StockTransfer[]
+  favorites           UserFavorite[]
+  groupBuyActivities  GroupBuyActivity[]
+  groupBuyTiers       GroupBuyTier[]
 
   @@index([categoryId])
   @@index([productNo])
@@ -683,16 +709,16 @@ model StockAlert {
 }
 
 model AutoPurchaseSuggestion {
-  id            String   @id @default(uuid())
-  productId     Int      @map("product_id")
-  productName   String   @map("product_name") @db.VarChar(200)
-  currentStock  Int      @map("current_stock")
-  minStock      Int      @map("min_stock")
-  suggestedQty  Int      @map("suggested_qty")
-  status        String   @default("PENDING")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-  product       Product  @relation(fields: [productId], references: [id])
+  id           String   @id @default(uuid())
+  productId    Int      @map("product_id")
+  productName  String   @map("product_name") @db.VarChar(200)
+  currentStock Int      @map("current_stock")
+  minStock     Int      @map("min_stock")
+  suggestedQty Int      @map("suggested_qty")
+  status       String   @default("PENDING")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  product      Product  @relation(fields: [productId], references: [id])
 
   @@index([status, createdAt])
   @@map("auto_purchase_suggestions")
@@ -816,28 +842,28 @@ model SupplierRatingHistory {
 }
 
 model ShopInfo {
-  id              Int      @id @default(autoincrement())
-  shopName        String   @map("shop_name") @db.VarChar(200)
-  address         String   @db.VarChar(500)
-  phone           String   @db.VarChar(50)
-  telephone       String?  @db.VarChar(50)
-  shopPhoto       String?  @map("shop_photo")
-  locationMap     String?  @map("location_map")
-  latitude        Decimal? @map("latitude") @db.Decimal(10, 7)
-  longitude       Decimal? @map("longitude") @db.Decimal(10, 7)
-  businessScope   String?  @map("business_scope")
-  wechatId        String?  @map("wechat_id") @db.VarChar(100)
-  douyinId        String?  @map("douyin_id") @db.VarChar(100)
-  kuaishouId      String?  @map("kuaishou_id") @db.VarChar(100)
-  xiaohongshuId   String?  @map("xiaohongshu_id") @db.VarChar(100)
-  businessLicense String?  @map("business_license") @db.VarChar(100)
-  businessHours   String?  @map("business_hours") @db.VarChar(200)
-  description         String?
-  storefrontMarquee   String?  @map("storefront_marquee")
-  banners             Json?    @map("banners")
-  bannerInterval  Int?     @default(4000) @map("banner_interval")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id                Int      @id @default(autoincrement())
+  shopName          String   @map("shop_name") @db.VarChar(200)
+  address           String   @db.VarChar(500)
+  phone             String   @db.VarChar(50)
+  telephone         String?  @db.VarChar(50)
+  shopPhoto         String?  @map("shop_photo")
+  locationMap       String?  @map("location_map")
+  latitude          Decimal? @map("latitude") @db.Decimal(10, 7)
+  longitude         Decimal? @map("longitude") @db.Decimal(10, 7)
+  businessScope     String?  @map("business_scope")
+  wechatId          String?  @map("wechat_id") @db.VarChar(100)
+  douyinId          String?  @map("douyin_id") @db.VarChar(100)
+  kuaishouId        String?  @map("kuaishou_id") @db.VarChar(100)
+  xiaohongshuId     String?  @map("xiaohongshu_id") @db.VarChar(100)
+  businessLicense   String?  @map("business_license") @db.VarChar(100)
+  businessHours     String?  @map("business_hours") @db.VarChar(200)
+  description       String?
+  storefrontMarquee String?  @map("storefront_marquee")
+  banners           Json?    @map("banners")
+  bannerInterval    Int?     @default(4000) @map("banner_interval")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
 
   @@map("shop_info")
 }
@@ -1182,55 +1208,55 @@ model DiyPackage {
 }
 
 model WxUser {
-  id             String            @id @default(uuid())
-  openid         String            @unique
-  unionid        String?           @unique
-  sessionKey     String?           @map("session_key")
-  nickname       String?
-  avatar         String?
-  gender         Int?
-  phone          String?
-  phoneEncrypted String?           @map("phone_encrypted")
-  realName       String?           @map("real_name")
-  birthday       DateTime?         // 生日（月日，用于生日关怀）
-  height         Float?            // 身高(cm)
-  weight         Float?            // 体重(kg)
-  zodiac         String?           // 生肖
-  constellation  String?           // 星座
-  hundredDaysDate DateTime?        @map("hundred_days_date") // 百天日期
-  firstBirthdayDate DateTime?     @map("first_birthday_date") // 周岁日期
-  graspGift      String?           @map("grasp_gift")       // 抓周礼物
-  handFootPrint  String?           @map("hand_foot_print")  // 手脚印图
-  walletPhoto    String?           @map("wallet_photo")     // 钱包照
-  address        String?           // 家庭住址
-  schoolName     String?           @map("school_name")      // 学校名称
-  talent         String?           // 宝宝特长
-  status         WxUserStatus      @default(ACTIVE)
-  linkedUserId   Int?              @map("linked_user_id")
-  totalOrders    Int               @default(0) @map("total_orders")
-  totalAmount    Decimal           @default(0) @map("total_amount") @db.Decimal(12, 2)
-  memberLevel    String            @default("NORMAL") @map("member_level")
-  growthPoints   Int               @default(0) @map("growth_points")
-  pointsBalance  Int               @default(0) @map("points_balance") // 可消费积分
-  lastOrderAt    DateTime?         @map("last_order_at")
-  churnStatus    String            @default("ACTIVE") @map("churn_status")
-  lastLoginAt    DateTime?         @map("last_login_at")
-  createdAt      DateTime          @default(now()) @map("created_at")
-  updatedAt      DateTime          @updatedAt @map("updated_at")
-  cartItems      CartItem[]
-  diyPackages    DiyPackage[]      @relation("WxDiyPackages")
-  orders         Order[]           @relation("WxOrders")
-  addresses      ShippingAddress[]
-  coupons        UserCoupon[]
-  complaints     Complaint[]
-  linkedUser     User?             @relation(fields: [linkedUserId], references: [id])
-  favorites      UserFavorite[]
-  photoAlbums    PhotoAlbum[]
-  milestones     BabyMilestone[]
-  pointsTransactions PointsTransaction[]
-  milestoneUploadLogs BabyMilestoneUploadLog[]
-  milestonePlayLogs BabyMilestonePlayLog[]
-  groupBuyActivities GroupBuyActivity[]
+  id                     String                   @id @default(uuid())
+  openid                 String                   @unique
+  unionid                String?                  @unique
+  sessionKey             String?                  @map("session_key")
+  nickname               String?
+  avatar                 String?
+  gender                 Int?
+  phone                  String?
+  phoneEncrypted         String?                  @map("phone_encrypted")
+  realName               String?                  @map("real_name")
+  birthday               DateTime? // 生日（月日，用于生日关怀）
+  height                 Float? // 身高(cm)
+  weight                 Float? // 体重(kg)
+  zodiac                 String? // 生肖
+  constellation          String? // 星座
+  hundredDaysDate        DateTime?                @map("hundred_days_date") // 百天日期
+  firstBirthdayDate      DateTime?                @map("first_birthday_date") // 周岁日期
+  graspGift              String?                  @map("grasp_gift") // 抓周礼物
+  handFootPrint          String?                  @map("hand_foot_print") // 手脚印图
+  walletPhoto            String?                  @map("wallet_photo") // 钱包照
+  address                String? // 家庭住址
+  schoolName             String?                  @map("school_name") // 学校名称
+  talent                 String? // 宝宝特长
+  status                 WxUserStatus             @default(ACTIVE)
+  linkedUserId           Int?                     @map("linked_user_id")
+  totalOrders            Int                      @default(0) @map("total_orders")
+  totalAmount            Decimal                  @default(0) @map("total_amount") @db.Decimal(12, 2)
+  memberLevel            String                   @default("NORMAL") @map("member_level")
+  growthPoints           Int                      @default(0) @map("growth_points")
+  pointsBalance          Int                      @default(0) @map("points_balance") // 可消费积分
+  lastOrderAt            DateTime?                @map("last_order_at")
+  churnStatus            String                   @default("ACTIVE") @map("churn_status")
+  lastLoginAt            DateTime?                @map("last_login_at")
+  createdAt              DateTime                 @default(now()) @map("created_at")
+  updatedAt              DateTime                 @updatedAt @map("updated_at")
+  cartItems              CartItem[]
+  diyPackages            DiyPackage[]             @relation("WxDiyPackages")
+  orders                 Order[]                  @relation("WxOrders")
+  addresses              ShippingAddress[]
+  coupons                UserCoupon[]
+  complaints             Complaint[]
+  linkedUser             User?                    @relation(fields: [linkedUserId], references: [id])
+  favorites              UserFavorite[]
+  photoAlbums            PhotoAlbum[]
+  milestones             BabyMilestone[]
+  pointsTransactions     PointsTransaction[]
+  milestoneUploadLogs    BabyMilestoneUploadLog[]
+  milestonePlayLogs      BabyMilestonePlayLog[]
+  groupBuyActivities     GroupBuyActivity[]
   groupBuyParticipations GroupBuyParticipant[]
 
   @@index([openid])
@@ -1243,15 +1269,15 @@ model WxUser {
 }
 
 model UserFavorite {
-  id          String   @id @default(uuid())
-  wxUserId    String   @map("wx_user_id")
-  packageId   Int?     @map("package_id")
-  productId   Int?     @map("product_id")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  wxUserId  String   @map("wx_user_id")
+  packageId Int?     @map("package_id")
+  productId Int?     @map("product_id")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  wxUser   WxUser   @relation(fields: [wxUserId], references: [id], onDelete: Cascade)
-  package  Package? @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  product  Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  wxUser  WxUser   @relation(fields: [wxUserId], references: [id], onDelete: Cascade)
+  package Package? @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([wxUserId, packageId])
   @@unique([wxUserId, productId])
@@ -1303,35 +1329,35 @@ model ShippingAddress {
 }
 
 model MemberLevel {
-  id         Int      @id @default(autoincrement())
-  level      Int      @unique          // 1=普通, 2=白银, 3=黄金, 4=铂金, 5=钻石
-  name       String   @db.VarChar(50)  // 等级名称
-  minGrowth  Int      @map("min_growth")
-  maxGrowth  Int      @map("max_growth")
-  benefits   Json?    // 权益描述（JSON 数组）
-  icon       String?  // 等级图标
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id        Int      @id @default(autoincrement())
+  level     Int      @unique // 1=普通, 2=白银, 3=黄金, 4=铂金, 5=钻石
+  name      String   @db.VarChar(50) // 等级名称
+  minGrowth Int      @map("min_growth")
+  maxGrowth Int      @map("max_growth")
+  benefits  Json? // 权益描述（JSON 数组）
+  icon      String? // 等级图标
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([level])
   @@map("member_levels")
 }
 
 model BabyMilestone {
-  id            String   @id @default(uuid())
-  wxUserId      String   @map("wx_user_id")
-  type          String   @db.VarChar(50)  // 幸福空间类型: 出生, 百天, 周岁, 二周岁, 三周岁, 四周岁, 五周岁, 幼儿园, 小学, 初中, 高中, 大学, 硕士, 博士
+  id            String    @id @default(uuid())
+  wxUserId      String    @map("wx_user_id")
+  type          String    @db.VarChar(50) // 幸福空间类型: 出生, 百天, 周岁, 二周岁, 三周岁, 四周岁, 五周岁, 幼儿园, 小学, 初中, 高中, 大学, 硕士, 博士
   recordDate    DateTime? @map("record_date")
   height        Float?
   weight        Float?
   hobby         String?
   photo         String?
-  momBlessing   String?  @map("mom_blessing")
-  dadBlessing   String?  @map("dad_blessing")
-  elderBlessing String?  @map("elder_blessing")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-  wxUser        WxUser   @relation(fields: [wxUserId], references: [id], onDelete: Cascade)
+  momBlessing   String?   @map("mom_blessing")
+  dadBlessing   String?   @map("dad_blessing")
+  elderBlessing String?   @map("elder_blessing")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  wxUser        WxUser    @relation(fields: [wxUserId], references: [id], onDelete: Cascade)
 
   @@index([wxUserId])
   @@index([type])
@@ -1342,7 +1368,7 @@ model BabyMilestone {
 model BabyMilestoneUploadLog {
   id         String   @id @default(uuid())
   wxUserId   String   @map("wx_user_id")
-  uploadType String   @db.VarChar(20)    // PHOTO / VIDEO
+  uploadType String   @db.VarChar(20) // PHOTO / VIDEO
   createdAt  DateTime @default(now()) @map("created_at")
   wxUser     WxUser   @relation(fields: [wxUserId], references: [id], onDelete: Cascade)
 
@@ -1354,7 +1380,7 @@ model BabyMilestoneUploadLog {
 model BabyMilestonePlayLog {
   id        String   @id @default(uuid())
   wxUserId  String   @map("wx_user_id")
-  playDate  DateTime @map("play_date")     // 归一化到当天 00:00:00
+  playDate  DateTime @map("play_date") // 归一化到当天 00:00:00
   createdAt DateTime @default(now()) @map("created_at")
   wxUser    WxUser   @relation(fields: [wxUserId], references: [id], onDelete: Cascade)
 
@@ -1363,21 +1389,21 @@ model BabyMilestonePlayLog {
 }
 
 model Complaint {
-  id          String   @id @default(uuid())
-  complaintNo String   @unique @map("complaint_no") // 自动生成投诉编号
-  wxUserId    String   @map("wx_user_id")
-  orderId     String?  @map("order_id")
-  title       String   @db.VarChar(200)
-  description String   @db.Text
-  status      String   @default("PENDING") // PENDING / PROCESSING / RESOLVED / CLOSED
-  priority    String   @default("NORMAL")  // LOW / NORMAL / HIGH / URGENT
-  handlerId   Int?     @map("handler_id")
-  resolution  String?  @db.Text           // 处理结果说明
+  id          String    @id @default(uuid())
+  complaintNo String    @unique @map("complaint_no") // 自动生成投诉编号
+  wxUserId    String    @map("wx_user_id")
+  orderId     String?   @map("order_id")
+  title       String    @db.VarChar(200)
+  description String    @db.Text
+  status      String    @default("PENDING") // PENDING / PROCESSING / RESOLVED / CLOSED
+  priority    String    @default("NORMAL") // LOW / NORMAL / HIGH / URGENT
+  handlerId   Int?      @map("handler_id")
+  resolution  String?   @db.Text // 处理结果说明
   handledAt   DateTime? @map("handled_at")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  wxUser      WxUser   @relation(fields: [wxUserId], references: [id])
-  handler     User?    @relation("ComplaintHandler", fields: [handlerId], references: [id])
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  wxUser      WxUser    @relation(fields: [wxUserId], references: [id])
+  handler     User?     @relation("ComplaintHandler", fields: [handlerId], references: [id])
 
   @@index([wxUserId])
   @@index([status])
@@ -1434,18 +1460,18 @@ model UserCoupon {
 
 // 团购活动
 model GroupBuyActivity {
-  id            String   @id @default(uuid())
-  packageId     Int?     @map("package_id")
-  productId     Int?     @map("product_id")
-  creatorUserId String   @map("creator_user_id")
-  minCount      Int      @default(3) @map("min_count")
-  maxCount      Int?     @map("max_count")       // 参团人数上限（null=不限制）
-  status        String   @default("ACTIVE") @db.VarChar(20) // ACTIVE / SUCCESS / FAILED
-  createdAt     DateTime @default(now()) @map("created_at")
-  expiredAt     DateTime @map("expired_at")
-  package       Package?  @relation(fields: [packageId], references: [id])
-  product       Product?  @relation(fields: [productId], references: [id])
-  creator       WxUser   @relation(fields: [creatorUserId], references: [id])
+  id            String                @id @default(uuid())
+  packageId     Int?                  @map("package_id")
+  productId     Int?                  @map("product_id")
+  creatorUserId String                @map("creator_user_id")
+  minCount      Int                   @default(3) @map("min_count")
+  maxCount      Int?                  @map("max_count") // 参团人数上限（null=不限制）
+  status        String                @default("ACTIVE") @db.VarChar(20) // ACTIVE / SUCCESS / FAILED
+  createdAt     DateTime              @default(now()) @map("created_at")
+  expiredAt     DateTime              @map("expired_at")
+  package       Package?              @relation(fields: [packageId], references: [id])
+  product       Product?              @relation(fields: [productId], references: [id])
+  creator       WxUser                @relation(fields: [creatorUserId], references: [id])
   participants  GroupBuyParticipant[]
   orders        Order[]
 
@@ -1458,11 +1484,11 @@ model GroupBuyActivity {
 
 // 团购参团记录
 model GroupBuyParticipant {
-  id         String   @id @default(uuid())
-  activityId String   @map("activity_id")
-  userId     String   @map("user_id")
-  status     String   @default("JOINED") @db.VarChar(20) // JOINED / SUCCESS / REFUNDED
-  joinedAt   DateTime @default(now()) @map("joined_at")
+  id         String           @id @default(uuid())
+  activityId String           @map("activity_id")
+  userId     String           @map("user_id")
+  status     String           @default("JOINED") @db.VarChar(20) // JOINED / SUCCESS / REFUNDED
+  joinedAt   DateTime         @default(now()) @map("joined_at")
   activity   GroupBuyActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
   user       WxUser           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1476,11 +1502,11 @@ model GroupBuyTier {
   id        Int      @id @default(autoincrement())
   packageId Int?     @map("package_id")
   productId Int?     @map("product_id")
-  minCount  Int      @map("min_count")       // 达到该人数时适用此价格
-  price     Decimal  @db.Decimal(10, 2)      // 阶梯价
+  minCount  Int      @map("min_count") // 达到该人数时适用此价格
+  price     Decimal  @db.Decimal(10, 2) // 阶梯价
   createdAt DateTime @default(now()) @map("created_at")
-  package   Package?  @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  product   Product?  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  package   Package? @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([packageId, minCount])
   @@index([productId, minCount])
@@ -1684,7 +1710,7 @@ model AppNotification {
   title        String
   content      String
   status       NotificationStatus @default(PENDING)
-  recipient    String?            // email 地址或用户 ID
+  recipient    String? // email 地址或用户 ID
   errorMessage String?            @map("error_message") // 发送失败时的错误信息
   sentAt       DateTime?
   createdAt    DateTime           @default(now()) @map("created_at")
@@ -1702,7 +1728,7 @@ model NotificationTemplate {
   type      NotificationType
   title     String
   content   String
-  variables String?          // JSON: ["name", "orderNo"]
+  variables String? // JSON: ["name", "orderNo"]
   createdAt DateTime         @default(now()) @map("created_at")
   updatedAt DateTime         @updatedAt @map("updated_at")
 
@@ -1711,17 +1737,17 @@ model NotificationTemplate {
 
 model OperationLog {
   id           String   @id @default(uuid())
-  module       String   // 模块名: orders, users, payments 等
-  action       String   // 操作类型: CREATE, UPDATE, DELETE, APPROVE, REFUND 等
+  module       String // 模块名: orders, users, payments 等
+  action       String // 操作类型: CREATE, UPDATE, DELETE, APPROVE, REFUND 等
   operatorId   String?  @map("operator_id")
   operatorName String?  @map("operator_name")
   targetId     String?  @map("target_id")
   targetDesc   String?  @map("target_desc")
-  method       String   // HTTP 方法
-  path         String   // 请求路径
-  params       Json?    // 请求参数（脱敏后）
-  ip           String?  // 客户端 IP
-  duration     Int      // 耗时（ms）
+  method       String // HTTP 方法
+  path         String // 请求路径
+  params       Json? // 请求参数（脱敏后）
+  ip           String? // 客户端 IP
+  duration     Int // 耗时（ms）
   statusCode   Int      @map("status_code")
   createdAt    DateTime @default(now()) @map("created_at")
 
@@ -1733,37 +1759,37 @@ model OperationLog {
 }
 
 model CustomerSegment {
-  id             String   @id @default(uuid())
-  name           String   @db.VarChar(100)
-  description    String?
-  rules          Json                // [{field, operator, value}] same format as AutomationRule conditions
-  memberCount    Int      @default(0)
-  status         String   @default("ACTIVE")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  campaigns      MarketingCampaign[]
+  id          String              @id @default(uuid())
+  name        String              @db.VarChar(100)
+  description String?
+  rules       Json // [{field, operator, value}] same format as AutomationRule conditions
+  memberCount Int                 @default(0)
+  status      String              @default("ACTIVE")
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  campaigns   MarketingCampaign[]
 
   @@map("customer_segments")
 }
 
 model MarketingCampaign {
-  id             String            @id @default(uuid())
-  name           String            @db.VarChar(100)
+  id             String           @id @default(uuid())
+  name           String           @db.VarChar(100)
   description    String?
   segmentId      String?
-  campaignType   String            // COUPON_PUSH | NOTIFICATION_PUSH
+  campaignType   String // COUPON_PUSH | NOTIFICATION_PUSH
   couponId       String?
   title          String?
   content        String?
-  status         String            @default("DRAFT") // DRAFT | SENDING | SENT | COMPLETED | CANCELLED
+  status         String           @default("DRAFT") // DRAFT | SENDING | SENT | COMPLETED | CANCELLED
   scheduledAt    DateTime?
-  sentCount      Int               @default(0)
-  openedCount    Int               @default(0)
-  clickedCount   Int               @default(0)
-  convertedCount Int               @default(0)
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  segment        CustomerSegment?  @relation(fields: [segmentId], references: [id])
+  sentCount      Int              @default(0)
+  openedCount    Int              @default(0)
+  clickedCount   Int              @default(0)
+  convertedCount Int              @default(0)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  segment        CustomerSegment? @relation(fields: [segmentId], references: [id])
   tracks         CampaignTrack[]
 
   @@index([segmentId])
@@ -1775,7 +1801,7 @@ model CampaignTrack {
   id         String            @id @default(uuid())
   campaignId String
   wxUserId   String
-  event      String            // DELIVERED | OPENED | CLICKED | CONVERTED
+  event      String // DELIVERED | OPENED | CLICKED | CONVERTED
   orderId    String?
   metadata   Json?
   createdAt  DateTime          @default(now())
@@ -1788,33 +1814,72 @@ model CampaignTrack {
 }
 
 model PhotoAlbum {
-  id          String   @id @default(uuid())
-  wxUserId    String?  @map("wx_user_id")    // null = 公共样片
-  albumType   String   @map("album_type")    // "SAMPLE" | "ALBUM"
-  title       String
-  coverUrl    String?  @map("cover_url")
-  photoUrls   String   @map("photo_urls")    // JSON 数组存储多个图片 URL
-  description String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  wxUser      WxUser?  @relation(fields: [wxUserId], references: [id], onDelete: Cascade)
+  id             String        @id @default(uuid())
+  wxUserId       String?       @map("wx_user_id") // null = 公共样片
+  albumType      String        @map("album_type") // "SAMPLE" | "ALBUM"
+  title          String
+  coverUrl       String?       @map("cover_url")
+  photoUrls      String        @map("photo_urls") // JSON 数组存储多个图片 URL
+  description    String?
+  categoryId     Int?          @map("category_id")
+  photographerId Int?          @map("photographer_id")
+  isPublic       Boolean       @default(true) @map("is_public")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  wxUser         WxUser?       @relation(fields: [wxUserId], references: [id], onDelete: Cascade)
+  category       WorkCategory? @relation(fields: [categoryId], references: [id])
+  photographer   Photographer? @relation(fields: [photographerId], references: [id])
 
   @@index([albumType])
   @@index([wxUserId, albumType])
+  @@index([categoryId])
+  @@index([photographerId])
   @@map("photo_albums")
+}
+
+/// 作品分类
+model WorkCategory {
+  id        Int          @id @default(autoincrement())
+  name      String       @unique
+  sortOrder Int          @default(0) @map("sort_order")
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  albums    PhotoAlbum[]
+
+  @@index([sortOrder])
+  @@map("work_categories")
+}
+
+/// 摄影师
+model Photographer {
+  id          Int          @id @default(autoincrement())
+  name        String
+  title       String? // 头衔：首席摄影师、总监等
+  avatar      String?
+  description String? // 简介
+  style       String? // 风格标签：日系、复古、简约等
+  sortOrder   Int          @default(0) @map("sort_order")
+  status      String       @default("ACTIVE")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  albums      PhotoAlbum[]
+
+  @@index([status])
+  @@index([sortOrder])
+  @@map("photographers")
 }
 
 // 积分交易记录
 model PointsTransaction {
-  id         String   @id @default(uuid())
-  wxUserId   String   @map("wx_user_id")
-  type       String   @db.VarChar(20)    // CREDIT(收入) / DEBIT(支出)
-  amount     Int                          // 变动积分数
-  balance    Int                          // 变动后余额
-  reason     String   @db.VarChar(50)    // 原因: upload_photo / upload_video / play_video / purchase
-  remark     String?                      // 备注（订单号等）
-  createdAt  DateTime @default(now()) @map("created_at")
-  wxUser     WxUser   @relation(fields: [wxUserId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  wxUserId  String   @map("wx_user_id")
+  type      String   @db.VarChar(20) // CREDIT(收入) / DEBIT(支出)
+  amount    Int // 变动积分数
+  balance   Int // 变动后余额
+  reason    String   @db.VarChar(50) // 原因: upload_photo / upload_video / play_video / purchase
+  remark    String? // 备注（订单号等）
+  createdAt DateTime @default(now()) @map("created_at")
+  wxUser    WxUser   @relation(fields: [wxUserId], references: [id], onDelete: Cascade)
 
   @@index([wxUserId, createdAt])
   @@map("points_transactions")
@@ -1831,4 +1896,70 @@ model PointsConfig {
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   @@map("points_configs")
+}
+
+// ============================================
+// 微信公众号模块
+// ============================================
+
+/// 公众号关注用户
+model OfficialAccountUser {
+  id            Int       @id @default(autoincrement())
+  openid        String    @unique @map("openid")
+  wxUserId      String?   @map("wx_user_id")
+  unionid       String?
+  nickname      String?
+  avatarUrl     String?   @map("avatar_url")
+  subscribe     Boolean   @default(true)
+  subscribeAt   DateTime? @map("subscribe_at")
+  unsubscribeAt DateTime? @map("unsubscribe_at")
+  sceneId       String?   @map("scene_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@index([wxUserId])
+  @@map("official_account_users")
+}
+
+/// 关键词自动回复
+model KeywordReply {
+  id        Int      @id @default(autoincrement())
+  keyword   String   @unique
+  matchType String   @default("EXACT") @map("match_type")
+  replyType String   @default("text") @map("reply_type")
+  content   String?
+  mediaId   String?  @map("media_id")
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("keyword_replies")
+}
+
+/// 模板消息发送日志
+model TemplateMessageLog {
+  id         Int      @id @default(autoincrement())
+  openid     String   @map("openid")
+  templateId String   @map("template_id")
+  status     String   @default("SENT")
+  errorMsg   String?  @map("error_msg")
+  sentAt     DateTime @default(now()) @map("sent_at")
+
+  @@index([openid])
+  @@index([sentAt])
+  @@map("template_message_logs")
+}
+
+/// 带参二维码
+model QRCode {
+  id        Int       @id @default(autoincrement())
+  sceneStr  String    @unique @map("scene_str")
+  ticket    String    @map("ticket")
+  url       String
+  expireAt  DateTime? @map("expire_at")
+  scanCount Int       @default(0) @map("scan_count")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@map("qr_codes")
 }

@@ -66,9 +66,17 @@ export class RolesService {
   async getUserPermissions(userId: number): Promise<string[]> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      include: { role: { include: { permissions: true } } },
+      include: {
+        userRoles: {
+          include: { role: { include: { permissions: true } } },
+        },
+      },
     });
-    return user?.role?.permissions.map((p) => p.permission) || [];
+    return [...new Set(
+      user?.userRoles?.flatMap(ur =>
+        ur.role.permissions.map(p => p.permission)
+      ) || []
+    )];
   }
 
   async seedDefaultRoles() {

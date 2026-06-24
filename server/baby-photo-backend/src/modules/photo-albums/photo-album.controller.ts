@@ -6,8 +6,6 @@ import { CreateAlbumDto, QueryAlbumDto } from './dto/create-album.dto';
 import { RemovePhotoDto } from './dto/remove-photo.dto';
 
 @ApiTags('相册管理')
-@ApiBearerAuth()
-@UseGuards(AdminJwtAuthGuard)
 @Controller('photo-albums')
 export class PhotoAlbumController {
   private readonly logger = new Logger(PhotoAlbumController.name);
@@ -15,36 +13,44 @@ export class PhotoAlbumController {
   constructor(private readonly albumService: PhotoAlbumService) {}
 
   @Post()
+  @ApiBearerAuth()
+  @UseGuards(AdminJwtAuthGuard)
   @ApiOperation({ summary: '创建相册/样片' })
   async create(@Body() dto: CreateAlbumDto) {
     return this.albumService.create(dto);
   }
 
   @Get()
-  @ApiOperation({ summary: '获取相册列表' })
+  @ApiOperation({ summary: '获取相册列表（公开）' })
   async findAll(@Query() query: QueryAlbumDto) {
     return this.albumService.findAll(query);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: '获取相册详情' })
+  @ApiOperation({ summary: '获取相册详情（公开）' })
   async findOne(@Param('id') id: string) {
     return this.albumService.findOne(id);
   }
 
   @Patch(':id')
+  @ApiBearerAuth()
+  @UseGuards(AdminJwtAuthGuard)
   @ApiOperation({ summary: '更新相册' })
   async update(@Param('id') id: string, @Body() dto: Partial<CreateAlbumDto>) {
     return this.albumService.update(id, dto);
   }
 
   @Delete(':id/photos')
+  @ApiBearerAuth()
+  @UseGuards(AdminJwtAuthGuard)
   @ApiOperation({ summary: '删除相册中的单张图片' })
   async removePhoto(@Param('id') id: string, @Body() dto: RemovePhotoDto) {
     return this.albumService.removePhoto(id, dto.photoUrl);
   }
 
   @Delete(':id')
+  @ApiBearerAuth()
+  @UseGuards(AdminJwtAuthGuard)
   @ApiOperation({ summary: '删除相册' })
   async remove(@Param('id') id: string) {
     return this.albumService.remove(id);

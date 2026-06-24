@@ -130,9 +130,22 @@ const UserList: React.FC = () => {
       ),
     },
     {
-      title: '角色',
-      dataIndex: 'roleName',
+      title: '用户名',
+      dataIndex: 'username',
       render: (text) => text || '-',
+    },
+    {
+      title: '真实姓名',
+      dataIndex: 'realName',
+      render: (text) => text || '-',
+    },
+    {
+      title: '角色',
+      dataIndex: 'roleNames',
+      render: (roleNames: string[]) =>
+        roleNames && roleNames.length > 0
+          ? roleNames.map(name => <Tag key={name}>{name}</Tag>)
+          : '-',
     },
     {
       title: '状态',
@@ -361,26 +374,35 @@ const UserList: React.FC = () => {
             />
           </Col>
           <Col span={6}>
-            <Search
-              placeholder="员工昵称"
-              value={searchParams.nickname || ''}
-              onChange={(e) => {
-                // 实时更新输入值，但不触发搜索
-                const nickname = e.target.value;
-                setSearchParams(prev => ({ ...prev, nickname: nickname || undefined }));
-              }}
-              onSearch={(nickname) => {
-                // 只在点击搜索按钮或按回车时搜索
-                handleSearch({ 
-                  ...searchParams, 
-                  nickname: nickname || undefined,
-                  phone: undefined,
-                  wechatId: undefined,
-                  fuzzy: nickname ? 'true' : undefined
-                });
-              }}
+            <Input
+              placeholder="真实姓名"
               allowClear
-              enterButton={false}
+              value={searchParams.realName || ''}
+              onChange={(e) => {
+                setSearchParams(prev => ({ ...prev, realName: e.target.value || undefined }));
+              }}
+              onBlur={() => {
+                if (searchParams.realName !== undefined) {
+                  handleSearch({ ...searchParams });
+                }
+              }}
+              onPressEnter={() => handleSearch({ ...searchParams })}
+            />
+          </Col>
+          <Col span={4}>
+            <Input
+              placeholder="用户名"
+              allowClear
+              value={searchParams.username || ''}
+              onChange={(e) => {
+                setSearchParams(prev => ({ ...prev, username: e.target.value || undefined }));
+              }}
+              onBlur={() => {
+                if (searchParams.username !== undefined) {
+                  handleSearch({ ...searchParams });
+                }
+              }}
+              onPressEnter={() => handleSearch({ ...searchParams })}
             />
           </Col>
           <Col span={4}>
@@ -395,7 +417,7 @@ const UserList: React.FC = () => {
               <Option value={Status.INACTIVE}>禁用</Option>
             </Select>
           </Col>
-          <Col span={6}>
+          <Col span={4}>
             <RangePicker
               placeholder={['开始日期', '结束日期']}
               style={{ width: '100%' }}
@@ -452,7 +474,7 @@ const UserList: React.FC = () => {
                 导出数据 <DownOutlined />
               </Button>
             </Dropdown>
-            {(searchParams.phone || searchParams.nickname || searchParams.status || searchParams.startDate) && (
+            {(searchParams.phone || searchParams.nickname || searchParams.realName || searchParams.username || searchParams.status || searchParams.startDate) && (
               <Button onClick={handleClearSearch}>
                 清除筛选
               </Button>

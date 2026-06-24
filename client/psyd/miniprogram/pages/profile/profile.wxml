@@ -20,12 +20,33 @@
       </view>
     </view>
 
+    <!-- ===== 关注引导 ===== -->
+    <view class="guide-card">
+      <view class="guide-item" bindtap="followOfficialAccount">
+        <view class="guide-icon" style="background:#E8F8E8;">💬</view>
+        <view class="guide-body">
+          <text class="guide-title">关注服务号</text>
+          <text class="guide-desc">获取订单通知、活动提醒</text>
+        </view>
+        <text class="guide-arrow">去关注 ›</text>
+      </view>
+      <view class="guide-divider"></view>
+      <view class="guide-item" bindtap="enableNotification">
+        <view class="guide-icon" style="background:#FFF8E1;">🔔</view>
+        <view class="guide-body">
+          <text class="guide-title">开启通知</text>
+          <text class="guide-desc">接收拍摄提醒、优惠信息</text>
+        </view>
+        <text class="guide-arrow">去开启 ›</text>
+      </view>
+    </view>
+
     <!-- ===== 快捷入口网格 ===== -->
     <view class="grid-card">
       <view class="grid-row">
-        <view class="grid-item" bindtap="goToStoreNav">
-          <view class="grid-icon icon-store-nav">🗺️</view>
-          <text class="grid-label">导航到店</text>
+        <view class="grid-item" bindtap="goToCart">
+          <view class="grid-icon icon-cart">🛒</view>
+          <text class="grid-label">购物车</text>
         </view>
         <view class="grid-item" bindtap="goToGroupBuy">
           <view class="grid-icon icon-group-buy">🎯</view>
@@ -39,18 +60,6 @@
           <view class="grid-icon icon-addr">📍</view>
           <text class="grid-label">地址管理</text>
         </view>
-        <!-- 第二阶段开放：优惠券 -->
-        <!-- <view class="grid-item" bindtap="goToCoupon">
-          <view class="grid-icon icon-cpn">🎫</view>
-          <text class="grid-label">优惠券</text>
-          <text wx:if="{{assetCount.coupon > 0}}" class="grid-value">{{assetCount.coupon}}张</text>
-        </view> -->
-        <!-- 第二阶段开放：积分 -->
-        <!-- <view class="grid-item" bindtap="goToPoints">
-          <view class="grid-icon icon-pts">⭐</view>
-          <text class="grid-label">积分</text>
-          <text class="grid-value">{{assetCount.points || 0}}</text>
-        </view> -->
       </view>
     </view>
 

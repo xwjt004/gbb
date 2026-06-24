@@ -96,6 +96,22 @@ class ProductService {
   }
 
   /**
+   * 检查商品关联的套餐
+   */
+  async checkBindings(id: number): Promise<{ bound: boolean; count: number; packages: Array<{ packageId: number; packageName: string; quantity: number }> }> {
+    const response = await request.get(`/products/${id}/bindings`);
+    return response.data.data;
+  }
+
+  /**
+   * 解除商品与所有套餐的关联
+   */
+  async unbindProduct(id: number): Promise<{ count: number }> {
+    const response = await request.post(`/products/${id}/unbind`);
+    return (response.data as any) as { count: number };
+  }
+
+  /**
    * 导出到Excel
    */
   async exportToExcel(params?: any) {

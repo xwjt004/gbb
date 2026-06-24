@@ -68,6 +68,10 @@ const RefundRecords = React.lazy(() => import('@/pages/Refunds/RefundRecords'));
 const ProductCategoryList = React.lazy(() => import('@/pages/ProductCategories/ProductCategoryList'));
 const ProductList = React.lazy(() => import('@/pages/Products/ProductList'));
 const ServiceItemList = React.lazy(() => import('@/pages/ServiceItems/ServiceItemList'));
+const ServiceCategoryList = React.lazy(() => import('@/pages/ServiceCategories/ServiceCategoryList'));
+const WorksManage = React.lazy(() => import('@/pages/Works/WorksManage'));
+const WorkCategories = React.lazy(() => import('@/pages/Works/WorkCategories'));
+const Photographers = React.lazy(() => import('@/pages/Works/Photographers'));
 const DiscountRulesList = React.lazy(() => import('@/pages/DiyPackages/DiscountRulesList'));
 const DiyPackageBuilder = React.lazy(() => import('@/pages/DiyPackages/DiyPackageBuilder'));
 const DiyPackageList = React.lazy(() => import('@/pages/DiyPackages/DiyPackageList'));
@@ -195,6 +199,10 @@ const ThemedApp: React.FC = () => {
                       <Route path="/products/categories" element={<ProductCategoryList />} />
                       <Route path="/products" element={<ProductList />} />
                       <Route path="/service-items" element={<ServiceItemList />} />
+                      <Route path="/service-items/categories" element={<ServiceCategoryList />} />
+                      <Route path="/products/works" element={<WorksManage />} />
+                      <Route path="/products/work-categories" element={<WorkCategories />} />
+                      <Route path="/products/photographers" element={<Photographers />} />
                       <Route path="/diy-packages/list" element={<DiyPackageList />} />
                       <Route path="/diy-packages/discount-rules" element={<DiscountRulesList />} />
                       <Route path="/diy-packages/builder" element={<DiyPackageBuilder />} />

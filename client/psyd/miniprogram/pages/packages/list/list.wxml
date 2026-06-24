@@ -24,10 +24,10 @@
           <text>⭐ 热门</text>
         </view>
         <view
-          class="category-item {{showGroupBuy ? 'active' : ''}}"
+          class="category-item gb-filter {{showGroupBuy ? 'active' : ''}}"
           bindtap="onGroupBuyToggle"
         >
-          <text>🔥 团购</text>
+          <text class="gb-filter-text">🔥 团购</text>
         </view>
         <view
           wx:for="{{categories}}"

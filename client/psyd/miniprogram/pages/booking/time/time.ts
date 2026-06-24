@@ -94,7 +94,8 @@ Page({
     try {
       const res = await request({
         url: `/time-slots/available?packageId=${packageId}&date=${date}`,
-        method: 'GET'
+        method: 'GET',
+        needAuth: false,
       });
 
       console.log('🕒 时间段API返回:', res);

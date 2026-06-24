@@ -1,0 +1,100 @@
+<view class="container">
+  <!-- 顶部装饰区 -->
+  <view class="hero">
+    <view class="hero-deco"></view>
+    <text class="hero-title">作品展示</text>
+    <text class="hero-sub">用镜头记录每一个幸福瞬间</text>
+  </view>
+
+  <!-- 分类导航 -->
+  <scroll-view scroll-x class="category-scroll" wx:if="{{categories.length > 0}}" enhanced show-scrollbar="{{false}}">
+    <view class="category-list">
+      <view
+        class="category-item {{activeCategoryId === 0 ? 'active' : ''}}"
+        bindtap="onCategoryChange"
+        data-id="{{0}}"
+      >
+        <text>全部</text>
+      </view>
+      <view
+        wx:for="{{categories}}"
+        wx:key="id"
+        class="category-item {{activeCategoryId === item.id ? 'active' : ''}}"
+        bindtap="onCategoryChange"
+        data-id="{{item.id}}"
+      >
+        <text>{{item.name}}</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 筛选栏 -->
+  <view class="filter-bar">
+    <view class="filter-bar-inner">
+      <view class="photographer-selector" bindtap="togglePhotographerFilter">
+        <text class="photographer-icon">📸</text>
+        <text class="photographer-label">{{selectedPhotographerName}}</text>
+        <text class="photographer-arrow" wx:if="{{!showPhotographerFilter}}">▾</text>
+        <text class="photographer-arrow" wx:else>▴</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 摄影师下拉列表 -->
+  <view wx:if="{{showPhotographerFilter}}" class="photographer-dropdown">
+    <view
+      class="photographer-option {{activePhotographerId === 0 ? 'active' : ''}}"
+      bindtap="onPhotographerChange"
+      data-id="{{0}}"
+      data-name="全部摄影师"
+    >
+      <view class="photographer-option-info">
+        <text class="photographer-option-name">全部摄影师</text>
+      </view>
+      <view wx:if="{{activePhotographerId === 0}}" class="photographer-check">✓</view>
+    </view>
+    <view
+      wx:for="{{photographers}}"
+      wx:key="id"
+      class="photographer-option {{activePhotographerId === item.id ? 'active' : ''}}"
+      bindtap="onPhotographerChange"
+      data-id="{{item.id}}"
+      data-name="{{item.name}}"
+    >
+      <view class="photographer-option-info">
+        <text class="photographer-option-name">{{item.name}}</text>
+        <text wx:if="{{item.title}}" class="photographer-option-title">{{item.title}}</text>
+      </view>
+      <view class="photographer-option-right">
+        <text wx:if="{{item.style}}" class="photographer-option-style">{{item.style}}</text>
+        <text wx:if="{{activePhotographerId === item.id}}" class="photographer-check">✓</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载骨架屏 -->
+  <view wx:if="{{loading}}" class="skeleton">
+    <view wx:for="{{skeletonArray}}" wx:key="*this" class="skeleton-item">
+      <view class="skeleton-image"></view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:elif="{{photos.length === 0}}" class="empty">
+    <view class="empty-icon">📷</view>
+    <text class="empty-text">暂无作品</text>
+    <text class="empty-sub">精彩作品即将呈现</text>
+  </view>
+
+  <!-- 作品列表 -->
+  <view wx:else class="photo-list">
+    <view wx:for="{{photos}}" wx:key="url" class="photo-card" bindtap="onPreviewImage" data-index="{{index}}">
+      <image src="{{item.thumbUrl}}" mode="aspectFill" class="photo-image" />
+    </view>
+  </view>
+
+  <!-- 底部提示 -->
+  <view wx:if="{{photos.length > 0 && !loading}}" class="footer-tip">
+    <text class="footer-tip-text">—— 已经到底了 ——</text>
+  </view>
+</view>

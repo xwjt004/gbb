@@ -10,7 +10,7 @@ page {
 
 .container {
   min-height: 100vh;
-  padding-bottom: 200rpx;
+  padding-bottom: 180rpx;
 }
 
 /* ==================== 进度指示器 ==================== */
@@ -18,7 +18,7 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48rpx 48rpx 32rpx;
+  padding: 24rpx 48rpx 20rpx;
   gap: 0;
 }
 
@@ -103,7 +103,7 @@ page {
 
 /* ==================== 套系信息卡片 ==================== */
 .package-card {
-  margin: 8rpx 28rpx 28rpx;
+  margin: 4rpx 28rpx 20rpx;
   padding: 32rpx 32rpx;
   background: linear-gradient(135deg, rgba(255, 105, 180, 0.12), rgba(232, 201, 160, 0.06));
   border: 1rpx solid rgba(255, 105, 180, 0.2);
@@ -182,8 +182,8 @@ page {
 
 /* ==================== 日历容器 ==================== */
 .calendar-container {
-  margin: 0 28rpx 24rpx;
-  padding: 36rpx 28rpx 28rpx;
+  margin: 0 28rpx 20rpx;
+  padding: 28rpx 28rpx 24rpx;
   background: #ffffff;
   backdrop-filter: blur(40rpx);
   -webkit-backdrop-filter: blur(40rpx);

@@ -23,6 +23,21 @@ async function bootstrap() {
   try {
     const app = await NestFactory.create(AppModule);
 
+    // 保留 /wx-official-account/callback 的原始请求体（微信 XML 消息使用）
+    // 必须在 body parser 之前注册，否则流已被消费
+    app.use((req, res, next) => {
+      if (req.method === 'POST' && req.url?.includes('/wx-official-account/callback')) {
+        const chunks: Buffer[] = [];
+        req.on('data', (chunk: Buffer) => chunks.push(chunk));
+        req.on('end', () => {
+          (req as any).rawBody = Buffer.concat(chunks).toString('utf-8');
+          next();
+        });
+      } else {
+        next();
+      }
+    });
+
     // 安全启动检查：生产环境禁止使用默认密钥
     if (
       process.env.NODE_ENV === 'production' &&

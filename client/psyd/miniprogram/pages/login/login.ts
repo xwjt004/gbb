@@ -213,7 +213,8 @@ Page({
     if (redirectUrl) {
       var tabBarPages = [
         'pages/packages/list/list', 'pages/product/list',
-        'pages/cart/cart', 'pages/profile/profile',
+        'pages/works/works', 'pages/store-nav/store-nav',
+        'pages/profile/profile',
       ];
       var normalizedUrl = redirectUrl.replace(/^\//, '');
       var baseUrl = normalizedUrl.split('?')[0];

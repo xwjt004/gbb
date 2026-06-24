@@ -276,7 +276,7 @@ export class GroupBuyService {
           product: { select: { id: true, name: true, salePrice: true, images: true } },
           creator: { select: { id: true, nickname: true, avatar: true, phone: true } },
           orders: {
-            select: { paymentStatus: true },
+            select: { orderNo: true, paymentStatus: true },
           },
           _count: { select: { participants: true } },
         },
@@ -293,8 +293,8 @@ export class GroupBuyService {
       ).length;
       return {
         ...item,
-        paidCount: totalPaid,
-        unpaidCount: item._count.participants - totalPaid,
+        paidCount: Math.min(totalPaid, item._count.participants),
+        unpaidCount: Math.max(0, item._count.participants - totalPaid),
       };
     });
 

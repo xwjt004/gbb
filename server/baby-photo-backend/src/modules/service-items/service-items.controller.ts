@@ -50,6 +50,35 @@ export class ServiceItemsController {
     return this.serviceItemsService.getCategories();
   }
 
+  @Post('categories')
+  @ApiOperation({ summary: '创建服务分类' })
+  @ApiResponse({ status: 200, description: '创建成功' })
+  @ApiResponse({ status: 409, description: '分类已存在' })
+  createCategory(@Body('name') name: string) {
+    return this.serviceItemsService.createCategory(name);
+  }
+
+  @Patch('categories/:name')
+  @ApiOperation({ summary: '重命名服务分类' })
+  @ApiParam({ name: 'name', description: '原分类名称' })
+  @ApiResponse({ status: 200, description: '重命名成功' })
+  @ApiResponse({ status: 404, description: '分类不存在' })
+  renameCategory(
+    @Param('name') oldName: string,
+    @Body('name') newName: string,
+  ) {
+    return this.serviceItemsService.renameCategory(oldName, newName);
+  }
+
+  @Delete('categories/:name')
+  @ApiOperation({ summary: '删除服务分类' })
+  @ApiParam({ name: 'name', description: '分类名称' })
+  @ApiResponse({ status: 200, description: '删除成功' })
+  @ApiResponse({ status: 404, description: '分类不存在' })
+  deleteCategory(@Param('name') name: string) {
+    return this.serviceItemsService.deleteCategory(name);
+  }
+
   @Get('statistics')
   @ApiOperation({ summary: '获取服务统计' })
   @ApiResponse({ status: 200, description: '获取成功' })

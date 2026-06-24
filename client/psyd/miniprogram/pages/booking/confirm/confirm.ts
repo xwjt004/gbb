@@ -206,45 +206,14 @@ Page({
     this.setData({ submitting: true });
 
     try {
-      // 获取或生成用户openid
-      const userInfo = wx.getStorageSync('userInfo');
-      let userOpenid = userInfo?.openid || ('test_user_' + bookingData.contactPhone);
-      
-      console.log('👤 当前openid:', userOpenid);
-      
-      // 无论如何都先创建/更新用户（确保用户存在）
-      try {
-        const createUserRes = await request({
-          url: '/users',
-          method: 'POST',
-          data: {
-            openid: userOpenid,
-            nickname: bookingData.contactName,
-            phone: bookingData.contactPhone,
-            status: 'ACTIVE'
-          }
-        });
-        console.log('✅ 用户创建/更新成功:', createUserRes);
-      } catch (userError: any) {
-        // 用户已存在会返回409冲突，这是正常的
-        if (userError.message && userError.message.includes('already exists')) {
-          console.log('ℹ️ 用户已存在，继续创建订单');
-        } else {
-          console.warn('⚠️ 用户创建异常:', userError.message);
-        }
-      }
-
       // 获取团购活动ID（如果有）
       const activityId = (bookingData.packageInfo as any).activityId;
 
-      // 调用创建订单接口
+      // 调用微信预约下单接口
       const orderData = {
-        userOpenid: userOpenid,
         packageId: bookingData.packageId,
         timeSlotId: bookingData.slotId,
         appointmentDate: new Date(bookingData.date).toISOString(),
-        totalAmount: parseFloat(this.data.totalPrice as any),
-        depositAmount: parseFloat(String(bookingData.packageInfo.depositAmount)) || 0,
         childrenCount: bookingData.childrenCount,
         customerName: bookingData.contactName,
         customerPhone: bookingData.contactPhone,
@@ -256,7 +225,7 @@ Page({
       console.log('📝 创建订单数据:', orderData);
 
       const res = await request({
-        url: '/orders',
+        url: '/wx-order/booking',
         method: 'POST',
         data: orderData
       });

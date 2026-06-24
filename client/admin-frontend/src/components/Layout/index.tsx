@@ -100,20 +100,48 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       icon: <GiftOutlined />,
       label: '产品中心',
       children: [
-        { key: '/packages/list', label: '套系列表' },
-        { key: '/packages/categories', label: '套系分类' },
         {
-          key: 'diy-sub',
-          label: 'DIY套系',
+          key: 'package-group',
+          label: '套系项目',
           children: [
-            { key: '/diy-packages/list', label: 'DIY套系列表' },
-            { key: '/diy-packages/builder', label: 'DIY套系构建器' },
-            { key: '/diy-packages/discount-rules', label: 'DIY折扣规则' },
+            { key: '/packages/list', label: '套系列表' },
+            { key: '/packages/categories', label: '套系分类' },
+            {
+              key: 'diy-sub',
+              label: 'DIY套系',
+              children: [
+                { key: '/diy-packages/list', label: 'DIY套系列表' },
+                { key: '/diy-packages/builder', label: 'DIY套系构建器' },
+                { key: '/diy-packages/discount-rules', label: 'DIY折扣规则' },
+              ],
+            },
           ],
         },
-        { key: '/products', label: '商品列表' },
-        { key: '/products/categories', label: '商品分类' },
-        { key: '/service-items', label: '服务项目' },
+        {
+          key: 'product-group',
+          label: '商品项目',
+          children: [
+            { key: '/products', label: '商品列表' },
+            { key: '/products/categories', label: '商品分类' },
+          ],
+        },
+        {
+          key: 'service-sub',
+          label: '服务项目',
+          children: [
+            { key: '/service-items', label: '服务列表' },
+            { key: '/service-items/categories', label: '服务分类' },
+          ],
+        },
+        {
+          key: 'work-group',
+          label: '作品项目',
+          children: [
+            { key: '/products/works', label: '作品管理' },
+            { key: '/products/work-categories', label: '作品分类' },
+            { key: '/products/photographers', label: '摄影师管理' },
+          ],
+        },
       ],
     },
     {
