@@ -70,8 +70,8 @@ export class WxOfficialAccountController {
   }
 
   /**
-   * 轻量跳转页面（返回纯 HTML，不依赖前端 SPA）
-   * 公众号菜单指向此链接，微信内置浏览器打开后立即跳转小程序
+   * 跳转页面（降级方案：旧版微信不支持 miniprogram 菜单类型时使用）
+   * 服务端预取 URL Scheme，内联到 HTML 中，加载后立即跳转
    */
   @Get('jump')
   @Header('Content-Type', 'text/html; charset=utf-8')
@@ -82,54 +82,33 @@ export class WxOfficialAccountController {
       return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>页面不存在</title></head><body style="text-align:center;padding:40px;color:#999;font-size:14px;">页面不存在</body></html>';
     }
 
-    let openlink = '';
+    // 服务端预取 URL Scheme（缓存 30 天，实际 Redis 读取约 5ms）
+    const openlink = await this.officialAccountService.generateUrlScheme(mpPath);
 
-    try {
-      openlink = await this.officialAccountService.generateUrlScheme(mpPath);
-    } catch (err) {
-      this.logger.error(`生成 URL Scheme 失败: ${err.message}`);
-    }
-
-    if (!openlink) {
-      return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>跳转失败</title></head><body style="text-align:center;padding:40px;color:#999;font-size:14px;">获取跳转链接失败，请重试</body></html>';
-    }
-
-    // 获取小程序头像
-    let headImgUrl = '';
-    try {
-      headImgUrl = await this.officialAccountService.getMiniProgramHeadImageUrl();
-    } catch {
-      // 忽略
-    }
-
-    // 返回轻量 HTML 页面，立即跳转
+    // 极简 HTML：获取数据后立即跳转小程序
     return `<!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="refresh" content="0; url=${openlink}">
-  <title>跳转中...</title>
-  <style>
-    body { margin:0; padding:0; background:linear-gradient(135deg,#fce4ec 0%,#f8f0ff 50%,#e8f5e9 100%); display:flex; justify-content:center; align-items:center; min-height:100vh; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
-    .card { background:#fff; border-radius:16px; padding:48px 36px 36px; text-align:center; max-width:280px; width:88%; box-shadow:0 4px 24px rgba(0,0,0,0.08); }
-    .avatar { width:72px; height:72px; border-radius:50%; object-fit:cover; margin-bottom:16px; box-shadow:0 2px 12px rgba(0,0,0,0.1); }
-    .title { margin:0 0 4px; font-size:18px; font-weight:600; color:#333; }
-    .desc { margin:0 0 20px; color:#999; font-size:13px; }
-    .btn { display:inline-block; width:200px; height:44px; line-height:44px; background:#07c160; color:#fff; text-decoration:none; border-radius:22px; font-size:16px; font-weight:500; }
-    .btn:active { background:#06ad56; }
-    .loading { margin-top:16px; color:#bbb; font-size:12px; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>跳转中...</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(150deg,#fff5f7,#fce4ec,#f3e5f5,#e8f5e9);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+.card{background:#fff;border-radius:24px;padding:40px 36px 32px;text-align:center;max-width:280px;width:86%;box-shadow:0 8px 32px rgba(0,0,0,0.08)}
+.loader{width:48px;height:48px;border:3px solid #fce4ec;border-top:3px solid #ec407a;border-radius:50%;margin:0 auto 16px;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+h2{font-size:18px;color:#555;margin-bottom:8px}
+p{font-size:13px;color:#bbb}
+</style>
 </head>
 <body>
-  <div class="card">
-    ${headImgUrl ? '<img class="avatar" src="' + headImgUrl.replace(/"/g, '&quot;') + '" alt="乖宝宝儿童摄影">' : ''}
-    <h2 class="title">乖宝宝儿童摄影</h2>
-    <p class="desc">用镜头记录每一个幸福瞬间</p>
-    <a class="btn" href="${openlink}">打开小程序</a>
-    <p class="loading">正在跳转...</p>
-  </div>
-  <script>window.location.href="${openlink}";</script>
+<div class="card">
+<div class="loader"></div>
+<h2>正在跳转...</h2>
+<p>乖宝宝儿童摄影 · 记录成长每一刻</p>
+</div>
+<script>location.href='${openlink}';</script>
 </body>
 </html>`;
   }

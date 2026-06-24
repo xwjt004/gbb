@@ -25,6 +25,7 @@ export class WxOfficialAccountMenuController {
   @Post('create')
   async createDefaultMenu() {
     const BASE = 'https://guaibaobao.cn/api/v1/wx-official-account/jump';
+    const MP_APPID = this.officialAccountService.miniProgramAppId;
 
     const menu = {
       button: [
@@ -32,14 +33,18 @@ export class WxOfficialAccountMenuController {
           name: '预约套系',
           sub_button: [
             {
-              type: 'view',
+              type: 'miniprogram',
               name: '套系查看',
               url: `${BASE}?p=packages`,
+              appid: MP_APPID,
+              pagepath: 'pages/packages/list/list',
             },
             {
-              type: 'view',
+              type: 'miniprogram',
               name: '团购活动',
               url: `${BASE}?p=group-buys`,
+              appid: MP_APPID,
+              pagepath: 'pages/group-buy/list/list',
             },
           ],
         },
@@ -47,14 +52,18 @@ export class WxOfficialAccountMenuController {
           name: '门店服务',
           sub_button: [
             {
-              type: 'view',
+              type: 'miniprogram',
               name: '作品欣赏',
               url: `${BASE}?p=portfolio`,
+              appid: MP_APPID,
+              pagepath: 'pages/works/works',
             },
             {
-              type: 'view',
+              type: 'miniprogram',
               name: '导航到店',
               url: `${BASE}?p=store-nav`,
+              appid: MP_APPID,
+              pagepath: 'pages/store-nav/store-nav',
             },
             {
               type: 'click',
@@ -67,14 +76,18 @@ export class WxOfficialAccountMenuController {
           name: '会员专区',
           sub_button: [
             {
-              type: 'view',
+              type: 'miniprogram',
               name: '我的订单',
               url: `${BASE}?p=orders`,
+              appid: MP_APPID,
+              pagepath: 'pages/order/list/list',
             },
             {
-              type: 'view',
+              type: 'miniprogram',
               name: '会员中心',
               url: `${BASE}?p=profile`,
+              appid: MP_APPID,
+              pagepath: 'pages/profile/profile',
             },
             {
               type: 'click',

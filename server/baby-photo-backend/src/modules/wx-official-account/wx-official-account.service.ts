@@ -286,8 +286,8 @@ export class WxOfficialAccountService {
           this.logger.warn(`获取小程序头像失败: ${err.message}，使用默认头像`);
         }
 
-        // 兜底：返回 shop-info 第一张可用图片
-        return '/uploads/shop-info/shop-1763006483299-805257991.jpg';
+        // 兜底：返回 Logo 图片
+        return '/uploads/logo.png';
       },
       86400 * 7, // 缓存 7 天（头像不常变）
     );
