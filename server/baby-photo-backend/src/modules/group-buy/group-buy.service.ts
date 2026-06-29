@@ -6,7 +6,6 @@ import { AdminCreateGroupBuyDto } from './dto/admin-create-group-buy.dto';
 import { UpdateGroupBuyDto } from './dto/update-group-buy.dto';
 import { CreateGroupBuyTierDto, UpdateGroupBuyTierDto } from './dto/group-buy-tier.dto';
 import { QueryGroupBuyDto } from './dto/query-group-buy.dto';
-import { PaymentsService } from '../payments/payments.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
@@ -17,7 +16,6 @@ export class GroupBuyService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly paymentsService: PaymentsService,
     private readonly notificationsService: NotificationsService,
   ) {}
 
@@ -560,7 +558,7 @@ export class GroupBuyService {
     return { code: 200, message: '已更新' };
   }
 
-  /** 定时检查过期团购 + 自动退款 */
+  /** 定时检查过期团购：标记为 FAILED，参与者按团购价成交（不退款） */
   async expireStaleActivities() {
     const expired = await this.prisma.groupBuyActivity.findMany({
       where: { status: 'ACTIVE', expiredAt: { lte: new Date() } },
@@ -570,26 +568,18 @@ export class GroupBuyService {
 
     const expiredIds = expired.map(a => a.id);
 
-    // 标记为 FAILED
+    // 标记活动为 FAILED
     await this.prisma.groupBuyActivity.updateMany({
       where: { id: { in: expiredIds } },
       data: { status: 'FAILED' },
     });
 
-    this.logger.log(`已过期 ${expired.length} 个未成团团购，开始自动退款...`);
-
-    // 对已支付订单自动退款
-    const paidPayments = await this.prisma.payment.findMany({
-      where: { order: { groupBuyActivityId: { in: expiredIds } }, status: 'FULLY_PAID' },
+    // 参与者标记为 SUCCESS（按团购价成交，不退款）
+    await this.prisma.groupBuyParticipant.updateMany({
+      where: { activityId: { in: expiredIds }, status: 'JOINED' },
+      data: { status: 'SUCCESS' },
     });
 
-    for (const payment of paidPayments) {
-      try {
-        await this.paymentsService.processRefund(payment.id, '团购过期自动退款');
-        this.logger.log(`自动退款成功: 支付 ${payment.id}`);
-      } catch (err: any) {
-        this.logger.error(`自动退款失败: 支付 ${payment.id}`, err.message || err);
-      }
-    }
+    this.logger.log(`已处理 ${expired.length} 个过期团购，参与者按团购价成交`);
   }
 }

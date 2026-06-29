@@ -22,39 +22,64 @@ NestJS modular structure with four directory categories:
 
 - **`src/modules/`** — Business modules, each self-contained with controller/service/DTO/entity:
   - Core biz: `users`, `packages`, `package-categories`, `orders`, `payments`, `time-slots`, `service-items`, `diy-packages`
-  - WeChat integration: `wx-auth`, `wx-mall`, `wx-cart`, `wx-order`, `wx-coupon`, `wx-address`, `wx-user`, `wx-favorite`
+  - WeChat integration: `wx-auth`, `wx-mall`, `wx-cart`, `wx-order`, `wx-coupon`, `wx-address`, `wx-user`, `wx-favorite`, `wx-official-account`
   - Inventory: `stock-outbound`, `stock-check`, `stock-alert`, `stock-transfer`, `stock-transaction`, `inventory-intelligence`
   - CRM/Marketing: `crm`, `smart-marketing`, `coupons`, `automation-rules`, `group-buy`, `discount-rules`
   - System: `auth`, `roles`, `operation-logs`, `files`, `export`, `system-backup`, `search`, `notifications`, `status-monitoring`
   - Products/Sales: `products`, `product-categories`, `photo-albums`, `seasonal-prices`
-  - Other: `analytics`, `statistics-analysis`, `shop-info`, `print-settings`
-- **`src/supplier/`** — Supply chain module, standalone domain with sub-controllers:
-  - `purchase-order.controller/service` — 采购订单
-  - `inbound.controller/service` — 入库管理
-  - `in-transit.controller/service` — 在途管理
-  - `supplier.controller/service` — 供应商管理
-  - `payment.controller/service` — 采购付款
-  - `refund.controller/service` — 采购退款
-- **`src/shared/`** — Cross-cutting concerns:
-  - `prisma/` — PrismaModule (global DB service)
-  - `guards/` — `PermissionGuard` (checks `@Permission()` decorator against `RolePermission` model)
-  - `decorators/` — `@Permission('module:action')` for role-based access control
-  - `filters/` — `AllExceptionsFilter` (unified error response format)
-  - `interceptors/` — `OperationLogInterceptor` (global APP_INTERCEPTOR, logs all mutations)
-  - `pipes/` — Custom validation pipes
-  - `schedulers/` — Cron jobs: `order-timeout`, `crm`, `appointment-reminder`, `photo-pick-reminder`, `daily-report`
-  - `services/` — `auto-status-transition`, `status-change-log`
-  - `cache/` — Cache module/interface/service
-  - `config/` — `env-validator` (validates required env vars at startup)
-  - `enums/` — Shared enums (payment-status, payment-system, order-status)
-  - `exceptions/` — `BusinessException` for domain-specific errors
-  - `validators/` — Custom validators (order-status transitions)
-  - `utils/` — Utilities (date, masking, payment-adapter)
-- **`src/payment/`** — Payment-specific controllers/services (payment-processing, refunds, payment-system abstraction)
-- **`src/types/`** — TypeScript type definitions (express.d.ts, pagination, API response types)
-- **Database**: Prisma schema in `prisma/schema.prisma` (PostgreSQL, ~1800 lines, 43+ models)
-- **Entry**: `src/main.ts` — CORS config, Swagger, global ValidationPipe, Sentry init, X-HTTP-Method-Override for WeChat PATCH, default role seeding, security startup checks (JWT_SECRET validation in production)
+  - Other: `analytics`, `statistics-analysis`, `shop-info`, `print-settings`, `work-categories`, `photographers`
+- **`src/supplier/`** — Supply chain module, standalone domain with sub-controllers for purchase-order, inbound, in-transit, supplier, payment, refund
+- **`src/shared/`** — Cross-cutting concerns: prisma, guards, decorators, filters, interceptors, pipes, schedulers, services, cache, config, enums, exceptions, validators, utils
+- **`src/payment/`** — Payment-specific controllers/services
+- **`src/types/`** — TypeScript type definitions
+- **Database**: Prisma schema in `prisma/schema.prisma` (PostgreSQL, 43+ models)
+- **Entry**: `src/main.ts` — CORS config, Swagger, global ValidationPipe, Sentry init, X-HTTP-Method-Override for WeChat PATCH, default role seeding, security startup checks
 - **API prefix**: `/api/v1/`, Swagger at `/api/docs`
+
+#### Module Convention
+
+Each business module follows a consistent pattern:
+- `*.module.ts` — imports PrismaModule, registers controller+service, exports service if needed by other modules
+- `*.controller.ts` — decorated with `@ApiTags()`, `@ApiBearerAuth()`, `@UseGuards(AdminJwtAuthGuard)` at class level, public endpoints use `@Public()` decorator
+- `*.service.ts` — `@Injectable()`, injects PrismaService via constructor
+- `dto/*.dto.ts` — class-validator + class-transformer for request validation
+
+#### API Response Format
+
+**Success**: `{ success: true, data: ... }`
+**Error** (via BusinessException subclasses): `{ success: false, statusCode: number, message: string, errorCode?: string, timestamp: string, path: string }`
+
+Built-in BusinessException subclasses (in `shared/exceptions/`):
+- `NotFoundException` (404, NOT_FOUND)
+- `ConflictException` (409, CONFLICT)
+- `ValidateException` (422, VALIDATE_FAILED)
+- `UnauthorizedException` (401, UNAUTHORIZED)
+- `ForbiddenException` (403, FORBIDDEN)
+
+Use these in services rather than NestJS built-in exceptions.
+
+#### Pagination Convention
+
+Controllers accept `@Query('page') page = 1, @Query('pageSize') pageSize = 20`. Services return:
+```ts
+{ list: T[], pagination: { current: number, pageSize: number, total: number } }
+```
+
+#### Authentication & Authorization
+
+- **Admin endpoints**: `AdminJwtAuthGuard` (passport JWT strategy for admin-jwt) — applied per-controller via `@UseGuards(AdminJwtAuthGuard)`. Public endpoints use `@Public()` decorator.
+- **Permission control**: `PermissionGuard` checks `@RequirePermission('module:action')` against user roles. Wildcard `*:*` = super admin, `module:*` = all actions for a module.
+- **Mini-program auth**: WeChat OAuth flow via `wx-auth` module (wx.login → code exchange → JWT). Refresh token mechanism with auto-retry on 401.
+- **Token storage**: Admin stores `admin_token` in localStorage. Mini-program stores in wx storage with key from config.
+
+#### Global Infrastructure (in AppModule)
+
+- **Rate limiting**: ThrottlerModule — 30 req/s (short), 150 req/10s (medium), 600 req/min (long)
+- **Scheduling**: ScheduleModule for cron jobs (order-timeout, crm, appointment-reminder, photo-pick-reminder, daily-report, group-buy)
+- **Validation**: Global `ValidationPipe` with `whitelist`, `transform`, `forbidNonWhitelisted`
+- **File serving**: ServeStaticModule maps `/uploads` to the uploads directory
+- **Config**: ConfigModule reads `.env.local` then `.env` (both optional, `isGlobal: true`)
+- **Operation Logging**: Global `OperationLogInterceptor` auto-logs all POST/PUT/PATCH/DELETE requests with module/action/operator/IP, excludes password fields
 
 #### Prisma Conventions
 
@@ -64,14 +89,7 @@ NestJS modular structure with four directory categories:
 - Composite indexes via `@@index([field1, field2])`
 - Enums defined as Prisma enums (e.g., `UserStatus`) map to PostgreSQL enums
 - Role permissions stored as `"module:action"` strings (e.g., `"orders:edit"`)
-
-#### Global Infrastructure (in `AppModule`)
-
-- **Rate limiting**: ThrottlerModule — 10 req/s (short), 50 req/10s (medium), 200 req/min (long)
-- **Scheduling**: ScheduleModule for cron jobs
-- **Validation**: Global `ValidationPipe` with `whitelist`, `transform`, `forbidNonWhitelisted`
-- **File serving**: ServeStaticModule maps `/uploads` to the uploads directory
-- **Config**: ConfigModule reads `.env.local` then `.env` (both optional, `isGlobal: true`)
+- Key enums in `shared/enums/status.enum.ts`: `OrderStatus`, `PaymentStatus` (with deprecated backward-compat aliases)
 
 #### Env Files
 
@@ -83,39 +101,52 @@ NestJS modular structure with four directory categories:
 
 React SPA with Vite:
 
-- **`src/pages/`** — ~30 route page directories grouped by domain (Orders, Packages, Payments, Stock, Suppliers, Marketing, CRM, System, Users, WxUsers, Analytics, Dashboard, DiyPackages, DiscountRules, Export, etc.)
+- **`src/pages/`** — ~30 route page directories grouped by domain
 - **`src/components/`** — Shared UI components (Layout, ProtectedRoute, ImageUpload, RichTextEditor, Calculator)
 - **`src/store/`** — Redux Toolkit store (authSlice, userSlice, orderSlice, packageSlice, networkSlice, globalSlice)
 - **`src/services/`** — API client layer:
-  - `api.ts` — Axios instance with interceptors (JWT token injection, 401→redirect, 5xx auto-retry for GET, `api:success`/`api:error` custom events). Exports `request` (wraps `AxiosResponse`) and `simple` (unwraps to `ApiResponse<T>` directly)
-  - ~30 domain service files (orders, packages, users, payments, etc.) each importing from `api.ts`
-- **`src/utils/`** — Utility functions
-- **`src/hooks/`**, **`src/contexts/`**, **`src/types/`**, **`src/config/`**, **`src/constants/`**, **`src/styles/`**
+  - `api.ts` — Axios instance with interceptors (JWT token injection, 401→redirect, 5xx auto-retry for GET). Exports `request` (returns AxiosResponse) and `simple` (unwraps to data directly)
+  - ~30 domain service files, each organized as an object with async methods (e.g., `orderService.getOrders()`)
+- **`src/types/`** — TypeScript types including `ApiResponse<T>`, `PaginatedResponse<T>`, `PaginationParams`
+- **Path alias**: `@/` maps to `./src`
 - **Routing**: `App.tsx` defines lazy-loaded routes with `ProtectedRoute` wrapper, Chinese locale
 - **Dev proxy**: Vite proxies `/api` to backend (configurable via `VITE_BACKEND_URL`)
 - **Base path**: `/admin/` (served behind nginx at `/admin/`)
 
+#### Service Layer Convention
+
+Services use either `request` (returns `AxiosResponse<ApiResponse<T>>`) or `simple` (returns `T` directly).
+```ts
+// Typical pattern: object with async methods
+export const orderService = {
+  async getOrders(params: GetOrdersParams): Promise<{ data: PaginatedResponse<Order> }> {
+    const res = await simple.get<any>('/orders', { params });
+    return res;
+  },
+  async createOrder(data: OrderFormData): Promise<{ data: Order }> {
+    return simple.post<any>('/orders', data);
+  },
+  async updateOrder(id: string, data: Partial<OrderFormData>): Promise<{ data: Order }> {
+    return request.patch(`/orders/${id}`, data).then(r => r.data);
+  },
+};
+```
+
 ### Store Frontend (`client/ps-frontend/`)
 
-Separate React SPA for customer-facing store, built with Vite (+ React 18, Ant Design 5, React Router 6):
-
-- **`src/pages/`** — ~10 pages (Home, Packages, Products, Cart, Checkout, Orders, Profile, Appointment, Favorites, Coupons)
-- **`src/components/`** — Shared UI components (Header, Footer, ProductCard, CartItem, etc.)
-- **`src/services/`** — API client layer (same pattern as admin: Axios instance + domain service files)
-- **`src/styles/`**, **`src/types/`**, **`src/utils/`** — Global styles, TypeScript types, utility functions
-- **Routing**: Standard React Router, no lazy loading (simpler app than admin)
-- **Docker**: Dev (port 3003), production (port 3004 via nginx upstream `storefront`)
+Separate React SPA for customer-facing store. Simpler structure, ~10 pages. API layer is straightforward: `axios.create({ baseURL: '/api/v1' })` with response interceptor that directly returns `response.data`.
 
 ### WeChat Mini Program (`client/psyd/`)
 
 Separate mini-program project under `client/psyd/miniprogram/`:
 
-- **UI Framework**: Vant Weapp (`@vant/weapp`) — action-sheet, button, card, dialog, empty, field, goods-action, navbar, notice-bar, popup, search, stepper, submit-bar, tabbar, toast, uploader, etc.
-- **Pages**: 37+ pages covering: packages/products browsing, booking flow (date→time→info→confirm), cart, order lifecycle (confirm/list/detail), payment (payment/agreement/result), address management, coupons, user profile/settings, member/points, favorites, appointment scheduling
-- **Tab Bar**: 4 tabs — 预约(Packages), 商品(Products), 购物车(Cart), 我的(Profile)
-- **Auth**: WeChat OAuth (wx.login → code exchange), phone number binding, agreement pages
-- **API calls**: Uses wx.request directly (not axios), with JWT token from wx-auth flow
+- **UI Framework**: Vant Weapp (`@vant/weapp`)
+- **Pages**: 37+ pages, Tab Bar: 4 tabs (预约/商品/购物车/我的)
+- **API calls**: Custom `utils/request.ts` wrapper around `wx.request` with JWT token, auto-refresh token on 401, fallback URL switching on network failure
+- **PATCH workaround**: WeChat mini-program doesn't support HTTP PATCH. Use `utils/request.ts` `patch()` which sends POST with `X-HTTP-Method-Override: PATCH` header. Backend `main.ts` has middleware to handle this.
+- **Auth**: `utils/auth.ts` — wxLogin flow (wx.login → backend code exchange → JWT), phone number login, token management
 - **Key entry files**: `app.json` (page registration + tab bar), `app.ts` (global lifecycle), `app.wxss` (global styles)
+- **Config**: `config/index.ts` defines BASE_URL, FALLBACK_URL, TOKEN_KEY
 
 ## Development Commands
 
@@ -125,10 +156,11 @@ cd server/baby-photo-backend
 npm run start:dev        # Watch mode (port 3000)
 npm run start:debug      # Debug + watch mode
 npm run build            # Compile
-npm run test             # Jest unit tests (*.spec.ts)
+npm run test             # Jest unit tests (*.spec.ts in src/)
 npm run test:watch       # Jest watch mode
 npm run test:cov         # Jest with coverage
 npm run test:e2e         # Jest e2e tests (config in test/jest-e2e.json)
+npm run test -- -t "test name pattern"  # Run single test by name pattern
 npm run lint             # ESLint --fix
 npm run typecheck        # tsc --noEmit
 npm run prisma:generate  # Generate Prisma client
@@ -136,6 +168,8 @@ npm run prisma:migrate   # Run dev migrations
 npm run prisma:studio    # Open Prisma Studio (port 5555, also via Docker: profile db-admin)
 npm run seed:e2e         # Seed data for e2e tests
 ```
+
+**Jest config** (in package.json): rootDir=src, testRegex=.*\\.spec\\.ts$, ts-jest transform, node environment.
 
 ### Frontend (Admin)
 ```bash
@@ -146,6 +180,13 @@ npm run test             # Vitest (jsdom environment)
 npm run lint             # ESLint (.ts, .tsx)
 npm run typecheck        # tsc --noEmit
 npm run preview          # Preview production build
+```
+
+### Store Frontend
+```bash
+cd client/ps-frontend
+npm run dev              # Vite dev server on port 3003
+npm run build            # TypeScript check + Vite build
 ```
 
 ### E2E (Root)
@@ -174,7 +215,7 @@ bash deploy.sh [production|staging]               # Full deploy: pull, migrate, 
 - `deploy.sh` — One-click deploy script (Docker-based)
 - `playwright.config.ts` — Root-level Playwright config targeting `tests/e2e/` (Chromium only, retries: 2)
 - `server/baby-photo-backend/.env` — Backend env vars
-- `client/admin-frontend/vite.config.ts` — Vite proxy, path aliases (`@/`), build chunks
+- `client/admin-frontend/vite.config.ts` — Vite proxy, path aliases (`@/`), build chunks with manualChunks for react/antd/axios
 
 ## Root-Level Tooling
 
